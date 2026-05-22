@@ -1,0 +1,1001 @@
+interaction_id,date,icp,pain_area,duration_min,score
+c0a21833-ec2e-4720-b33b-63bbbd0cc11d,2026-04-02,Student,Budget,31,0.36
+94fa7e9d-5d25-46b3-b3a3-e0476eb67ba5,2026-03-14,Student,Financing,34,-0.66
+b4c04ec9-984a-458d-8666-de9fbe0b8634,2026-05-04,Business,Budget,25,0.79
+fcbe3ae7-fb98-4077-b148-7627aee44620,2026-03-15,Family,Economy,5,-0.79
+6fe06523-ed83-4ff6-a4d9-e86f451fe58c,2026-04-22,Student,Budget,30,-0.24
+05ddbe69-1785-4975-85fb-6eca21fdf83f,2026-03-17,Student,Budget,28,-0.26
+60e8b778-fcb5-456b-a32a-78477868940b,2026-04-28,Low Income,Economy,31,-0.84
+759aa0bb-0ab0-4e11-813a-c503aa6a69d5,2026-02-22,Large Family,Right Vehicle,37,0.25
+08256c8f-c14b-4bf5-853a-63966f1dae98,2026-04-04,Student,Economy,3,-0.26
+442592a5-0118-499d-81b5-29446c0393ed,2026-04-18,Couple,Right Vehicle,16,0.18
+c14783d3-1a05-436b-8119-7f0e60db0ae0,2026-02-23,Business,Budget,8,0.43
+2f0f5d38-550e-49eb-97be-1105fce8ac10,2026-04-15,Business,Budget,34,-0.67
+c9f2b8ab-274c-4427-baf4-9579b4351a04,2026-04-06,Family,Financing,37,0.27
+760f42bb-547c-49a5-a1ff-ddcb151f6858,2026-04-24,Couple,Economy,5,0.27
+d5adb199-2218-4510-845f-c2e067e92e97,2026-04-06,Couple,Right Vehicle,18,-0.23
+2eedfacc-e6d7-4fc1-b878-f7cff46cd62b,2026-05-03,Couple,Right Vehicle,31,0.11
+a6248c46-1834-46fa-b012-009ec867fe64,2026-03-09,Low Income,Financing,23,-0.49
+ffd33370-9fe3-4e9f-ad01-db7bc1e3cc51,2026-02-22,Business,Financing,17,0.05
+24311654-735f-4b72-a026-e949ca5010f8,2026-03-12,Business,Financing,3,-0.44
+c1b76c6a-a602-4b0a-a977-634cb67e88b9,2026-05-22,Couple,Financing,22,-0.97
+5bf4080e-d64a-49e5-95a1-201435b0d517,2026-03-26,Couple,Financing,2,-0.14
+108a4516-f21e-4109-b86d-44909226224d,2026-04-12,Business,Right Vehicle,35,0.3
+57b01778-583c-4dbb-907c-97a9b7e1ba62,2026-03-17,Couple,Budget,18,0.83
+e3e844b8-c9d8-4fb7-a536-fcc7bddfeec0,2026-04-26,Student,Budget,40,0.67
+36f3e0f2-c772-4988-a8e3-1568dc67df25,2026-02-27,Large Family,Right Vehicle,33,0.21
+a0875dc7-4c1a-418c-a597-c63744da2b9a,2026-02-22,Low Income,Budget,2,0.27
+07f3b4ed-2e62-45e9-bba6-db1f0f1c91b8,2026-05-10,Family,Economy,39,-0.44
+329aca0a-d44a-46ae-83f3-574ace6b9ec0,2026-04-30,Family,Economy,9,-0.54
+0ea0b25a-ca62-4c60-9ac5-84399b7311cb,2026-04-15,Business,Right Vehicle,23,-0.88
+78e463ce-6d18-4b3c-ac35-59f1972421c2,2026-04-21,Low Income,Economy,7,-0.54
+94a37e88-0311-4657-a249-ec4205c66e09,2026-03-10,Low Income,Economy,5,-0.31
+32bca932-9e58-4e69-89f7-a9bcefeacbb9,2026-03-24,Student,Availability,8,0.67
+1a7c901f-08d6-4c07-b789-7fc47223a0bc,2026-04-28,Low Income,Economy,30,0.48
+057989dc-48b9-46d5-9bf4-dcacc034eab9,2026-03-02,Student,Right Vehicle,24,-0.94
+c3a55370-fa6c-4c95-9647-2b7edccc678a,2026-05-07,Large Family,Financing,31,0.43
+bfdd719c-926c-49c8-b544-f54f4b45beb7,2026-04-25,Family,Availability,16,0.51
+204907c8-526e-402b-a54c-0529958ae640,2026-03-02,Large Family,Availability,8,-0.34
+ac11c6d0-c4e5-473b-9f91-5eecb6e9c4c2,2026-03-20,Large Family,Availability,12,-0.95
+a6791d41-3b44-4ddb-b032-a165500950b2,2026-04-07,Student,Availability,34,0.3
+b871060f-dcd2-4385-8345-1ba4aa69929f,2026-04-16,Large Family,Right Vehicle,31,-0.98
+b4cd5969-bd73-4317-90c4-b9d992140e98,2026-04-30,Business,Right Vehicle,21,-0.26
+cbd472b6-0340-4fa1-a3a7-8f80e6954e22,2026-04-01,Student,Financing,29,0.7
+ba809af5-7108-453d-a6bd-5ce2d9bce0bd,2026-03-31,Business,Financing,9,0.73
+18df790c-bf4d-4e20-b59c-6616c4895545,2026-03-26,Couple,Economy,8,-0.38
+7451b87b-2819-44ee-a5c8-9b0654137cb3,2026-05-19,Family,Right Vehicle,30,0.99
+2d2b151d-ed25-4cb7-98f2-129560737dae,2026-04-08,Couple,Availability,35,-0.35
+ee27ebac-667e-4e2f-b242-2f57c14069c6,2026-02-26,Couple,Right Vehicle,29,-0.85
+d3623cf4-ea66-4392-9ed6-5f64d32793d6,2026-03-03,Business,Availability,23,0.34
+624b2ad4-6ac5-485a-a214-eb55de391d4e,2026-05-11,Business,Economy,25,0.29
+72fe8072-242b-45dd-afb2-e05eae5f5564,2026-04-19,Family,Availability,12,-0.52
+9261494f-884e-494b-a68c-6cedb206cf8a,2026-03-23,Business,Right Vehicle,5,-0.07
+7b258abe-e3ed-4998-8cbe-b0e62f1f7589,2026-03-18,Business,Economy,21,0.22
+9196b238-478e-4137-b277-1fcb1b766927,2026-04-19,Couple,Financing,26,0.22
+f859580a-9e4f-4c39-b650-a1f355ea40a4,2026-02-24,Student,Right Vehicle,31,0.97
+256b44ba-8637-4d09-961f-c48c41df9c3a,2026-03-23,Business,Budget,20,0.99
+f430c047-5bed-4f86-92d8-59dbb7af729e,2026-04-16,Business,Availability,29,-0.66
+cef067e7-6f4d-48ad-8019-090ad8e82b8b,2026-04-13,Large Family,Economy,17,0.31
+b3a1db99-514d-4fcd-be57-e557f899b826,2026-04-28,Couple,Availability,11,-0.31
+401d09e1-faa0-4d91-8f61-ce40c1799714,2026-02-25,Business,Availability,37,-0.58
+bb415542-fe05-4dca-8327-9b6929c84289,2026-03-03,Business,Budget,18,0.89
+63b1e212-3df1-4f4e-a118-cfee952926be,2026-03-27,Low Income,Economy,32,0.0
+dce6d9a6-a2f6-4833-8f42-645c9a9bec01,2026-03-02,Student,Financing,13,0.41
+b40617ff-68f4-44a1-a299-98a1562cd4cf,2026-05-04,Student,Budget,16,0.97
+89bb7cf3-1811-4e86-bcee-1fec3d688ec9,2026-05-03,Student,Right Vehicle,12,0.68
+c286360f-8fe0-4f4f-997e-51dcb9aa2a11,2026-05-11,Business,Right Vehicle,14,-0.87
+169f19a9-4c42-4861-9a14-7da08219d774,2026-05-03,Couple,Right Vehicle,11,-0.15
+eab3f55a-76a5-4d5a-be96-2cddcc5a573f,2026-03-26,Large Family,Economy,26,0.72
+b8f12f4a-a78f-498a-a9d5-a7d71eb61f93,2026-05-03,Business,Financing,33,-0.79
+0441d4d8-8929-41ef-a88c-4a58e3522d40,2026-03-31,Couple,Financing,18,0.02
+a598cf12-5a5b-4480-aa48-0425258e63b7,2026-04-04,Business,Right Vehicle,26,0.63
+f52a6f02-0864-4017-ad71-3795ba3bae40,2026-05-05,Low Income,Economy,26,0.46
+ec30595b-c09c-4183-97fe-c58c312aefba,2026-03-23,Business,Right Vehicle,16,-0.26
+6e5d770e-5bf0-4001-b213-2427df0011f1,2026-03-19,Low Income,Financing,13,-0.64
+ba8f18a7-8fc1-40fb-a774-cfcb0237e6ac,2026-03-14,Business,Right Vehicle,23,0.03
+0a4b578b-9463-4772-b255-689628b8e2da,2026-03-23,Couple,Financing,11,-0.35
+c618a426-957f-4dfa-b9c1-14aa6b157e1f,2026-03-08,Family,Right Vehicle,26,-0.23
+eb2e3727-1d8d-4668-ad8b-bd7bbb2d6306,2026-05-12,Large Family,Budget,10,-1.0
+f6a6272f-a4ef-4e25-abef-96b953ee157a,2026-02-26,Low Income,Budget,33,-0.02
+59fc3309-9796-457a-b784-1b241a06f16f,2026-03-20,Student,Economy,10,-0.82
+b3f32334-7154-43ea-9c01-7ab3a999112d,2026-04-23,Family,Budget,39,0.06
+1b10064f-0735-4af8-b441-0eadc5850622,2026-05-09,Large Family,Financing,29,-0.01
+fdc07d09-6b9e-4c23-8406-6534720d7879,2026-04-04,Low Income,Economy,27,0.24
+dcfed9b9-b2b5-40ff-aa3e-916770e5b179,2026-03-13,Business,Financing,6,0.27
+1dfce026-7c34-40b7-9461-534921638c23,2026-05-01,Couple,Availability,26,-0.69
+4953ed8f-bd43-4302-bb3f-3e09f22a7543,2026-04-21,Family,Economy,16,-0.34
+11cc81d0-4f84-48fd-80a8-0fe44899a28e,2026-03-01,Business,Budget,17,0.21
+e8db843c-0e94-4052-b69a-dbf18d4a5490,2026-03-13,Low Income,Right Vehicle,11,0.76
+27d71c92-715f-4085-8cfa-859200bdc209,2026-04-09,Business,Financing,13,0.28
+6ccf7be5-70bc-4638-a17f-2a4a7d9fdf24,2026-02-24,Business,Economy,21,0.74
+a03cda48-fc45-42ca-9bcb-8dac520b1576,2026-04-16,Couple,Financing,13,0.51
+4211230f-b37e-43a0-a5b1-f7344f73916a,2026-04-10,Business,Financing,24,0.38
+1877d7cf-b969-42a0-9f83-ba3afd276eac,2026-02-22,Large Family,Budget,21,0.4
+dc77c6e6-c3b4-4881-b9a9-f3133d251fb0,2026-03-08,Family,Budget,33,-0.96
+363eb868-9f7b-496a-964f-1b3c5b9fa0b9,2026-05-01,Couple,Right Vehicle,13,0.94
+3200a9d0-c9f9-49be-a9a8-de1b7923ec6e,2026-04-14,Student,Economy,2,-0.43
+1aa146cd-c4dc-4863-bd96-abc1ca04dae4,2026-02-28,Couple,Budget,9,0.26
+2d28f8ae-d15a-4646-8a97-5e2e9770bb5d,2026-05-07,Family,Financing,35,0.07
+cfb952ad-9ebc-4241-99fd-142cb7dc69f3,2026-02-26,Student,Economy,16,-0.99
+14683154-7042-44dd-a53f-2cff3c966ec6,2026-04-29,Family,Right Vehicle,19,-0.21
+34c8e0a1-e95c-445d-b4a2-325817c68a94,2026-04-27,Business,Budget,17,-0.22
+8f5688fa-0455-46de-84b2-234aa1a8440d,2026-03-13,Couple,Financing,19,0.81
+17c5a9b6-caac-48bf-b141-97207eb77c8e,2026-05-07,Low Income,Economy,27,-0.42
+7d56467b-ef36-45a7-a50d-3099469ee7f1,2026-02-21,Business,Budget,13,0.26
+1aa302fc-ab07-4d8e-8e52-b387f0822343,2026-03-06,Large Family,Economy,9,0.32
+f5f6223e-3f49-4581-830d-17ae7ca618b3,2026-05-15,Business,Availability,37,-0.62
+d4c450e6-e35c-4f61-ac6e-f7113bb95369,2026-04-30,Student,Financing,2,0.68
+c74a145b-cd7a-47f6-931b-0135d54967e6,2026-03-27,Business,Economy,7,-0.66
+b16b5fa3-e9ed-4869-bd5c-873b8b929548,2026-04-08,Student,Right Vehicle,34,-0.17
+24908913-8f50-4e8f-9090-8d23fa02e3d1,2026-03-14,Family,Availability,40,-0.11
+e5c192c5-3a9c-4a98-8bad-3655acbdd97b,2026-03-11,Business,Availability,29,0.38
+b03b2338-7968-4208-b990-810c45ff824b,2026-03-22,Couple,Budget,20,0.39
+84eff5cf-a472-4a69-b5c8-7994c45f7275,2026-02-26,Low Income,Budget,39,-0.4
+ff283d93-2f99-4f27-98c5-1d049bba3789,2026-05-08,Large Family,Availability,18,0.73
+e95d0af4-4f78-41d1-9b9a-d14f100eb877,2026-04-28,Couple,Financing,18,0.24
+b5b72209-484c-4a7d-83d0-f026a0806197,2026-04-29,Student,Budget,37,0.02
+adfca12c-bfad-43b6-9283-ce2a6f397cc3,2026-05-11,Business,Financing,30,1.0
+4881cd42-b66e-47f8-99c0-2a025632bf2f,2026-04-23,Student,Right Vehicle,27,0.26
+e340d9a1-f2ff-4ef2-b155-22c2cd0a1ec6,2026-03-04,Family,Economy,33,0.33
+a2a74ccb-fa9a-4bd9-a439-87372dc9ff70,2026-04-20,Student,Financing,7,-0.15
+5ae711ec-4da0-463a-b206-05b3f2b3cdee,2026-02-25,Family,Economy,10,-0.67
+5fd66170-ff2b-4fcb-972c-2e5ea4d4b40c,2026-02-28,Business,Availability,16,0.13
+1e63a764-6e0a-4a6d-9b25-91ae38b5eb79,2026-05-17,Business,Financing,10,0.29
+35725f25-0125-4008-9123-a5e6e25602c2,2026-03-28,Couple,Budget,8,-0.79
+97e72caa-1efe-4a13-ba49-123d62fffcc8,2026-04-26,Large Family,Availability,26,0.2
+e636243a-1278-4285-a585-6b74c96d6445,2026-03-18,Student,Right Vehicle,34,0.62
+d6295476-8760-43f3-8ef7-f49837aea270,2026-05-19,Business,Right Vehicle,13,-0.2
+9bd39a95-d58f-4ecf-b4db-9d695f273a9b,2026-04-03,Large Family,Economy,30,-0.12
+4ceb7061-003f-474a-aece-a8329ce5fb3e,2026-05-20,Student,Budget,30,0.61
+c75b0d63-c529-4d2f-bd04-c02dea87f19e,2026-05-02,Large Family,Economy,21,0.82
+61e4c213-bf6e-49c5-a388-fb83cd476a82,2026-05-22,Large Family,Economy,9,-0.07
+c21c21df-848b-4499-96c6-c5b095a5283b,2026-05-15,Family,Economy,21,0.78
+afdc31c0-1e60-4d7a-9a91-25bef4275f3a,2026-05-19,Couple,Financing,28,-0.37
+a1378dbe-27e8-45b5-887a-44ad740553ee,2026-05-08,Couple,Budget,14,0.34
+9f977f3a-70c5-4712-8e89-fbb69a45bac7,2026-04-26,Couple,Right Vehicle,26,-0.05
+0a4cda96-e088-49bd-a3cc-fd1e814097d8,2026-03-07,Student,Financing,21,0.36
+f70f1ee6-354d-42a1-b187-6ad6b11c6a49,2026-04-08,Family,Right Vehicle,35,-0.17
+8c01e2f3-1ac8-40de-b796-6df5a5431850,2026-04-29,Family,Financing,16,-0.93
+0e1d6d0d-7a3c-41e9-8243-c007db3a7660,2026-04-06,Couple,Budget,6,-0.52
+aea7bb0b-076f-46c4-abbd-fb1c110b669b,2026-05-21,Student,Availability,7,0.91
+0cb1e7ed-3ff8-4a76-8b41-7a96ff80f45e,2026-05-18,Student,Availability,37,-0.93
+99c3091a-78bf-403f-a826-e488f2b98309,2026-05-21,Business,Budget,17,-0.53
+6f576056-4a16-47fd-9989-4d47cb509d5e,2026-04-06,Large Family,Availability,24,-0.33
+4f4cd0a6-69cb-4143-805f-937d32e1b480,2026-03-12,Business,Availability,27,-0.21
+70b4c4c3-2bf7-4ee9-9e2d-5a663d30b81d,2026-04-08,Large Family,Availability,31,0.93
+16c7c4da-8053-4cd5-b388-4c6168829e0a,2026-03-21,Couple,Availability,24,0.45
+3c7feb09-3cf9-4f70-bb63-c4e08bd27079,2026-03-14,Low Income,Right Vehicle,19,-0.25
+6dfafb63-a6c6-4316-a111-ca7bbb08c464,2026-05-03,Business,Financing,25,-0.38
+01e0236d-19e4-4519-b475-ba168548c163,2026-05-04,Family,Economy,22,0.71
+ba7a8bf6-a8bc-45de-8cf8-fdcde10191ee,2026-05-13,Student,Budget,7,1.0
+79bde1a0-914f-4801-80fa-d2896fdeb8b2,2026-04-29,Couple,Right Vehicle,22,-0.05
+90e5f8bb-c874-411a-bbde-25db5467ff3a,2026-03-19,Student,Financing,33,-0.2
+0f509b04-82d1-41ef-aa1e-4c746988d235,2026-03-14,Family,Right Vehicle,7,0.66
+c8a5ec5e-c0cc-46ae-ac90-bf0425b887c0,2026-03-11,Family,Availability,31,-0.9
+37f6fde6-46f7-43cc-8fad-5c5a6b5b03b1,2026-05-09,Student,Budget,33,0.21
+83cfa825-7abf-4abe-892e-a3b3b2115595,2026-04-23,Large Family,Financing,29,-0.81
+424e429f-bd41-4b6a-b4d9-527f58cbe1f2,2026-05-06,Low Income,Right Vehicle,14,-0.39
+86c3dea1-a2d2-4694-a665-475a7d769eef,2026-05-04,Large Family,Economy,17,0.33
+78b14c34-3fea-4047-a88b-562ad937ec19,2026-05-01,Couple,Budget,9,-0.41
+035a4892-4723-4e66-93fe-99014ad328b9,2026-04-17,Student,Financing,31,0.95
+0e2b7310-14b7-48b9-a7d9-b79419aea395,2026-04-16,Student,Availability,40,0.42
+1d1dc194-a840-4a24-b70c-c0ffa9179aa7,2026-03-07,Business,Economy,10,-0.86
+8308d525-e2ca-499b-9a25-ad0883ad8213,2026-04-19,Couple,Economy,26,0.81
+283c00cb-a72b-488a-8c8c-5bcd5395b105,2026-03-28,Family,Financing,11,0.28
+bdfb407f-e341-4cc7-ab9e-41704415bd59,2026-04-11,Large Family,Availability,25,-0.52
+1a260295-db6a-4016-aee7-d37371c84349,2026-03-04,Low Income,Budget,17,0.07
+e2df0222-7cb4-40d7-b49e-b529cf401e4d,2026-05-09,Low Income,Financing,4,0.18
+1669fc60-9990-42b0-807c-b994515250c6,2026-02-23,Business,Financing,27,-0.09
+1da197e5-a69d-49b8-b2c3-eb5dfae3b703,2026-05-17,Low Income,Availability,20,-0.76
+105b1cd4-a9f5-4c6a-8b32-8046271a4526,2026-05-04,Family,Budget,37,-0.57
+e1f0f565-51f9-42d6-bd66-fd4eb4a23c3a,2026-03-23,Couple,Economy,31,0.14
+96a0e76d-d47c-4cc1-881f-bb9fa42a3084,2026-03-10,Family,Economy,27,0.11
+3634f65a-b250-482f-8040-a45f249cda4a,2026-02-21,Family,Budget,6,-0.69
+61bd04a8-a061-4817-9751-74bd7003f7f5,2026-03-05,Student,Right Vehicle,18,-0.65
+7e08c817-c129-4402-8537-9728ab18d7a3,2026-05-18,Low Income,Economy,3,-0.87
+8892eb30-189c-4e04-84b2-b6c737d1d318,2026-04-11,Couple,Financing,30,0.65
+1e804483-5f05-4118-b199-09bd2cb88e74,2026-05-16,Large Family,Financing,38,-0.07
+c0651e06-1f78-46d0-ab1f-7c9dc21cb537,2026-03-30,Student,Budget,17,-0.2
+67798bc7-29a8-4a77-b9cf-f9ed807e5291,2026-05-08,Family,Availability,5,0.46
+feebe35d-8208-42f6-a394-1fad7589e94e,2026-04-24,Business,Financing,31,-0.36
+63fb879b-2f54-4e3c-b171-491007d1bf5d,2026-03-15,Couple,Economy,23,0.08
+bb807b41-e96a-4a27-9bc9-a7445a52350d,2026-03-03,Low Income,Financing,8,0.43
+3a5b02fe-2504-4bc6-a6aa-3a93919b7a5a,2026-05-06,Business,Financing,5,0.14
+d737d804-f93a-4a58-b942-adc7cd35f6c3,2026-05-14,Low Income,Budget,28,-0.33
+6207a1b1-3565-4a49-8b67-5b2ee9a37144,2026-04-25,Business,Budget,34,0.08
+efc1efdb-fdcf-4ce5-8573-87316fdf43ac,2026-03-07,Family,Financing,34,0.04
+8958d064-d287-4008-8bb2-dcefe19d39c6,2026-03-25,Student,Financing,25,-0.93
+30380994-3c93-4ab3-a463-edcaaa00bf86,2026-03-27,Business,Right Vehicle,31,-0.08
+f927f90a-7a65-4499-80c0-15c49d6b9ce0,2026-03-27,Student,Economy,20,0.22
+593d9863-cf1c-4afb-99f1-2f757373234a,2026-02-23,Low Income,Right Vehicle,4,0.15
+9189826e-73de-4a54-8f13-b34933f3e585,2026-04-10,Business,Right Vehicle,10,-0.28
+2a0412d8-770d-435b-a564-fa2b7f3aa5d6,2026-04-23,Student,Budget,34,-0.12
+556d4c4f-4a28-4c6a-b4f0-6d9efa70fbf8,2026-04-13,Family,Economy,34,0.69
+db46285b-46d5-4b8e-979b-492f4187910c,2026-04-11,Student,Right Vehicle,27,-0.84
+bac362fe-220b-40e6-af0b-02316aa30487,2026-04-01,Low Income,Budget,26,0.6
+2c64588d-671d-4b2e-a85b-6da189e9f18e,2026-04-02,Large Family,Financing,40,-0.04
+64cc97d5-61c0-4d9f-bdb7-0819703a33a9,2026-03-21,Business,Right Vehicle,12,-0.56
+55fe59c0-cc1f-4136-85d6-137b094aba2a,2026-03-05,Student,Economy,38,-0.67
+0e0e92ea-7d80-4748-a5bf-27e768459fcb,2026-04-27,Student,Budget,28,-0.12
+d66c319c-edc4-4fa6-919b-678d71e11835,2026-03-20,Student,Budget,27,-0.44
+a188a6f4-bf39-4132-a576-0da42a8a21be,2026-03-22,Couple,Right Vehicle,29,0.27
+5bed9038-34d3-4d3e-b602-7f8f61d1bd54,2026-05-04,Large Family,Availability,37,0.73
+fcb1b205-e9b4-4493-b7ad-b7c70b811943,2026-05-09,Business,Economy,15,0.3
+5ecd99be-1d1f-4587-8280-a6c1b0dc90be,2026-04-29,Large Family,Right Vehicle,16,-0.45
+749aed10-33de-4c70-bf3f-b6ac921a9ca7,2026-03-01,Large Family,Budget,10,-0.11
+10189f8d-376b-497b-beb1-96dc24b3c308,2026-03-12,Large Family,Right Vehicle,13,-0.79
+8dd82835-7fee-4998-b468-6b599cb7fcf2,2026-03-26,Business,Right Vehicle,16,0.1
+5fc62803-584c-4b50-8033-33dc9c4b77d1,2026-03-12,Large Family,Right Vehicle,26,0.48
+6682534b-180c-4e22-8c6c-c5c31f44b0ec,2026-04-10,Business,Availability,38,0.77
+9e141a7c-d028-44b5-a4d6-c9050ce3587f,2026-03-25,Student,Financing,22,0.81
+7d177d6e-d334-4b9a-9bdc-1eedd43ba909,2026-05-06,Large Family,Availability,25,0.11
+7468a726-8275-421d-9d28-c14a39b84fa1,2026-04-29,Couple,Availability,28,-0.55
+215061e6-1125-499e-bf42-e340436efff3,2026-05-06,Large Family,Availability,14,0.91
+30662025-2744-4952-932f-31a637cd612a,2026-02-28,Student,Financing,18,-0.39
+b75129ab-dbbe-40af-8aad-cc55ffd6987e,2026-05-16,Couple,Availability,14,-0.85
+b897489a-c22b-4848-9960-80d20907a3f0,2026-04-30,Student,Financing,28,0.25
+f9d74e47-0052-47b6-94c7-1d655596ce3f,2026-04-10,Business,Budget,38,0.47
+3c07cc55-2e74-41e5-bef9-21bb9f4d3cc2,2026-05-16,Student,Availability,23,0.21
+32297ce1-1b0b-4140-9c90-88cb5142b6d6,2026-05-11,Low Income,Financing,21,-0.17
+ff15526a-3815-4818-924f-03beb8e547fa,2026-03-09,Couple,Availability,31,-0.66
+cd69b090-d8cc-49dc-8cb3-632880e16842,2026-04-24,Couple,Budget,37,-0.19
+96e7b16b-5dce-4352-9432-860af1e5feba,2026-03-28,Student,Financing,39,0.74
+c812acde-e7b4-4acc-9a32-94bbaee46589,2026-02-21,Family,Budget,19,-0.28
+b652ec7a-09c6-4052-8745-8319d141e77f,2026-04-16,Couple,Availability,6,0.2
+d3c0661e-4f76-447e-9ec9-9f9750e7eefc,2026-03-19,Couple,Right Vehicle,26,-0.92
+bddb444a-1425-4e89-9a02-e0e9ed1a8b9d,2026-03-21,Family,Economy,2,0.67
+701c2173-331c-48a6-8977-0ee0dc4b8e89,2026-04-17,Student,Economy,9,0.72
+d78780f5-48b2-4aa7-9232-3539a1988cd7,2026-03-29,Large Family,Availability,21,0.46
+a11655c6-b33f-4b4e-802a-7645da6f3a5c,2026-03-04,Business,Right Vehicle,24,-0.11
+ab17aa9f-d262-4cf5-9285-a1d44c90e787,2026-04-07,Large Family,Availability,11,0.34
+adc56e8c-71c8-4912-81b8-d4d5125ee1a8,2026-04-29,Large Family,Right Vehicle,26,-0.51
+42f47d4a-b63d-42f5-aef5-58c30771f2bb,2026-03-26,Low Income,Budget,8,-0.37
+e8a42e7c-4b92-492c-b36b-5375cd319a7b,2026-05-11,Student,Financing,22,-0.29
+9a8295f1-bd81-4748-bdec-87b4f6e8c41f,2026-05-04,Student,Budget,34,0.4
+3115243b-d24f-442b-a24d-2b5ab55b0b46,2026-04-01,Student,Availability,7,0.62
+b0bdc7f4-9a5d-471c-bdbc-412c90422298,2026-03-07,Student,Economy,37,-0.01
+6f950ca8-196f-4764-a3b3-b6d8dafde01c,2026-04-03,Large Family,Economy,31,-0.77
+113a3a9d-3b73-4dc0-8fc8-1a1c57a21955,2026-04-27,Large Family,Availability,16,0.59
+e66de4d3-b567-4492-a50b-6a072739fbd9,2026-02-28,Couple,Budget,14,-0.77
+9ecf5d4e-d411-4b74-a6c7-1a6f44acb053,2026-04-05,Student,Economy,32,0.48
+9eeac99d-71ec-4524-8fed-42224fd69b70,2026-05-18,Couple,Availability,27,-0.56
+833842d1-722d-40bc-b9d4-ecc3c4f9df48,2026-03-29,Student,Economy,10,-0.91
+a9f1c5e5-73e2-4a69-a243-7ab4e5a687f8,2026-04-23,Couple,Availability,32,-0.38
+f94b44be-3633-4589-bb52-d749b2e82e0d,2026-05-22,Family,Right Vehicle,28,-0.94
+d6714075-fc2e-45bf-bdd7-666e028ad698,2026-03-01,Student,Right Vehicle,20,0.04
+1161fe2e-2927-4f5d-9683-30e661311be3,2026-05-22,Couple,Availability,34,-0.35
+0b3bc304-2805-42e5-9176-fb7510c06883,2026-05-05,Low Income,Economy,9,0.81
+ec650d3a-facf-435f-9a40-f9826c3e9668,2026-05-20,Low Income,Budget,18,-0.57
+04b44930-151b-4c3d-83b2-428790fe225f,2026-02-21,Large Family,Availability,36,-0.4
+e1e16a86-9c89-4349-8f08-b802359ce3f0,2026-03-18,Large Family,Budget,34,0.32
+84c4f85a-3c28-4a97-bb0c-ec37eb85f951,2026-03-21,Low Income,Right Vehicle,15,0.64
+768b980a-dbb4-4139-8f29-7c79e71a18ba,2026-03-20,Large Family,Availability,13,0.76
+6db7d8d9-537e-48b8-bfad-c19a5c798108,2026-03-09,Business,Budget,26,-0.75
+b6a87fdb-a8bc-4285-8056-8eff4a616654,2026-03-30,Family,Right Vehicle,32,0.29
+b2a61953-8672-4753-992f-80455b8f518e,2026-03-03,Couple,Availability,10,0.68
+1adeda12-65f1-43c4-a83e-f7034312fa6d,2026-03-04,Family,Financing,26,0.36
+cb492006-aacf-474f-80c5-449debfaf14f,2026-04-16,Low Income,Budget,16,-0.46
+e88cc0d7-ad59-458b-95d5-514cc6786807,2026-03-06,Large Family,Availability,37,0.78
+5c787fca-7c15-44ea-aa16-91d0dcaf2f6c,2026-03-14,Couple,Availability,20,0.46
+1c04970b-c69c-4a18-91e1-da4c477d83ea,2026-03-30,Family,Financing,33,0.61
+70451de8-f793-46a3-9ace-91684551497d,2026-03-16,Couple,Availability,39,0.59
+2bd84f1a-06f5-4b7c-98b0-d734bc00d2dc,2026-03-23,Couple,Availability,10,0.81
+95464804-7637-4386-8365-c69b898a859d,2026-02-22,Student,Availability,12,0.68
+c4dd7898-87c9-4e39-8254-fed0e68fce4d,2026-05-02,Family,Financing,6,0.43
+9846440a-1def-4885-b8d6-2e36a37cce20,2026-04-29,Large Family,Budget,24,0.98
+64a68d98-5bd3-427b-af9b-6773124dd9ea,2026-04-17,Student,Economy,30,0.5
+36f90d1e-458d-4116-a681-513ef52a50e1,2026-03-07,Large Family,Budget,35,0.69
+5dc31177-3d97-4727-badb-ee2ce4364421,2026-05-11,Couple,Economy,33,-0.7
+02289931-9cab-44c1-a4aa-bcd72358cdae,2026-05-05,Large Family,Economy,8,0.76
+afb718e8-516f-4db1-b924-107435d54c13,2026-04-20,Family,Availability,24,0.31
+72d4907d-5d31-48e7-9044-fc0e057e3daf,2026-04-20,Business,Availability,31,-0.61
+d83a3f09-0a0a-4471-859b-d985f4902e50,2026-04-21,Low Income,Budget,29,0.98
+67cfe28f-0e69-493f-af83-b8cedad86367,2026-05-16,Large Family,Right Vehicle,39,0.41
+4377e4bf-2afb-49ad-b15f-d42b23a46b54,2026-05-01,Student,Budget,7,-0.54
+f38a69cd-c952-4125-8588-ac63c8c4f84e,2026-04-18,Business,Availability,6,-0.34
+4970eb1a-6dd8-430d-92c8-571434aa56c1,2026-04-16,Couple,Economy,27,0.03
+6e5a4a7d-77c2-4a7f-8160-ce4ad5aa9426,2026-05-07,Low Income,Economy,3,-0.23
+1e6ca8d4-6323-4602-87f0-4fc5ed998162,2026-05-13,Business,Budget,24,-0.4
+beb67586-b186-4cbd-a888-e28b9d352d33,2026-05-09,Low Income,Financing,19,0.87
+bceeb010-e2fa-4528-bf3c-9e2a2aae6bae,2026-03-14,Student,Availability,22,0.56
+bb315c80-02b2-4f2c-b888-eb59ce49d775,2026-04-02,Student,Right Vehicle,6,-0.82
+9752a310-8569-4137-be20-7f4ee363db06,2026-04-24,Large Family,Availability,14,0.98
+5fa69dff-2882-4890-84e3-01eb5cfbedcd,2026-03-21,Large Family,Economy,24,-0.9
+3ed0442d-846f-4b69-b91f-47ff5f0d31fa,2026-04-29,Student,Economy,37,-0.41
+d41ef628-8b3c-4c92-8818-3a2e015840cf,2026-04-08,Low Income,Availability,37,-0.03
+027a4be9-eb15-4b50-81c1-0c0cbc207b4b,2026-03-05,Family,Right Vehicle,6,0.7
+1d20db35-681e-4a0e-b1f9-b08d22ebb6e1,2026-03-25,Business,Financing,37,-0.73
+21949f8e-f0e3-4481-9175-ceed1ddb245a,2026-03-21,Student,Economy,4,0.33
+00b17ca6-c6e0-41d9-967a-b6f1a77a9b53,2026-05-13,Large Family,Right Vehicle,9,-0.68
+81944be3-f548-4b01-93d1-7f7cf3c3e938,2026-05-18,Family,Availability,37,0.94
+6db8fa24-84ca-4bf3-adca-19a0607f9219,2026-05-06,Low Income,Financing,39,0.81
+bac958af-711f-4c62-b956-0a894f890dd4,2026-03-05,Business,Economy,11,-0.22
+10300a7e-ad1e-4d7a-97c2-9f1210b1bc3e,2026-03-25,Couple,Right Vehicle,21,-0.35
+7661136d-1b6f-49f1-84a0-fdefe7f8023e,2026-04-07,Family,Right Vehicle,22,-0.97
+2145699d-8724-44c0-836b-f2146d51942d,2026-04-07,Family,Right Vehicle,31,0.5
+782c6ea7-2800-4394-bc62-432c74b3127a,2026-02-24,Couple,Availability,15,-0.44
+088caef4-a4a7-4346-8bc0-549990bd8a66,2026-05-14,Student,Right Vehicle,5,-0.36
+463d9cc6-4d1c-4bd2-a10c-df2027c2c7ed,2026-04-22,Student,Financing,38,0.6
+aea21a00-eb65-4918-8b6b-0ae406358ed9,2026-03-18,Low Income,Economy,17,-0.05
+3f69b99c-d8a2-4892-9fe6-596f7e749331,2026-04-17,Large Family,Economy,36,-0.28
+d17c65ba-1c12-4d90-96b7-f227b9c088e0,2026-04-03,Couple,Availability,16,-0.52
+921e312a-a672-426c-a85a-7e6dbc7c5a16,2026-02-24,Large Family,Financing,37,0.05
+713904ec-a49a-4d7f-81ab-3b4fad9e839e,2026-04-18,Family,Economy,17,-0.5
+46f940b6-b6b2-4ded-91e6-5932da178187,2026-05-04,Low Income,Economy,14,0.62
+66bbcce2-f782-474a-9ad7-2f986ca91e7a,2026-04-04,Student,Right Vehicle,34,0.43
+086edabd-d292-4a52-be75-f6c2b56bf0e1,2026-03-03,Business,Financing,3,0.6
+6ebb6442-8a87-4f81-8b0b-fd97187922b0,2026-05-03,Large Family,Budget,21,0.28
+d1c35109-6761-49d3-a507-2164f363c6f0,2026-05-07,Low Income,Financing,19,0.74
+cfe24be8-995a-41be-8f54-057825895fa2,2026-05-04,Business,Budget,12,0.47
+ed3154f9-3d9e-4252-9295-9f00bebceff0,2026-05-01,Couple,Right Vehicle,24,0.35
+f79710cd-6050-4c07-8631-d3c56ccfbaa5,2026-05-05,Low Income,Budget,9,-0.66
+3ceafe59-7ea6-4830-977a-58d763ec8e3f,2026-05-08,Student,Financing,6,-0.99
+40833dbb-25d3-4704-bbe2-4518d6f03342,2026-05-11,Business,Budget,3,-0.7
+3a7ae388-5be1-4baa-8f88-13c628dde31a,2026-04-26,Low Income,Economy,10,0.13
+505aa19a-159e-4960-891d-24453323a2a3,2026-04-18,Couple,Budget,11,0.81
+3c8c27b8-b0a8-4aea-9e9a-90c8984a7cb4,2026-05-09,Large Family,Financing,18,0.61
+bab286aa-9c56-411b-bbba-7de8249b1a6c,2026-03-04,Business,Availability,36,-0.54
+99a8b426-229d-410e-bcb0-52776255b68b,2026-03-14,Low Income,Availability,19,-0.38
+303ca676-c5cc-472f-bc3a-bc46c4369da7,2026-03-19,Student,Financing,15,-0.64
+2269d8ce-03f5-4e95-9744-35ae510ef966,2026-04-19,Large Family,Financing,6,-0.81
+c5d1fc4f-35fe-435f-b6ea-a66bf2d9f3d4,2026-04-07,Couple,Availability,19,-0.52
+868336ec-6a8a-49ce-9b0b-3f4f24fd27ac,2026-05-02,Low Income,Budget,32,-0.76
+c04a6da1-858c-435d-a386-ebd117227e80,2026-04-09,Family,Availability,32,0.04
+e2de7992-63ea-4d87-a3d4-928a20c2dd9b,2026-03-17,Student,Financing,3,-0.63
+8ffc328b-3476-47f6-b49a-c921f5a3a632,2026-04-26,Student,Economy,7,-0.54
+f429681a-c42a-4649-9137-0f0b3b3e8629,2026-05-21,Student,Budget,15,-0.13
+4656efcd-d8ba-4a14-8a45-6ce01d54abec,2026-04-11,Family,Financing,9,-0.06
+18e9aaff-af7a-4e0b-b2bc-21abcc749836,2026-03-02,Family,Right Vehicle,26,0.02
+60a7a64a-0813-4849-a5ff-31c9bc61ac4e,2026-05-12,Family,Right Vehicle,3,0.8
+a064aad3-ee0b-4bbe-a888-d057d2ccc30e,2026-03-14,Low Income,Budget,8,0.58
+9f570bed-ef92-47f1-a7a2-04073f39ab91,2026-02-24,Couple,Financing,32,0.77
+f742e7f9-40de-4b7b-9fae-cd95cea8a52d,2026-02-21,Couple,Economy,38,0.99
+fe478124-a7e8-4563-bd19-55b04e347e5d,2026-05-22,Couple,Financing,9,-0.7
+ce6c14f1-d556-41bd-ae8e-9d04a6905d14,2026-03-25,Low Income,Right Vehicle,11,-0.6
+d1514a57-e2a7-496e-899b-9d7526d9aeac,2026-02-26,Couple,Right Vehicle,16,-0.24
+dd525b06-a978-4c64-81fa-8713c0c0378d,2026-02-24,Family,Financing,38,-0.41
+9cd3dca2-b985-4e19-87d2-f474bad0b439,2026-03-03,Couple,Right Vehicle,37,0.92
+72769243-e537-4a54-95c2-182a08aedb61,2026-03-06,Couple,Financing,39,0.88
+94ccc5bb-ca4a-46d2-af28-23f6dd1fd146,2026-05-03,Family,Financing,4,0.19
+64667c2b-b9c2-448c-ac19-02581a990493,2026-03-08,Low Income,Budget,4,-0.78
+9dc43e80-0f89-4a04-bb5b-09ccf33cbbd1,2026-04-13,Low Income,Economy,35,0.92
+f05d8475-a5ed-4a5a-8ddb-b3e48b9ff801,2026-05-11,Student,Economy,10,-0.72
+2b26e59b-a8de-4601-b549-34ae9c49032a,2026-05-08,Couple,Right Vehicle,29,0.37
+e9601456-3ee4-4c33-a5d3-95c217b5f119,2026-04-20,Couple,Economy,11,0.93
+148ce114-62d9-4842-a158-63c548dd53df,2026-04-15,Low Income,Availability,40,-0.18
+ac4e313d-ceb8-487d-9f5b-6c389dd6be55,2026-04-04,Couple,Financing,10,0.38
+733043d3-80ab-4b1e-9407-e820350fedd7,2026-04-19,Business,Right Vehicle,10,0.16
+021ac46e-609b-412b-824c-7c20166f9a2a,2026-03-26,Family,Availability,30,-0.57
+92e75e6f-8047-461b-b787-406fc679fdcc,2026-02-28,Low Income,Availability,37,-0.46
+c542152d-3df3-4894-a3f3-bcf6d4ad9c0a,2026-03-25,Student,Right Vehicle,29,0.75
+b82a7ea8-d730-4fdc-9162-df9f8cc31a90,2026-03-26,Business,Right Vehicle,8,-0.16
+56a6e632-7b66-425f-936f-1e82e4f17916,2026-04-02,Family,Financing,18,-0.76
+bc71b8b4-027e-44fa-b87d-dbbe50990288,2026-02-27,Large Family,Right Vehicle,31,0.72
+e789d473-810b-45a5-b291-559a58d4b44f,2026-04-23,Business,Economy,22,-0.17
+03379d99-ef55-4bdc-93e6-0b746b777cc5,2026-05-04,Student,Right Vehicle,17,-0.97
+26b943e0-e844-4c02-9ac6-eaff825418f7,2026-03-01,Business,Availability,2,0.65
+b09d4cb0-a5c4-46c1-8faf-99adbb338342,2026-03-23,Business,Economy,36,0.43
+4df6e374-a34f-4068-aa5e-06c21a72905e,2026-03-01,Family,Economy,2,0.63
+37a807da-f132-4036-a269-20a5680d1851,2026-05-21,Student,Financing,18,-0.19
+97ff3d3a-73c6-48ce-9fbd-cf00a325e187,2026-03-01,Student,Availability,33,0.72
+d8b4f12a-84d0-4abc-90a0-298ed5210bd0,2026-04-19,Low Income,Budget,31,0.28
+fe16400a-d70f-4bd0-8c5b-63c889bc5c75,2026-03-15,Student,Right Vehicle,15,0.19
+1c218dcf-855a-46da-8f93-10b26966f451,2026-05-15,Family,Financing,21,-0.76
+acaab1d8-7b23-4105-8d99-72efd4b57cc9,2026-03-09,Couple,Economy,40,0.6
+336f61f7-2746-4ad8-9dc8-024c2ec34ab7,2026-04-14,Low Income,Financing,36,0.4
+fd34d255-fae7-4ab1-b2c5-189aeed9bb2f,2026-04-04,Low Income,Economy,17,-0.46
+79f08e18-5149-4bd5-9200-bfaf8c345a1a,2026-05-07,Low Income,Right Vehicle,14,0.61
+d64b2382-6401-4a92-9027-95033dc95438,2026-03-21,Low Income,Budget,27,0.78
+b3a8f417-7934-460f-9212-1b6583881f5a,2026-03-16,Business,Economy,8,0.61
+b7bd2078-990b-403c-b673-0654bb7d5cf9,2026-03-18,Large Family,Right Vehicle,29,0.81
+c8956363-0c37-4210-a29d-6dd0e32bb14e,2026-04-18,Low Income,Financing,5,0.77
+c70db22a-3af7-41ab-abb6-8eb57a52e2b9,2026-04-09,Family,Right Vehicle,25,0.85
+addbc44a-5ed3-44ad-a1f5-77853dc62b14,2026-04-23,Business,Budget,37,-0.28
+1052a797-d5ca-40d5-8976-59ae0f2a206d,2026-04-27,Student,Financing,17,-0.29
+e0d5aafb-8dfb-4d28-8766-34a4813113af,2026-03-31,Low Income,Availability,13,0.65
+7c33888f-8172-463f-83ca-d89ff2ae4bb6,2026-03-06,Low Income,Availability,37,0.95
+036459c5-7984-49d3-a5b3-d32efd5d484a,2026-03-01,Low Income,Availability,35,-0.1
+64da743c-c01c-4a4d-99aa-1809d393351c,2026-05-21,Couple,Availability,17,-0.98
+17145a9b-d49c-4766-b137-21656f10d19e,2026-04-25,Family,Budget,2,-0.67
+c46e1f9a-7493-44ad-9138-e556fe1561f2,2026-04-26,Low Income,Financing,6,-0.51
+2fcf5290-80e5-41fe-8fd9-d5d09cebbebe,2026-05-01,Student,Budget,34,-0.43
+cd74a80e-b02b-43a1-900e-7780f468928f,2026-03-29,Business,Budget,33,-0.46
+20e7eda6-94d9-435a-a172-dbe872b4536a,2026-02-25,Family,Right Vehicle,23,-0.96
+108904db-402c-4507-86f4-900e4c932ee8,2026-02-21,Student,Economy,31,-0.04
+bd40b377-d1f8-425b-ae81-39494563114d,2026-03-19,Large Family,Budget,38,-0.1
+5b8711a9-a31a-44d6-8418-e3fb6b39d54f,2026-03-22,Low Income,Financing,25,-0.63
+a8d446da-8b19-4c51-8653-ac0d617f03d1,2026-04-16,Low Income,Financing,14,-0.63
+0fa70e7f-87d2-4c41-b170-14e9dba8825c,2026-03-24,Large Family,Economy,35,-0.59
+7fbbc500-6e18-4a67-a4a4-800d69dea664,2026-03-30,Family,Financing,21,0.2
+014d94f9-1c5b-44f2-9a61-9a51e9990252,2026-03-09,Business,Economy,33,0.74
+5e1d73d8-9491-486a-8b6b-0649323b0d6e,2026-03-05,Family,Financing,20,0.11
+9f38d366-e992-4aa0-a7fa-8ea0e253babf,2026-03-21,Family,Availability,8,0.75
+feb51751-e7df-4fc7-a71a-d07abba06f90,2026-03-12,Large Family,Availability,40,-0.1
+f25d59d8-8be5-44ff-a4d6-e08a9752a63e,2026-05-22,Family,Budget,24,0.86
+c69b9338-17aa-4282-8b2d-3f1182506e68,2026-03-31,Large Family,Availability,6,0.57
+48af3241-a0a9-44db-a1eb-6218c3d842f1,2026-04-13,Business,Financing,39,-0.13
+0104856b-90e5-4353-91a3-2c1f568a304f,2026-03-28,Low Income,Economy,15,0.62
+5ce77de1-48e8-439b-9c4a-fbdaaa83a18f,2026-05-18,Couple,Availability,38,0.65
+b868fd72-90a0-418c-9f17-53b1152f21f2,2026-03-08,Couple,Right Vehicle,22,0.88
+5a36780f-5865-408f-9754-3cb484da161c,2026-05-21,Low Income,Budget,23,0.93
+0a4595a1-9676-4b55-a040-26acc127c1e8,2026-04-11,Large Family,Economy,19,-0.74
+34dbcf57-c1fd-43c8-9c0f-fd21e369c906,2026-03-31,Student,Availability,12,0.59
+aae63adc-710f-4ea8-be06-a8094b18e66e,2026-04-21,Large Family,Availability,10,0.28
+53e5c5d9-877e-4a0a-8e0a-8c1abe82ab0c,2026-04-30,Student,Right Vehicle,21,-0.1
+095107f7-2d4f-4629-bc00-15dd1840db7f,2026-04-27,Family,Budget,28,0.9
+f1fe263d-9d9a-4b23-805d-fee055442c90,2026-04-14,Large Family,Financing,26,-0.2
+8900d7f6-c7ce-4152-8e7a-a1bccc2bcd6c,2026-04-17,Student,Economy,7,0.47
+a9d26e34-a696-4866-8914-707429276a17,2026-03-25,Business,Availability,11,-0.39
+8f69a874-f722-44ad-b728-c097eb18515b,2026-05-20,Student,Budget,11,0.89
+77461bde-0d7c-4e70-b823-6bbefd55e01a,2026-03-31,Family,Financing,15,-0.81
+5d608c7e-0733-417b-b555-8d8553cd138c,2026-03-24,Business,Right Vehicle,30,0.37
+b4427e4b-2c9b-46b1-b465-457c675098ac,2026-04-06,Business,Financing,15,0.58
+3c61475f-6eb8-4254-b36c-e2b50c26a658,2026-03-05,Low Income,Availability,16,-0.26
+1efeb745-6ee4-4b53-bc3e-e7ec7ec9e7cc,2026-04-09,Low Income,Economy,10,-0.32
+c28e48fc-c6d3-434b-a222-14f63585d87a,2026-04-20,Large Family,Financing,4,-0.56
+c088fc40-839c-4ef8-8def-071c09793a93,2026-04-08,Large Family,Right Vehicle,25,-0.05
+34aa4bbb-c45f-48d6-8042-3bc5f27ba973,2026-03-17,Business,Economy,6,-0.7
+aa5318b7-49d1-4f80-b6ad-9725cc8ae30a,2026-03-19,Student,Availability,34,0.92
+3fdaab7a-0800-46c2-99d3-dfa90dfc4511,2026-05-11,Student,Right Vehicle,27,-0.72
+d22e3c66-d67d-4655-ac15-1da392273db4,2026-04-17,Large Family,Economy,2,0.34
+55555991-b5b8-4e41-a866-d611f4ca3e2e,2026-05-08,Large Family,Budget,19,-0.53
+b18f12f7-5564-4af5-b936-e0fe6f0ba63c,2026-05-01,Family,Right Vehicle,9,-0.54
+d4703b9c-c117-4dd4-a3ac-64c9cae817d3,2026-04-03,Student,Economy,15,0.06
+a9dac19d-6942-44fa-9114-83bbabca01b9,2026-04-01,Large Family,Availability,28,-0.89
+8f0ede68-d162-4e0b-a6a2-5fa46eaf5f8c,2026-04-14,Low Income,Budget,14,-0.65
+4a6c4118-e0d5-4405-a0d6-20688f774ecc,2026-03-04,Large Family,Right Vehicle,10,-0.37
+d22d951d-c426-42c3-a984-2acf946d7063,2026-04-04,Large Family,Right Vehicle,33,-0.28
+2ce09602-716f-4479-b52a-dcf8c29ef545,2026-04-20,Low Income,Financing,20,-0.21
+eff43856-b047-4bbf-af79-1a9d83ca144e,2026-04-04,Large Family,Right Vehicle,30,-0.39
+6ae994e9-7acd-448a-801a-a00c150efac2,2026-04-08,Business,Right Vehicle,8,0.83
+da9b1c7f-ba80-44ff-90a1-2045ddb00b53,2026-05-01,Student,Right Vehicle,8,0.04
+4f3a79e4-009b-46c9-bcf4-86904d8bbfd3,2026-03-05,Couple,Availability,2,0.77
+f1af2e03-1257-447d-929e-99fd98c84ad1,2026-03-18,Family,Budget,16,-0.37
+c1c54113-0550-4fac-abf8-226bcc2a6694,2026-03-04,Large Family,Economy,10,0.51
+4d80d657-1060-4cfa-8de4-72bd21d45966,2026-02-25,Student,Economy,4,-0.98
+482d128f-32a1-4dc5-847b-4f1f0574202b,2026-03-18,Family,Budget,31,0.16
+d6da189c-4727-4009-bab8-500867117abc,2026-05-15,Large Family,Economy,10,0.07
+032cd0a0-1f04-4f59-addf-b3ed480de8ce,2026-04-13,Business,Financing,28,-0.28
+bcbdb729-6308-4865-9a9b-e30cc0eacb4e,2026-05-17,Low Income,Availability,38,-0.69
+7bb6dfa0-eef6-4805-b419-18180aad6764,2026-04-10,Business,Right Vehicle,21,0.73
+25e3412f-2ca0-4dba-9998-6c061da01a64,2026-04-22,Large Family,Economy,32,0.4
+bb9b0810-ebb5-4459-bc2c-61c67ed154c0,2026-05-13,Large Family,Availability,31,0.31
+2d24ac87-4a3b-4332-a697-67bfb68f751c,2026-03-24,Couple,Economy,36,-0.77
+750208dc-476c-49ef-9f7c-3f0b26eed51b,2026-05-18,Business,Financing,2,-0.43
+ad730eb4-e5b8-4171-b732-04faa20cc913,2026-04-19,Large Family,Financing,32,-0.45
+6f047567-42ad-45b4-ae34-6ca7fe5200b1,2026-04-16,Family,Budget,4,-0.38
+51560682-d61d-4ea8-bce6-cf7d16ff6587,2026-03-27,Family,Availability,11,-0.29
+8f32974f-a0d0-44d9-8b7c-3b45ae5bd1c1,2026-03-17,Low Income,Availability,32,-0.57
+4976e472-02a3-43a6-8e14-4277b37cae35,2026-03-30,Couple,Financing,29,-0.56
+7e5b5ce4-fafc-495e-9a24-83bb17d0eb1e,2026-03-09,Large Family,Financing,33,-0.0
+884aa2bf-b435-4d1b-b3e3-322dc72b3c25,2026-03-13,Couple,Availability,6,-0.88
+0e47eb95-3aa3-4c11-a4ac-cc8b4b5714c5,2026-04-30,Low Income,Financing,30,-0.09
+8d8e8e26-4ffe-4d57-bf10-80b832a0657f,2026-05-20,Low Income,Financing,22,-0.41
+429db3b5-4939-49cc-8d38-bc1e39f8d9fd,2026-05-11,Business,Financing,40,0.85
+5de34512-3b8f-4202-912b-ceeb41300b28,2026-04-25,Family,Right Vehicle,19,-0.14
+7f1ef3bc-b811-4025-b069-44381c54d1a1,2026-05-20,Large Family,Economy,18,-0.93
+f7fa7d34-f6fb-4c59-82ed-bd12a0138f97,2026-05-19,Family,Budget,38,0.49
+d30fc072-511f-4fc1-bd05-d5c1bf816872,2026-04-23,Low Income,Availability,2,-0.76
+e06d7e3d-c045-49fd-a42a-a3c24174549b,2026-04-01,Student,Budget,4,0.94
+58d4efcf-4f13-4f49-98f1-c09e0f031707,2026-02-21,Business,Availability,20,-0.48
+f73a325a-7e6f-45a1-93c3-b377b2b989e9,2026-05-21,Low Income,Availability,20,-0.71
+4a61b89b-3009-4ac7-bae9-425c3817f0b1,2026-03-23,Low Income,Right Vehicle,16,0.2
+2679ddb6-2ba5-42bd-9a25-027389cbbb70,2026-05-18,Student,Right Vehicle,32,0.61
+1ca3561c-3bef-445c-99b4-d790f240278f,2026-04-19,Student,Financing,38,0.36
+9a49d423-83ba-4d4d-85b4-9db2458369a6,2026-03-13,Couple,Right Vehicle,9,0.41
+4b2625a9-6662-4899-be4e-0d3359352a77,2026-03-13,Couple,Financing,35,-0.74
+aa4c8fd1-bffe-48cb-b857-3072ab62e381,2026-04-26,Large Family,Availability,19,-0.42
+3dc17516-e028-4e41-b360-d1a06d0a5bfb,2026-05-11,Couple,Availability,14,0.98
+dd5b5bb8-87bd-4bf5-a535-8c5f32b7a8a7,2026-03-29,Family,Right Vehicle,21,0.58
+7ede09a8-6f5c-413f-abd9-da544ea088d1,2026-03-22,Business,Economy,38,0.96
+7a63ef8f-7803-4548-99cd-aa336a76d1c1,2026-04-29,Low Income,Economy,9,-0.61
+b0750c9c-b214-4a6c-acd6-bcdc3962d034,2026-05-12,Student,Right Vehicle,16,-0.63
+dc2f7474-e59b-4b7c-87aa-988fd986108b,2026-03-11,Large Family,Availability,34,0.36
+85ae3f24-2f7a-4de7-bdf6-8c7285efff1d,2026-04-18,Family,Right Vehicle,33,-0.34
+4f317481-5cf0-4b07-95ea-7bf233cd9cba,2026-03-19,Family,Availability,10,0.33
+fde9ebda-3cf8-4885-9e54-eb01810a8405,2026-03-26,Family,Right Vehicle,10,-0.59
+cdb7f7c8-47db-4ecd-b427-7dd2f665eb53,2026-04-06,Family,Availability,37,0.21
+214725e4-6771-4427-84e3-6b7a0ae88987,2026-05-16,Couple,Right Vehicle,9,0.15
+44c98c4e-8b02-449f-8ca0-0071cd3e38f3,2026-05-19,Family,Financing,37,-0.38
+11d5adfb-dc6e-4114-8fbe-376a59762dd2,2026-05-17,Low Income,Financing,35,0.46
+261e4c53-0544-421f-9a8b-018fdf5b60a5,2026-04-28,Student,Availability,38,-0.11
+a0a2efda-4e3a-4652-9f83-48c92daad3b1,2026-02-28,Couple,Right Vehicle,29,0.98
+0431c835-928d-4601-9a89-3ac4efed3efa,2026-05-14,Student,Budget,23,-0.98
+a6f3a7fd-9352-4a3c-b4bb-49dd2c603399,2026-03-28,Family,Right Vehicle,16,-0.25
+b83ad991-1afa-476a-863b-35c5952509b9,2026-02-21,Family,Budget,27,0.08
+af834cc7-a937-4a02-be08-1a481a7afd36,2026-04-06,Couple,Availability,10,0.11
+a4c02b22-887e-4b29-ab58-120d08aa3398,2026-05-19,Business,Availability,29,0.62
+3d75a243-f226-482f-b839-e6f70d354786,2026-05-20,Business,Right Vehicle,36,-0.67
+7d035c58-8b48-42ff-8495-999ca7db3781,2026-03-15,Business,Budget,19,0.67
+5789e8c2-45af-46de-a8d7-79b15bc4a766,2026-05-09,Business,Budget,40,0.33
+f18e810c-ae50-4497-9d27-9f8d7e468ff5,2026-03-29,Couple,Availability,3,0.74
+2f5ce64b-5af4-4a91-b721-07dded6bf938,2026-03-22,Business,Economy,39,0.12
+86137483-5887-46fa-a5d3-8b682f02207c,2026-03-08,Large Family,Budget,9,-0.6
+cc379ef8-f4c9-4817-9302-eff1ddf870a2,2026-03-25,Large Family,Right Vehicle,36,0.91
+47998301-14b9-48bc-a078-4b3d136919ff,2026-04-10,Business,Financing,22,0.45
+6fe7106e-1820-445e-bd17-aefd17e647c8,2026-03-23,Student,Financing,11,-0.79
+46d07e6a-e1ac-4b37-a5b9-fbdd78e41f41,2026-03-21,Business,Financing,22,0.23
+7d0aff6b-4734-40b4-9cfc-69c23a1a304f,2026-05-14,Family,Economy,12,-0.18
+47099563-92a3-4fcf-af38-3199dca83146,2026-03-24,Large Family,Budget,39,0.08
+9566fe31-6583-4d8b-821e-1a73b58bbe8f,2026-03-07,Business,Economy,24,0.69
+f72660d3-5282-4280-8339-81bf968cb514,2026-04-06,Family,Economy,14,-0.68
+bfe53f5f-55ef-4c86-bca3-2989d18cb867,2026-04-10,Family,Availability,35,-0.2
+2bcd6af9-a04f-4c50-9293-6e288cf0cb35,2026-02-27,Large Family,Availability,20,-0.38
+0c8503cf-3325-451a-b958-c8872c4e6eff,2026-03-22,Large Family,Budget,27,0.07
+7c159fd1-c995-4717-8bfe-e41afddde494,2026-03-08,Student,Right Vehicle,35,-0.75
+2a4458c9-3fdd-4874-bbd6-a8bd1aa085a6,2026-03-01,Student,Availability,2,0.72
+b3ea4706-6a2d-4724-a390-88f01bb7b9e1,2026-04-02,Student,Budget,30,-0.81
+3de0e8a2-597f-4f3e-b1e2-e14415674398,2026-03-23,Large Family,Economy,36,0.99
+801e9b64-11cf-44f8-b7bc-1a015c7abab8,2026-04-13,Student,Financing,4,0.95
+173f0286-107f-423f-ac87-9345836e101f,2026-05-18,Low Income,Right Vehicle,24,0.87
+009cd086-e997-4572-b19a-2ca5732f06a8,2026-03-24,Couple,Financing,40,-0.23
+8552cfc0-c4f5-4eed-a6a7-c32ff76a89fd,2026-05-13,Low Income,Budget,23,-0.12
+6fe5dd5d-c1fc-49b5-b17a-6e392b226d02,2026-04-18,Couple,Right Vehicle,26,-0.83
+f5f5fc43-ed6f-4993-ab5c-5078e4641adf,2026-04-28,Student,Budget,7,0.2
+cf70a77b-2839-4d9b-bca1-d8c6afee4365,2026-04-05,Couple,Right Vehicle,21,-0.97
+3aa343b5-1be2-41c0-bb63-9f302d09b5a5,2026-02-26,Large Family,Right Vehicle,16,0.8
+48fc4cc1-11bb-472e-b141-b392b42b2995,2026-03-07,Couple,Budget,39,-0.35
+7a634ebb-8e89-499f-839a-3fc4604dc77d,2026-03-26,Low Income,Right Vehicle,2,-0.87
+0debf15f-6c91-4471-8047-9193f39f9d37,2026-03-08,Couple,Financing,16,0.13
+1b9ba6be-8290-4b25-91a9-6f3d25fb5e3d,2026-03-02,Business,Economy,9,0.18
+b6dd82ff-70d4-4a06-9fe8-55538f252603,2026-05-10,Student,Budget,30,0.24
+d058183a-78d7-4ec1-bf2b-b3eb1644f7ff,2026-05-11,Business,Economy,3,0.36
+d86093a7-f565-4900-892c-3fe0d7c5eae5,2026-04-05,Family,Budget,25,-0.5
+bcce0c1d-0f9e-4c8f-8d30-80b56ae5c6fe,2026-04-20,Business,Budget,2,-0.3
+8c040783-b272-4210-9a39-bfa741205f1f,2026-04-14,Large Family,Availability,17,-0.95
+8d255d09-ce24-411a-8123-137a45575cc1,2026-03-12,Large Family,Right Vehicle,15,0.67
+866ff884-bad9-4835-b7ef-57b62f53f972,2026-04-12,Family,Availability,9,0.02
+cd2e1819-1a87-42aa-9b34-625dc216e730,2026-04-03,Business,Budget,31,0.5
+75174125-d15e-49a1-a865-3bd3e8891373,2026-04-08,Student,Financing,18,0.61
+9e3c634d-2286-4e3e-bfd0-db837994bf4b,2026-03-15,Couple,Availability,28,-0.65
+5ea16663-824b-4ec3-a52a-7900b6e09c3f,2026-04-17,Family,Budget,23,0.7
+5b4af7d4-8b15-4058-a7be-2685ce48ab71,2026-02-25,Couple,Right Vehicle,21,-0.57
+9e20f5e2-9b4c-4d9c-afd7-6d22cb6d0aa9,2026-03-07,Business,Availability,24,0.38
+1d77d897-eda4-4e16-ab90-fe5d8db10ff1,2026-05-03,Family,Financing,40,-0.18
+d8aaf2ee-094b-4459-aed1-6ac905206bd9,2026-04-14,Couple,Financing,2,-0.12
+d26cb363-92b8-4c46-a97b-d1537bd0be25,2026-04-23,Couple,Availability,7,-0.82
+5833e193-e87b-4164-8145-58a282a8efff,2026-05-15,Business,Right Vehicle,23,-0.44
+dedaebd9-3bfd-4fbf-b1a4-9efcaee6a2e4,2026-03-04,Large Family,Availability,11,-0.47
+3def3698-2381-42c7-b582-94ce1b6433b1,2026-02-24,Large Family,Economy,5,-0.34
+e200a895-4182-4204-9e0f-0d4a0e00ae86,2026-04-25,Couple,Economy,39,0.25
+18d09c71-1e73-407c-a76b-dfa6711612c2,2026-02-23,Couple,Financing,7,0.26
+6870c8bd-91f3-442f-8037-f62543a69c75,2026-02-21,Couple,Right Vehicle,18,0.74
+d8b0ec1b-2205-4d11-b34f-7b0b46a2cc6e,2026-02-26,Couple,Financing,26,-0.93
+e3cce8f3-c6c6-46af-aede-12838a523d0e,2026-03-16,Business,Financing,2,0.21
+a61f6b22-f028-4965-81f9-80b3b6f5b8d0,2026-03-23,Couple,Financing,2,0.24
+54a294ba-2196-4adb-902c-f6c19f13b70f,2026-04-28,Student,Financing,3,1.0
+80194806-c484-4db8-a50d-391a315d661c,2026-05-05,Student,Economy,32,-0.53
+76e7b17a-67d3-452e-87f4-f2385fd472c9,2026-04-12,Couple,Availability,18,0.65
+32dc9c46-6e07-49bb-9ab4-21c6420819a4,2026-05-18,Student,Financing,40,0.24
+14df4487-7a0e-4f91-ab8b-a9150f2a550a,2026-05-13,Couple,Economy,29,-0.08
+d60724c4-d94b-4e40-8377-c711d67ef10e,2026-05-13,Large Family,Financing,22,-0.69
+8a0d2e32-c416-408b-9aa5-2083a05b2ca6,2026-05-17,Low Income,Economy,9,-0.07
+779e771e-6e02-4ff0-b998-880d14c03231,2026-03-14,Large Family,Right Vehicle,37,0.9
+d7ae744f-f2a9-4de9-b172-bff7111af455,2026-04-10,Student,Right Vehicle,22,-0.93
+b971734f-cc18-41f1-866f-4b0c0514230d,2026-05-16,Business,Budget,13,0.22
+15cbf347-b4de-4df9-89fd-20ae494d2bbf,2026-04-04,Large Family,Availability,18,0.96
+489bbbfe-74ca-4b34-a738-bf16ba08009a,2026-04-19,Couple,Right Vehicle,39,0.95
+7433c479-a879-40de-8f66-296b08fa0aa1,2026-03-19,Low Income,Financing,12,0.87
+4020e66f-d537-4ac0-89bf-373d9d449633,2026-03-17,Family,Economy,30,-0.39
+7e2ff59a-b442-4586-be58-acf5c41949fa,2026-04-16,Business,Financing,24,0.99
+2c94189a-7d8b-4d17-8f3a-802555afda01,2026-05-12,Low Income,Budget,28,-0.32
+3a080d4e-ba66-446a-bb9f-621597cde545,2026-05-01,Business,Financing,12,-0.77
+43634d45-7002-4408-90fb-7591e9647ad1,2026-03-01,Couple,Budget,21,0.17
+ff0f9a1b-5cfe-4021-90b2-641b2fb7c927,2026-03-24,Student,Economy,9,-0.97
+cda076f7-3690-494c-9064-afd7fa69a93b,2026-03-27,Family,Economy,11,0.24
+fa08add8-b6c5-4bd3-b23b-efbf53f5d9d4,2026-03-01,Business,Financing,36,-0.24
+1f05ef6d-ec7c-456c-8c45-f5242902ff2f,2026-02-24,Low Income,Economy,31,0.64
+5d081b68-99fa-44f1-9862-f0c362b804a5,2026-05-13,Student,Economy,27,0.3
+1eb6a08f-72b2-4c07-91bb-1f3340eeb8b8,2026-03-30,Large Family,Economy,5,0.24
+154cc367-1e48-49fa-8b3f-9b685b1f5899,2026-04-07,Family,Budget,3,-0.39
+aa7188e1-8432-46e4-ac8b-69d97f70c39f,2026-03-14,Large Family,Financing,15,-0.66
+8a3797a4-53cd-404a-939c-7c54fbed9fb3,2026-04-06,Business,Budget,32,-0.44
+eda3c87b-3d3c-4600-b386-c93fb82ac99f,2026-03-20,Student,Availability,28,-0.61
+0d55f4e3-6244-424a-81cb-1eb39b30dfd1,2026-03-20,Business,Financing,36,0.35
+b73a0242-414e-4107-9eda-0dd3be8cd2b7,2026-03-15,Low Income,Right Vehicle,36,-0.49
+a9c4a68f-b974-4a39-9b8e-0f55a5187e60,2026-03-23,Family,Financing,39,0.77
+2148023b-6650-4a64-8bd1-dd9221e1fe5b,2026-03-11,Low Income,Financing,28,0.46
+a0b2e0fb-608b-45d0-8b59-bf67acb7389f,2026-05-06,Low Income,Availability,36,0.17
+7918efdc-0cda-4a49-b614-e02afd5bc653,2026-03-19,Large Family,Availability,29,0.56
+eb2d648b-70fb-46fc-b99f-da26532ae0c6,2026-02-27,Family,Right Vehicle,32,-0.89
+f6e8b6d9-7299-423c-8e71-4e937f933f00,2026-05-05,Family,Right Vehicle,24,-0.02
+cf1b9195-46f3-48d7-9de1-ed0b32e7012a,2026-03-24,Student,Economy,25,0.27
+14072f7b-810e-4b0d-94a5-d366a14e6c6c,2026-05-04,Couple,Right Vehicle,21,-0.85
+619ce3db-1298-43f7-9ce5-3589a894269f,2026-05-15,Low Income,Availability,13,0.52
+016317fb-255b-4b08-87c9-28bcca24033b,2026-03-30,Couple,Economy,30,0.04
+dd53b405-8bee-474b-8e58-0f7632c6876e,2026-04-24,Couple,Right Vehicle,31,-0.87
+1d1cc321-831d-4db5-9d1f-0a99694d889d,2026-03-17,Business,Availability,12,0.4
+ed13aa99-ba4f-4239-9fde-608f5396b8d6,2026-03-29,Family,Budget,38,0.7
+d638f184-e00f-4825-b9d4-47e79633b5ca,2026-03-09,Low Income,Budget,30,0.24
+6728b883-4f23-4751-b072-877a99a21a4f,2026-04-21,Business,Availability,2,-0.36
+8a9dc0b1-b32f-49c3-9e65-a4895833ad41,2026-03-03,Couple,Economy,5,0.2
+520eb05e-3874-4dea-9629-ecdf6b7645ff,2026-03-07,Family,Financing,36,-0.59
+68e261b6-9acb-41ac-b77e-e1f48e3efbdf,2026-03-30,Low Income,Economy,33,-0.7
+f3324872-6e43-497c-9b75-127a6cfaad8a,2026-05-01,Low Income,Budget,10,-0.39
+d572d60e-7e15-4eb6-b843-e7a364e3614b,2026-05-11,Couple,Financing,15,0.58
+8e792447-c8ab-4ce2-aa33-4475e414f48d,2026-04-05,Family,Right Vehicle,13,-0.98
+969db270-d46e-4f30-90e6-afe779869215,2026-05-04,Low Income,Economy,14,-0.08
+cb0295b2-078a-4081-bad8-a851373ea35f,2026-04-20,Business,Budget,4,0.42
+ce5db877-c184-4708-b9ad-d285dde96cc1,2026-03-13,Low Income,Right Vehicle,23,0.88
+90906129-0629-4a3e-910b-36c546a0f5de,2026-03-08,Low Income,Availability,5,-0.55
+430bbc6c-06bf-4955-82eb-688cdf131033,2026-05-19,Family,Availability,31,-0.75
+4d4c728d-f675-4c3d-83bc-6414193d082c,2026-04-02,Business,Economy,39,0.19
+75927882-6d49-4cb5-9beb-eddb221db342,2026-02-28,Large Family,Financing,7,-0.27
+05037f68-bb00-424e-b68c-058f5e1b59c6,2026-02-28,Family,Availability,37,-0.53
+5a98e71a-8711-424d-977c-651227dc6d01,2026-04-21,Large Family,Economy,37,0.83
+b7b64a4e-7d88-4bbf-8766-605f7b06e593,2026-05-06,Low Income,Economy,6,-0.21
+f31bd725-ecd7-4a75-a7fd-e81a68952e82,2026-05-04,Family,Budget,18,0.52
+d3df7aae-89ee-4da9-a5dd-c5948ef44ed0,2026-03-19,Student,Availability,31,-0.13
+0e83e316-0ebc-4a78-ba4f-dd28c43fcdf8,2026-04-18,Low Income,Budget,2,-0.59
+d15504e6-c663-49e0-a075-90cf0d366999,2026-02-26,Business,Right Vehicle,25,0.68
+dd4c6f93-e98a-446f-affd-af686cf87d99,2026-03-12,Business,Availability,23,0.35
+6f713cc6-9298-4c7a-ae71-672e4f4b768f,2026-03-27,Large Family,Right Vehicle,3,-0.98
+929a4897-99d0-4136-87fc-8f8f91dc8194,2026-03-08,Couple,Economy,23,0.58
+6eb89101-87ad-4592-ac4a-5a6e73b22b44,2026-03-31,Low Income,Right Vehicle,34,-0.63
+599a918e-1811-4ddc-b68c-870c43e44d4f,2026-05-17,Couple,Right Vehicle,37,0.87
+9ccfcc4e-e4a8-429f-b88a-b7532dd6d62e,2026-04-15,Family,Economy,5,0.91
+86c36cf7-188e-44d7-b109-50a94372947c,2026-02-26,Business,Financing,2,-0.64
+6788cd41-a2e2-46a0-bbcf-0b45aedfe542,2026-04-08,Student,Financing,27,-0.8
+6c0c7982-f317-4755-9606-13bf503a4c2c,2026-02-24,Low Income,Right Vehicle,24,0.17
+bc6d750a-53af-47a3-9cf9-72a4b1634e87,2026-03-30,Business,Budget,34,0.35
+5821fc2a-1a6b-46dc-afbe-c973df67f7c5,2026-05-14,Couple,Financing,6,-0.1
+f481c11d-7d7c-493c-aca1-9c5e416d0471,2026-03-31,Business,Financing,24,-0.7
+01a84444-2a03-4cb4-b158-fef28cbfc6e1,2026-02-21,Low Income,Availability,26,0.45
+a82667ab-86cd-4964-997d-2b18e7f0c79d,2026-04-01,Family,Right Vehicle,12,-0.73
+4900620a-1870-4987-b98a-a24dc7fdc50e,2026-05-19,Family,Financing,39,0.22
+96041a3c-ce75-40f5-bc76-9c476265f358,2026-05-12,Low Income,Economy,29,0.29
+6c4dfbaf-ec81-4980-b6b7-f7b8b7dceb14,2026-04-18,Student,Right Vehicle,19,-0.04
+36f0d922-11ad-4530-9019-bdabda1d02c7,2026-03-17,Couple,Budget,35,0.56
+f18418a7-b7a8-453c-8d2a-87b6c0b59d0b,2026-02-25,Couple,Economy,15,-0.67
+569dd8de-8054-456a-8db2-e787c79f5d3e,2026-05-03,Low Income,Economy,30,0.11
+72e44113-7a57-4508-923f-6e1e03dd0205,2026-04-10,Student,Availability,20,-0.28
+b7ac43f7-f737-4134-bd59-f4bcb4347486,2026-03-31,Student,Budget,13,-0.35
+207133a5-5a36-4efe-a70d-eaa0244405ec,2026-03-02,Business,Budget,36,0.96
+01902637-3472-4c9a-8816-483bd08620b0,2026-04-23,Business,Financing,9,0.99
+a5f4a937-024c-4169-af3a-f8fd5bdeee41,2026-04-30,Low Income,Budget,20,0.69
+190a49b6-84e5-4b73-8714-c0f35b4a15ab,2026-05-17,Student,Economy,5,-0.14
+228100cb-1460-4af1-8565-2535b05eb524,2026-03-30,Large Family,Economy,7,-0.07
+79311657-9b58-42ef-948c-8113fc00997d,2026-02-26,Family,Right Vehicle,24,0.84
+2eda1deb-14cf-48d1-8817-a6153806a13f,2026-03-06,Family,Availability,20,-0.81
+2439e948-066a-4a3d-94ef-089a8ef6f5cb,2026-03-04,Couple,Budget,39,-0.18
+2f1c0e2c-a266-413f-8dc4-c44dce321ddd,2026-04-08,Couple,Budget,39,0.34
+0fb942d2-a9d6-4ef6-ada6-866e3d47bf3c,2026-05-09,Low Income,Financing,23,-0.81
+b4d873d5-9e9f-4ee6-8567-4047fbc052d5,2026-02-25,Couple,Availability,12,0.51
+ffe99ef4-8833-452c-a2b7-6ab8f8557043,2026-03-30,Large Family,Financing,36,0.46
+bd48ac0e-07b0-4318-827c-f026e49352d1,2026-03-03,Couple,Economy,6,0.61
+3e25e136-e359-42fe-85b2-d763a5bf4dbb,2026-03-08,Low Income,Economy,39,-0.02
+78b90cc8-180a-4dc0-a1cd-aea14dca6971,2026-03-05,Low Income,Right Vehicle,38,0.74
+8042e0d5-6405-4f44-8419-deeb1797f8b1,2026-03-24,Couple,Financing,13,-0.17
+cf819825-5a5f-4c4f-8086-e2356f282c96,2026-03-04,Student,Budget,22,0.91
+a8e11d19-c601-49f9-8de1-d7a0493bc453,2026-03-06,Business,Right Vehicle,11,-0.39
+ab83fadf-b6f6-4bb6-bb9a-7e753b0febe2,2026-04-28,Family,Budget,38,-0.37
+e7ebbd4f-0a98-47ab-a8f0-b6da369d1f01,2026-04-03,Low Income,Availability,3,-0.45
+08d1ecd7-2b62-4381-9c35-815b624166a8,2026-03-08,Family,Availability,35,-0.23
+fd34657b-7ca2-48bb-839d-404e9d42ea45,2026-03-13,Business,Financing,12,-0.5
+befbc8b7-a16f-49f4-975e-b5a3a4119a31,2026-02-28,Low Income,Budget,7,0.24
+d6efa0f4-5712-45f4-9fe9-b3076bbad461,2026-03-27,Student,Right Vehicle,17,-0.53
+19f1a8a2-3f58-436c-ac73-d08d4dffbfc0,2026-02-22,Family,Financing,36,-0.02
+befe9290-b58a-49dc-b96c-2a27cfac9e72,2026-04-23,Low Income,Availability,28,0.39
+57f9de44-d403-4eff-a0ea-595bf5aa665a,2026-05-21,Student,Right Vehicle,21,0.71
+bc23e74c-60cc-4e41-b559-75f6a61127ed,2026-02-26,Business,Financing,20,0.11
+1fef8045-99d5-4a0b-a88c-0d109ea9d1dc,2026-03-02,Business,Economy,14,-0.27
+14e7a9d9-f3ef-403d-9be9-c7b4e1151d5d,2026-04-28,Couple,Right Vehicle,25,-0.73
+d5ef27d0-19ec-46ac-8460-86ee632fce8d,2026-05-01,Student,Right Vehicle,29,-0.21
+f77f2d95-a9da-42de-8b0b-9dd1792e6446,2026-02-24,Business,Financing,22,-0.82
+bc2cad5a-acd7-497b-b0d4-95d04765e5ca,2026-05-15,Student,Economy,7,-0.15
+acbfa198-4e32-4873-8a72-17d0052a84c3,2026-03-10,Student,Financing,2,-0.22
+5fcf5b1c-ea6b-4ddb-a72f-6871a9d7a759,2026-05-14,Student,Availability,4,-0.3
+731dbe99-ca5d-4a2c-98a9-097a1b52aec8,2026-03-22,Couple,Economy,19,0.51
+ecdf4587-7a79-471e-a022-3bc04f19b1af,2026-05-02,Large Family,Financing,14,0.28
+1bfe5186-818f-450a-a01c-1c2a6c16e30b,2026-04-14,Student,Financing,39,0.17
+5d0ddb44-1e87-4a19-873c-5fa2aa1a11f2,2026-05-09,Student,Budget,39,0.96
+53fb70e8-4f7c-4d79-ad92-0969e47d0fce,2026-04-17,Couple,Budget,3,0.72
+97c76a08-7e79-4709-85b5-3cfae5d67e58,2026-04-17,Low Income,Economy,30,0.0
+321ab3b5-159d-4484-957c-1ef8337a2563,2026-04-07,Business,Economy,12,-0.01
+d6adcdb5-ecb2-4de3-9aff-c39a0aeff433,2026-03-04,Couple,Financing,10,-0.74
+75e3ee95-7425-4435-9f74-ebba02fd14aa,2026-04-06,Low Income,Budget,38,0.68
+cedf9771-8480-4e83-9d89-822182001d35,2026-04-25,Large Family,Right Vehicle,21,-0.29
+1612e74f-bc4a-467a-a42a-4fcc769b0edf,2026-03-21,Couple,Financing,27,0.62
+88d84065-e6e1-4953-b64e-ba79f6cadc1d,2026-03-07,Couple,Budget,3,-0.76
+af88761f-9142-428a-ba3e-116da181ca7e,2026-05-18,Low Income,Financing,34,0.42
+55967b7d-058f-460a-9276-38c165f03d62,2026-04-28,Student,Right Vehicle,27,0.31
+d31eebfc-55e9-44a4-a00b-706b5646a994,2026-03-05,Family,Right Vehicle,18,-0.04
+dc22f941-d0f1-44ff-b186-5962cb592884,2026-05-04,Large Family,Availability,36,-0.79
+d411b7da-7cdb-4559-8038-82f97e48befa,2026-03-21,Business,Financing,14,-0.92
+7bd61620-ddd4-4056-bc92-4419c2215ac6,2026-04-14,Large Family,Economy,5,0.17
+4b38e6fb-0101-417c-83b4-fdbc416a1f35,2026-02-23,Large Family,Financing,12,0.47
+fe6e3e61-9ebb-48e8-bcb2-2849d310bf45,2026-04-11,Student,Right Vehicle,11,0.3
+9b0a1549-dc7b-47a7-a6ea-f6628577fc16,2026-03-04,Family,Economy,15,0.05
+ec6a7d2a-9aba-4dd1-8371-486960735825,2026-04-04,Student,Right Vehicle,23,0.62
+7e65f06d-4629-42bf-87d9-03524a9a6f0f,2026-03-16,Large Family,Financing,28,-0.15
+991d83f0-8bb6-4a8c-96bf-e9d94dd0fea5,2026-04-13,Low Income,Right Vehicle,15,-0.57
+f9f6ef68-3f88-493b-a7cc-fc9dccd6042c,2026-05-20,Family,Financing,28,-0.66
+5d01666b-e004-4812-9267-1d519b531a5c,2026-05-15,Business,Financing,33,-0.74
+ad804adc-adda-4171-b890-d3bc3523de4f,2026-04-27,Low Income,Right Vehicle,35,-0.51
+12175448-364f-4f4e-a026-9f4b5227ad4e,2026-03-04,Business,Availability,39,0.02
+3ac522b3-c3bb-46c1-a0f5-82f1776cf6aa,2026-02-26,Large Family,Availability,32,-0.07
+f612ab5c-2075-4824-b55d-5cef3b878706,2026-02-23,Low Income,Right Vehicle,29,0.95
+d1255189-2d69-4539-9e33-acd18296d967,2026-05-17,Large Family,Economy,20,0.39
+abdbf4b0-8f16-456e-963d-d457dadd8f11,2026-04-09,Low Income,Right Vehicle,40,-0.26
+2e9d0e3e-a0fa-4a70-9b63-f1a904c500af,2026-03-07,Large Family,Budget,24,-0.94
+6b3a9e57-312b-4864-98b2-8d5ce801fea3,2026-04-16,Low Income,Right Vehicle,5,0.9
+aa2c23fb-8a27-45ef-8f14-7688dc027b98,2026-04-18,Family,Budget,5,-0.73
+645ba73e-32a4-4024-8187-8f6a75715164,2026-05-11,Student,Right Vehicle,17,-0.21
+593b00fe-c58f-4233-bd43-a370c5604e8b,2026-05-18,Low Income,Financing,17,-0.81
+b2847e07-1685-470d-9508-82eb454a63fc,2026-03-31,Business,Financing,39,0.39
+b254a4c4-79c7-4fa5-bd49-357837e24234,2026-04-05,Couple,Availability,19,0.55
+fd7e977b-13d3-42cf-b6d2-0e3b5e29a859,2026-05-14,Couple,Financing,10,-0.16
+e29f7244-ee2e-4b7b-97bf-7885c9065012,2026-03-17,Couple,Budget,9,0.99
+665266f2-fc04-4d05-bf17-beeba41a09b1,2026-04-02,Business,Economy,12,0.73
+3909adb5-2785-42ba-b50d-42415be60426,2026-03-17,Couple,Right Vehicle,13,0.24
+2efa4cae-8755-4b98-8c66-1d1689b2a000,2026-03-25,Couple,Budget,4,0.8
+828e0b6d-9fe2-4add-91fc-8d66ca4120a9,2026-05-13,Low Income,Budget,10,0.33
+d27ed11e-44d8-43d9-ac32-2155f02d8365,2026-05-04,Couple,Right Vehicle,7,-0.1
+bc164ff9-6c09-4612-8a3c-13fd7398f388,2026-04-21,Business,Economy,25,-0.49
+9657a9b0-d1e5-4ed8-a4c7-372cb515366b,2026-05-15,Family,Budget,15,-0.62
+ab63606f-3332-4b08-80d1-b304e3426de5,2026-03-07,Low Income,Economy,3,-0.4
+a6f7e9c4-6b5f-4eaf-a54d-b5d2b2bac55b,2026-05-09,Couple,Right Vehicle,30,-0.11
+4b4c9eaa-f376-43d5-bbae-8546034fe7be,2026-05-11,Low Income,Availability,16,0.97
+0a1b59eb-9fd0-4da2-972f-fd551550b7ed,2026-05-06,Student,Availability,26,-0.88
+5b3e07cd-0591-47e6-ba39-6ea5c43d4ea7,2026-03-09,Couple,Economy,11,-0.51
+02c485a7-b1c2-4cf4-8599-c5f5cf13f178,2026-05-21,Family,Financing,12,-0.75
+69789f88-b3d7-45b0-a67b-c128d79c7d15,2026-03-09,Low Income,Availability,37,1.0
+9a402e05-0a6d-4a21-b633-fac4976949e5,2026-04-11,Large Family,Availability,5,-0.83
+bb1162e5-d375-4bd8-8f9a-2c24fca61cff,2026-03-12,Family,Right Vehicle,6,-0.12
+48841a57-302d-41d9-a47b-68f581923de8,2026-04-01,Large Family,Availability,7,0.52
+48539f08-3b4b-48ea-9901-e45d6dcd8a01,2026-05-15,Couple,Budget,12,0.63
+4e22e85a-5d9c-4745-b994-8d2e1a9f152b,2026-03-27,Student,Financing,32,0.26
+65dee3b9-3e33-43c4-9a39-3df6a3888311,2026-03-03,Low Income,Availability,28,0.63
+87c2629b-34c2-4e5d-b4f8-e633de7b0b5f,2026-04-12,Couple,Budget,20,-0.14
+590a8aff-80bd-4f2c-a7b8-fb8b8d5d0d18,2026-03-04,Large Family,Economy,10,-0.42
+494937f9-b152-4234-ad1a-526abccc1610,2026-03-13,Student,Economy,37,0.91
+a77dab75-1af7-4ad9-9ed0-ebdf4dcbd2fa,2026-04-15,Student,Financing,17,-0.01
+67f36a9e-7396-43c1-b544-57bc128ce251,2026-05-06,Large Family,Economy,31,-0.71
+1b51624f-5c1a-41ee-9bf0-73b955f17cda,2026-05-21,Student,Economy,22,0.49
+fb65b2d3-b419-4ec9-8149-e3f5f113e110,2026-04-19,Student,Budget,15,-0.33
+30c0c9aa-a517-438c-9998-98f8d6f35634,2026-05-08,Business,Right Vehicle,11,0.94
+ead9c76c-bd84-4b15-838f-887e3d63734c,2026-05-02,Business,Availability,8,0.65
+3618742b-6953-4f66-b4f9-e85c9c3dc7ec,2026-04-26,Large Family,Budget,27,0.51
+96f49d56-8419-482c-8917-d761ff70ded5,2026-04-19,Student,Economy,24,-0.35
+f390cb8e-bd05-4cea-8f72-f4d644aa2cda,2026-03-01,Business,Economy,9,-0.67
+4f94328a-aa5c-4289-9382-272743c66eab,2026-05-06,Couple,Budget,11,0.95
+81c6114d-f3d3-4fe2-86c2-325f96f6fdef,2026-03-12,Family,Economy,20,0.91
+d55bbff0-0756-4d26-97aa-3c9b3ce1769c,2026-04-03,Large Family,Economy,29,-0.49
+94c09ed7-5a87-40e3-9d75-9815ce535c39,2026-04-03,Family,Right Vehicle,33,0.78
+ca32c3ac-88eb-48a0-89a5-25e5bf58f294,2026-03-14,Business,Economy,17,0.74
+d76438c5-b80a-45de-92b4-c53117183644,2026-04-15,Business,Availability,39,-0.11
+94551e19-7de5-4af1-b8aa-5fce2062dd63,2026-03-08,Couple,Budget,2,0.04
+8885a621-c730-43c7-800b-9bd80b75637c,2026-03-15,Low Income,Availability,38,0.66
+e18c6442-cb8d-4655-8024-26555e981c20,2026-05-02,Student,Budget,20,-0.49
+e753de49-7793-47ff-bd77-0fa1dfe52452,2026-05-10,Low Income,Financing,37,0.61
+59b4dfb3-15e9-4d69-853c-2bdd8ed20157,2026-03-18,Business,Availability,14,-0.05
+e64b2d42-f06f-4315-b851-9926441d09bc,2026-05-15,Couple,Economy,7,0.09
+5eebdab6-8f85-4688-8abf-8be028e31d92,2026-02-26,Low Income,Economy,10,-0.67
+5c73e3bb-80b6-4a93-ab4c-8d085a0fc969,2026-02-23,Couple,Right Vehicle,12,0.08
+6f6c5d6e-69da-4d68-a20a-aa224151f42d,2026-03-06,Family,Budget,22,-0.1
+95d4c1f9-323e-4cb6-a33e-42f436cf3ed8,2026-03-18,Large Family,Financing,8,-0.45
+e7bd1aa4-6f62-450d-a8bc-8fdbeebd5f1d,2026-03-23,Student,Economy,12,0.13
+b30e4c68-b2bc-4db9-93e4-0ad43b600c3a,2026-05-03,Student,Budget,40,0.82
+f9230208-0f7a-4e98-994c-369542b427f6,2026-05-21,Student,Availability,8,-0.97
+cb2bf58a-1670-43b0-a0b4-abea7467c3ed,2026-03-12,Business,Economy,6,-0.3
+56d9c3a0-2b77-4f60-b0a5-45a3afec7fed,2026-03-20,Low Income,Budget,19,0.59
+a9bf802b-95cc-436f-8ea0-38733f3338f4,2026-05-03,Large Family,Availability,7,-0.68
+dc7107a6-3120-4eba-b766-cc5f9964e31f,2026-03-09,Low Income,Financing,14,-0.44
+43c39ac4-73dc-48bc-a04d-451abf1948b5,2026-03-19,Low Income,Financing,26,0.5
+a0b1a11a-2acc-4876-b62b-cc2eaa58eb72,2026-03-22,Student,Budget,38,0.82
+66d578b9-dcfb-4183-a77d-c2dfb47176f2,2026-05-10,Large Family,Budget,10,-0.01
+182bf3a4-e73e-4d6d-baeb-91fdd85e29c2,2026-04-18,Student,Budget,32,0.04
+78bc0192-27f8-4994-8048-6f647635e22e,2026-03-10,Family,Availability,2,0.21
+ce4d75d8-46a0-4d19-9dbf-eafc64473481,2026-03-26,Student,Budget,39,0.89
+c57e1e22-11e2-4c57-8149-add8093270dd,2026-04-07,Business,Budget,19,0.96
+c62a1d2d-e958-4074-9366-a9eeb0a4da36,2026-04-13,Large Family,Right Vehicle,2,0.63
+6cab972d-0103-45ab-b7d9-9463d58d65ad,2026-03-12,Business,Budget,34,-0.88
+fc7da76e-ba76-49cf-86e4-1bce3bdf1a9f,2026-03-04,Couple,Availability,10,0.44
+80521db8-8b7e-4110-abad-b99b18ab2dbc,2026-05-05,Large Family,Availability,4,0.11
+d776c572-3986-41ed-bd19-bd106974ad77,2026-03-04,Family,Right Vehicle,2,-0.38
+0fd06967-4ffa-4d7f-a930-2a0b59e49093,2026-04-08,Business,Availability,9,0.86
+694f741e-f499-49da-8280-346b22957a29,2026-03-18,Low Income,Financing,7,-0.68
+37361e21-04b7-4c90-b000-4e74f6403c0b,2026-03-15,Couple,Financing,40,0.84
+7ddc6736-8859-40f0-aaaa-a2479f26706c,2026-03-14,Low Income,Economy,5,-0.23
+85bb3628-428e-4b30-8914-19de5612b5ad,2026-04-18,Couple,Budget,9,-0.11
+3924ca01-f7ea-4f26-ac05-9adddc77e6e4,2026-02-24,Business,Economy,2,-0.33
+b197b095-430f-4d9c-8895-af8c5422646a,2026-04-25,Family,Economy,13,0.04
+4fffe9c1-ba7c-45f8-bf1b-037cb1127b5e,2026-05-14,Low Income,Budget,26,-0.71
+7cc4a1cd-98c0-42e7-a954-42c84f3fb19c,2026-04-02,Low Income,Financing,19,0.44
+b2f9efd9-97cd-49bf-930b-288eae5566e2,2026-03-29,Couple,Financing,3,-0.35
+0794aa68-2236-4061-b6e3-102ff2cc3f9c,2026-04-18,Business,Financing,29,-0.95
+6ac1b2f9-30cb-479c-9a69-6120bf7d382c,2026-03-30,Large Family,Availability,36,-0.17
+06a3e749-8772-4fef-8245-2340f312833c,2026-03-25,Student,Right Vehicle,13,-0.1
+e6f69aa2-bdab-4ea4-a5a3-4fef921a6249,2026-03-04,Large Family,Right Vehicle,7,0.55
+66d0b0b2-5e0d-4287-abe6-a0af73d3f477,2026-04-05,Student,Budget,25,0.69
+3b632dc8-4307-4b22-9132-6a0d1976418c,2026-04-23,Business,Availability,21,-0.89
+92de6f29-3326-431b-902a-7404f2e76bd8,2026-04-06,Couple,Economy,12,0.3
+403b3c34-a6cc-44ac-b3aa-89dab22c3c76,2026-03-20,Business,Financing,20,0.35
+b1fce86c-ba05-4e2b-8fcd-ea54cfa220ce,2026-03-18,Low Income,Budget,16,-0.73
+4438cd5d-94e6-4d56-9ec2-14d24179c574,2026-04-10,Large Family,Availability,29,-0.83
+264b6bdf-a0df-46e4-b424-1e7d923f8f89,2026-03-02,Couple,Budget,38,0.91
+bd6666b0-e948-4e91-91f2-5bf3faf80fee,2026-04-26,Low Income,Right Vehicle,8,0.93
+c51fe35a-27b7-44f1-9925-2b54b35b7ab0,2026-04-22,Family,Budget,4,-0.12
+38bee1f7-9f4b-4458-b97f-001a08bd6c1b,2026-03-27,Student,Availability,5,0.59
+c94a8635-a27f-4698-bee6-6ae0a06a6357,2026-05-12,Couple,Financing,3,-0.2
+26b506e2-8849-47fa-a12c-ef955fa6d8af,2026-04-13,Student,Budget,17,0.34
+0b5f09bc-2b44-4837-ba04-9c157036aa3e,2026-05-15,Large Family,Economy,15,0.87
+a7fd616f-145c-4776-8d5a-961f41f163cf,2026-05-14,Student,Financing,6,-0.01
+7cd7d0dd-fb25-407d-82f2-7fd130f8a914,2026-05-10,Family,Economy,26,0.28
+7e03cb1e-76ac-4022-abf3-171ec2de8acb,2026-03-24,Low Income,Right Vehicle,15,0.4
+ba20c490-c940-4a86-a441-484a27e0f3ab,2026-05-15,Low Income,Financing,15,-0.83
+883b56e1-70b8-4add-b668-d19e3ba18446,2026-05-10,Couple,Financing,14,0.03
+49829974-ed9a-4a53-a870-7b42eecb3342,2026-03-25,Large Family,Economy,21,0.68
+b5e96bb7-a653-4dfc-ba09-ef2980d7a296,2026-04-02,Couple,Right Vehicle,2,-0.32
+d1f4c6d9-bdf3-4513-831f-e5a5213f122e,2026-04-23,Family,Availability,33,0.77
+1b3e91f7-fab3-4501-96e2-7fb1a4f1be87,2026-05-06,Couple,Budget,30,-0.41
+ad59ef25-d45a-4e09-85e2-b15137e5824b,2026-03-20,Low Income,Financing,2,-0.77
+92094a8c-a44c-48a6-b4a9-7cf15b2b21a0,2026-04-23,Large Family,Budget,36,0.8
+20b13e02-b549-4a5f-9bca-b9e76099cb1b,2026-05-16,Business,Availability,10,-0.68
+c9f86239-bee0-41ab-91c1-8f9717e3cf6d,2026-02-22,Couple,Financing,32,-0.64
+6b699f59-a2a7-4e29-a059-3c0abf85e927,2026-02-26,Couple,Availability,31,0.46
+014b1dcb-8ecc-4f64-947e-26f22ebc08f9,2026-05-02,Low Income,Financing,37,-0.8
+aa2e878c-af9e-48e7-be3c-d822728f97cd,2026-04-11,Couple,Budget,40,0.59
+6c1c78b6-1c61-4b65-9f26-4e8f2b8ecd4d,2026-05-12,Family,Financing,8,0.84
+5066be06-2060-409d-aa46-30cd4f55cd89,2026-03-22,Family,Availability,2,-0.1
+97d2d343-fdc9-4736-ac44-0bb37dc925d1,2026-04-15,Low Income,Budget,9,0.73
+205b8394-10d5-4e42-a606-ad5e4a11ec52,2026-02-27,Couple,Availability,5,-0.69
+84c10e72-b39c-427a-8000-bb7480aee664,2026-03-13,Large Family,Budget,23,0.97
+5b84973b-f2cd-440e-b317-c8b8fc1310e6,2026-03-14,Family,Right Vehicle,35,-0.31
+cf173589-b5c5-43a6-955f-e130601cb440,2026-04-19,Couple,Financing,31,-0.02
+46ab74de-80f2-4a1c-9e07-adf199df59fe,2026-04-30,Large Family,Budget,2,-0.87
+98d469d3-527c-49db-8c00-d55e0a1f45ab,2026-04-02,Low Income,Right Vehicle,8,0.92
+05cf0079-564c-4329-847c-2ff500efe805,2026-05-03,Family,Right Vehicle,6,-0.91
+88d98084-6eb4-418f-a7ca-e6f6226b1a46,2026-03-21,Couple,Financing,27,0.02
+020ada9c-b6b1-416c-b282-d8599b51dd9a,2026-04-05,Couple,Right Vehicle,5,-0.98
+0dd7b600-c559-4b6f-b6e9-062bfcf4ef5f,2026-03-20,Couple,Budget,14,0.54
+b60452f5-4285-46e6-b8b8-48cf5543a522,2026-03-21,Large Family,Financing,14,-0.72
+d85609be-7c9c-4228-902f-55808b483a69,2026-05-22,Family,Right Vehicle,39,-0.9
+74c2436b-d628-41b3-983c-7ebb1678ea50,2026-03-24,Family,Availability,37,-0.11
+adbb7029-3674-49b9-8147-fefab0c0a4de,2026-03-13,Family,Financing,7,-0.14
+529f21b8-237d-4444-9be2-d4a6ea1bcf57,2026-03-01,Couple,Right Vehicle,34,0.16
+2b2992b8-f3f7-4257-949d-979028841b5e,2026-05-11,Business,Right Vehicle,36,0.82
+b3e99156-50db-4109-9c6b-602a741c7b43,2026-02-24,Large Family,Financing,28,0.19
+a6a9e9bd-5ae1-4082-bc30-2114b2ada960,2026-05-10,Student,Economy,3,0.25
+d5574d6a-2426-4a49-aa82-7d57f572dbdf,2026-05-11,Student,Right Vehicle,27,0.45
+56b2f669-3fa8-4353-bd35-dca0ab34f1ef,2026-02-21,Couple,Budget,18,-0.65
+f02c2ba9-c4fd-4a1c-9bfb-dcd57a0adbdf,2026-04-29,Family,Availability,8,0.25
+95a9d588-d927-403c-b502-ce18378e9ef5,2026-05-13,Family,Right Vehicle,34,-0.5
+efeaefd5-fd3c-4907-8b23-4c5489e2adcd,2026-05-22,Large Family,Financing,34,-0.88
+6f1d57d1-5a44-494e-a499-47193320f733,2026-04-06,Couple,Financing,29,-0.35
+10d5675e-bb1a-4312-8c9f-7058b18aa1ec,2026-04-15,Family,Financing,14,0.0
+eed1a571-66be-4e5e-842b-ae93701eb6a1,2026-03-19,Family,Budget,24,0.97
+8d1b535d-97dd-4ada-9807-6cff6e230315,2026-04-26,Family,Availability,14,0.38
+4a3033b0-dc38-4faa-8fb7-1187d7821936,2026-02-22,Low Income,Financing,34,0.03
+3c79b27a-fe6d-4139-a27e-226650204d4d,2026-05-16,Couple,Economy,28,0.44
+3143fa1a-04a4-442d-8e33-66323bbeec5f,2026-05-05,Large Family,Availability,29,-0.31
+1cf48c96-a238-408c-8fc7-4ed002604a37,2026-03-15,Low Income,Financing,12,-0.16
+c08b163c-1156-4b99-82b0-8bf3a0520153,2026-03-19,Large Family,Economy,8,0.13
+91ef677b-07bd-4ca6-aa35-fa9a0af1cde5,2026-03-09,Couple,Budget,19,-0.88
+51be3161-86f1-472f-8618-9a65ed9cd9a5,2026-04-04,Student,Availability,3,-0.53
+97b1fd09-54b7-4780-89f5-6543cc4f26c3,2026-04-23,Family,Availability,10,-0.49
+937859af-976d-46c1-a859-cc93d706f22d,2026-04-03,Couple,Financing,13,-0.43
+28f49cf8-bb81-47c1-901d-ae8ff1b517f3,2026-03-03,Student,Availability,17,0.99
+d1463644-4175-44d6-8380-feb63c5e2cf7,2026-05-01,Couple,Financing,13,-0.64
+b03526dc-92df-454d-a0ad-9299db307aab,2026-05-13,Student,Financing,11,-0.34
+f50600c0-f603-4817-8cd1-46aef93647a8,2026-02-21,Business,Right Vehicle,9,-0.33
+df1de6ad-c4c9-4943-9974-4973882950ef,2026-03-29,Business,Financing,31,-0.92
+71ceafab-e8f0-4237-818d-f537a4532238,2026-05-10,Student,Economy,16,0.83
+ef216b07-5c17-4584-8f50-ae2fac0e464d,2026-05-14,Large Family,Economy,28,-0.14
+9f5a9a94-4b24-41de-9b11-e7336028a5a4,2026-03-03,Student,Economy,21,-0.53
+c99edbac-f077-4a17-97c5-21aa928fa781,2026-03-07,Low Income,Financing,35,-0.74
+fd5ce637-8e42-4fb1-8241-91ac837648df,2026-03-20,Couple,Availability,28,0.69
+49b15c66-e313-489d-9d58-982a8763c14b,2026-02-25,Couple,Budget,12,-0.78
+be445aa9-9da4-4fd1-801d-c02ff1d91ff2,2026-05-02,Family,Availability,30,0.65
+110eb7cf-f98a-46db-832c-1fc21cc9f1c4,2026-03-10,Business,Right Vehicle,9,-0.55
+24ed4096-47cf-4269-acc2-d32ae06d54f3,2026-02-23,Business,Availability,40,0.53
+48aaaea0-1948-41c0-9f56-13f9e8756bf5,2026-03-20,Low Income,Budget,13,-0.01
+58e000d7-0941-479e-b225-caa99b4ad044,2026-02-21,Business,Economy,30,-0.8
+7b96bd91-7b73-4a2f-b67c-f6433ef716e0,2026-04-20,Family,Economy,5,0.31
+f19155a6-b942-4bea-948d-9fb723279fda,2026-02-24,Business,Availability,35,0.11
+d26b4097-f0db-4531-b00c-402e5ab81aaa,2026-03-31,Family,Economy,2,0.77
+883a1309-310c-4e93-a256-e520ae347ed0,2026-03-28,Family,Economy,32,-0.54
+0d84cea9-66ef-496e-8d11-9ed4813c1e22,2026-03-03,Low Income,Financing,4,-0.97
+f6f1f68e-3111-4e80-a005-c307cf85156b,2026-04-07,Low Income,Budget,20,0.66
+287243fd-8268-43ff-9076-947de1d5a896,2026-04-15,Family,Availability,36,-0.88
+3dd6fb05-4d93-4742-9416-651ccd225e8e,2026-04-01,Student,Budget,2,-0.85
+9228f6ec-4c9d-42b5-b656-8fd0acd70036,2026-03-20,Student,Budget,25,-0.45
+b36f7265-9318-431d-afa4-af9034d7dce2,2026-03-15,Low Income,Financing,17,0.74
+4c50ad54-27fe-4918-9890-0d6bd6db5ad8,2026-03-24,Low Income,Economy,24,0.95
+6cd5d1b8-afe5-4318-964e-2ddcb340e4af,2026-04-10,Couple,Availability,16,0.03
+efcb4973-c332-4634-b0ca-1588adbf4175,2026-03-10,Low Income,Availability,36,0.16
+8263098e-a85e-4d4d-8d6f-3f3d3a31e503,2026-04-21,Family,Financing,38,-1.0
+e1727a9a-64f9-4314-b475-906656891c08,2026-02-26,Business,Economy,18,0.66
+1f3e39d3-15c4-4a7b-88e6-55e94814fb44,2026-05-13,Business,Budget,6,-0.59
+1c255119-78af-46af-ba97-afbb82f70fcf,2026-03-24,Couple,Financing,30,0.4
+94b4ff44-7c89-4dde-a9b3-929cabf8ed9c,2026-03-06,Family,Right Vehicle,37,-0.36
+efffc619-2aad-4929-aecd-8cf15e786205,2026-05-12,Large Family,Financing,13,-0.49
+2217e0a6-6717-4e36-b837-731f692624d4,2026-05-21,Student,Right Vehicle,7,0.3
+415f4206-7077-4475-892f-4826d498a021,2026-04-26,Large Family,Budget,25,-0.49
+d88e28c6-2645-4d0d-a865-84ab3b3ad282,2026-03-27,Low Income,Right Vehicle,32,0.15
+2099e074-51db-4cd7-956f-62766ee891f5,2026-04-18,Large Family,Availability,23,0.63
+1fc7dc6d-c75b-4ea5-9803-1776d3869abf,2026-05-13,Low Income,Availability,21,0.16
+53e94aac-0c76-4f69-8b56-5cf829c999a1,2026-02-23,Business,Budget,32,-0.82
+10755f2f-0e4c-468f-a68a-ed1090635546,2026-02-27,Couple,Budget,20,-0.04
+d5ecbdd5-89c0-498f-9dda-d2692f792568,2026-05-22,Low Income,Right Vehicle,39,0.37
+b9aeb0dd-011e-4db4-9701-ad4a4f642da7,2026-05-10,Student,Economy,39,0.58
+7f05db41-8eba-4bb0-a40a-fa0d32577a87,2026-03-10,Student,Budget,4,0.2
+deb01f67-74dd-4bc0-9c64-49ad54b35103,2026-03-11,Family,Financing,33,-0.99
+cd81dd6e-2ba4-4a0d-a87d-64c02639b501,2026-04-23,Low Income,Availability,10,0.66
+e598e066-f554-452e-8343-5af6f2e29b76,2026-04-14,Student,Economy,32,0.67
+1876f5f1-d908-4463-85ac-d62a6cde83ee,2026-04-02,Business,Availability,28,-0.93
+e4ef2e24-303e-43ab-b5ba-54db9d78e2e4,2026-03-28,Couple,Financing,5,-0.75
+62b2d6df-6ecc-44be-a1ff-890ffc24dd98,2026-03-01,Low Income,Economy,26,-0.29
+07797788-3062-464b-8c3e-5aee25b56edd,2026-04-17,Large Family,Availability,36,-0.96
+ae932ade-2e9b-42a4-be36-76bfcb1004f8,2026-03-28,Low Income,Economy,27,-0.93
+4056f7a3-eb40-41f0-aa86-b5b92c92a014,2026-05-15,Business,Availability,18,0.99
+e511907a-7a9c-44dd-a85f-517fcb7abbf8,2026-05-05,Student,Financing,39,-0.86
+4f9bbdb0-8ef7-4822-9d8f-b6da403d593d,2026-04-10,Large Family,Availability,36,0.76
+0787e234-a660-468d-9584-9800a3a3f79f,2026-02-22,Large Family,Economy,17,-0.67
+825767e5-730c-4af5-b801-d0b301370d5a,2026-05-08,Family,Availability,24,-0.68
+20cfe240-919a-4350-b27e-18b6aaf5174c,2026-03-09,Business,Economy,38,-0.74
+eaf636b7-637c-4820-b87d-5b1acbcd2a76,2026-05-10,Large Family,Availability,12,0.13
+4e035cfb-060b-4f38-8aa1-ed1d629e4d29,2026-03-23,Business,Availability,21,-0.38
+9bf3ad01-3c56-4206-aa40-d966c99d5e9b,2026-03-13,Couple,Right Vehicle,27,-0.22
+ddd5861e-7a7a-4361-a5db-da2442b628d2,2026-03-11,Business,Financing,39,-0.89
+23ec160e-8f18-4363-a65b-1d0e46d98512,2026-05-03,Couple,Financing,9,0.25
+10b142b7-0e5c-4645-9b84-2b72acbbb956,2026-03-26,Low Income,Availability,27,-0.04
+da047625-035e-4179-9118-5b21354c6239,2026-03-21,Low Income,Budget,19,0.28
+3bc38c81-16f7-4642-aec9-59d3ceb10980,2026-02-25,Couple,Budget,38,0.29
+2f0ba574-29eb-4e24-abc2-852f46008ee4,2026-04-16,Business,Economy,13,-0.15
+ecb0d25c-4323-4862-8743-bd0dcfd489d1,2026-02-28,Low Income,Financing,27,-1.0
+451c6492-b74e-40cb-94ce-fd74102b8a42,2026-03-01,Large Family,Availability,7,-0.6
+7e1d1628-c3a8-4937-a336-6b0b10b28ea8,2026-03-04,Student,Budget,6,0.41
+620d0a46-35b3-474c-9779-9d059f156d89,2026-04-01,Couple,Financing,39,-0.03
+9a1e1f36-2fb8-484f-b246-85550e34c96e,2026-03-13,Family,Economy,23,-0.36
+57e03da9-447f-4e23-a5b9-c81bba3a6612,2026-03-18,Large Family,Right Vehicle,19,-0.32
+22738ede-a606-464b-b72a-fb2972406bc5,2026-03-09,Low Income,Availability,3,0.52
+99e37885-7b1b-4ff4-95ff-7c56fa54a86f,2026-05-02,Couple,Economy,25,-0.01
+d91b8d7b-8d04-4d0c-a768-59a960894ffd,2026-03-05,Student,Availability,36,-0.48
+135062de-d63c-43c6-bd10-8c7ec3a27ccb,2026-04-27,Student,Financing,33,-0.68
+f7adf427-5025-49a2-aa01-561961eac6dc,2026-05-12,Couple,Right Vehicle,27,0.02
+26f59754-bb0e-4057-8e0e-83640ce0083e,2026-05-13,Large Family,Budget,6,-0.98
+385e574a-f35e-4fa2-8fd6-3fa6adf47046,2026-03-17,Couple,Economy,26,0.18
+34ad5e73-55ee-4468-8ed3-27a133a05bb1,2026-03-11,Large Family,Budget,12,-0.67
+ae94c7ae-063b-4f74-be5e-cf62f1c494ad,2026-05-15,Low Income,Economy,24,-0.61
+588a0561-963e-4bc9-a495-870a1e4fb666,2026-03-05,Family,Economy,32,-0.7
+b482d494-039f-4b0a-8cfb-a94f7b180c22,2026-02-26,Business,Economy,28,-0.68
+7cc4f268-2021-4e41-8b87-044eb0be6461,2026-05-11,Business,Budget,6,-0.36
+8bf0c53e-dac8-4851-a1d2-216dd17060a8,2026-04-17,Family,Right Vehicle,6,0.38
+7b76b6d7-bcfe-4655-9f6c-15fd81772396,2026-02-26,Business,Budget,29,-0.42
+16fca83a-c6ec-4118-92e5-190f6a7af096,2026-04-30,Large Family,Financing,19,-0.74
+b66f47a8-a0d8-46cf-8134-79e9df6aa369,2026-03-13,Student,Right Vehicle,37,-0.91
+4906b306-c19b-4cd8-85ec-9bf8120cbed7,2026-04-11,Business,Budget,14,-0.38
+264ac11b-4d68-4f15-8f03-9a26605c7205,2026-03-14,Student,Budget,9,0.44
+d1edd47c-0540-45da-9925-68302bbf2719,2026-03-14,Couple,Financing,28,0.64
+6b01a2ff-fd9e-49cb-bb01-fd56418d3576,2026-03-08,Business,Economy,12,0.42
+1339cbf4-a3c7-4142-8165-073d8e87b6f9,2026-04-19,Low Income,Financing,15,-0.17
+8ce4e6f2-cef3-4530-8266-4af4157199a6,2026-03-27,Business,Availability,27,-0.05
+5d4d90f7-b8a0-448a-910a-a5bec0567516,2026-05-10,Family,Economy,12,-0.27
+9f1781fb-bb29-455a-886b-90d32aeff8c6,2026-03-19,Business,Economy,27,-0.8
+3abfcd38-30b5-48de-a7a2-611f921e2d0b,2026-04-26,Family,Economy,3,-0.77
+106d5ef6-ca4b-411e-a61c-8f788bdb7bad,2026-03-04,Family,Availability,2,0.42
+6e0d9f00-773e-4a1d-83d7-d82c63d9feeb,2026-02-22,Business,Right Vehicle,35,0.74
+a9b34baf-c9c0-414f-b2aa-0b3292d514a1,2026-05-12,Student,Financing,30,0.27
+027546fd-59e5-4db5-95c3-8ff6a29ca6dc,2026-04-14,Business,Financing,16,-0.86
+ecb03f59-2694-4323-9290-d9033844e311,2026-04-03,Large Family,Economy,24,0.22
+438e728e-1aff-4fb2-92af-0cca3a5e1f92,2026-04-01,Family,Economy,15,0.31
+51dc5774-54fe-43dd-a4ee-9f68473b1331,2026-03-17,Business,Availability,21,-0.62
+47a44b4c-8e20-4bf5-82fe-dc7d8e10fa82,2026-04-26,Couple,Right Vehicle,4,-0.07
+effa6794-86c1-4b45-bd3e-e438d47ecf59,2026-03-04,Business,Availability,14,-0.62
+6da24efc-129c-4120-907f-45d245d524db,2026-05-01,Business,Financing,6,-0.75
+68c9e6fe-a646-4709-b044-d36f0a93c82b,2026-05-05,Family,Financing,37,-0.7
+e161c81f-d933-4682-845c-6b3ab9f10a86,2026-05-05,Couple,Availability,39,0.92
+9ae80e4e-45c8-402c-bad3-1709ab007c45,2026-04-05,Family,Availability,32,-0.8
+2fecc9ac-c19e-434d-9db5-a35c63ddf911,2026-04-27,Business,Right Vehicle,11,0.76
+7f9a6a0e-9100-4313-b991-866f08f5b527,2026-05-18,Large Family,Financing,14,0.72
+bd4708f2-388a-4675-98da-bebd77e62622,2026-04-13,Business,Right Vehicle,5,-0.49
+8cf072e1-4ed7-4601-88d9-3c75b7ff2567,2026-05-04,Student,Financing,11,-0.53
+6ce77b67-cf72-4bca-ba4f-38f5a3ff123e,2026-04-26,Couple,Right Vehicle,32,0.06
+ba21ad46-9dcb-4a52-bace-6d9c87fb8387,2026-03-07,Business,Financing,35,0.87
+abc472e1-0ffa-47ff-a6d4-7d41ea56860a,2026-04-14,Low Income,Financing,20,-0.61
+a25c8f81-721d-4f02-909b-6b61ddb14b01,2026-04-16,Business,Economy,20,-0.63
+376ed713-3cca-428f-ad8f-cce6b975a18a,2026-03-23,Student,Budget,13,1.0
+7e0b7e02-cacf-4e4f-b192-8e1e605cb17c,2026-05-17,Couple,Budget,22,1.0
+b30c299e-725a-455e-bc58-7a60bcf1bd8e,2026-04-30,Low Income,Budget,6,-0.19
+2d104cbf-428c-47f5-b32f-e361d00edb1a,2026-03-30,Family,Right Vehicle,25,0.97
+bbfa06d6-b768-4775-862b-7e8b66d48ab2,2026-05-19,Large Family,Economy,25,0.4
+468e2827-c3ad-4997-800c-c405333fe5ee,2026-03-17,Student,Budget,20,-0.39
+835e2c0e-e4b6-4c94-9dc1-133bd41c0069,2026-04-22,Large Family,Financing,7,-0.7
+22ebc4d2-ba5f-4723-9201-47377ba3d1e3,2026-04-07,Student,Financing,22,0.36
+60988c64-cb6d-46bf-a6a6-de20b425eb01,2026-05-13,Low Income,Availability,32,0.55
+c77bcb55-7d3a-4269-ba67-58ed378ef99e,2026-04-22,Low Income,Financing,39,-0.28
+19dc22cf-8c61-4d7a-9fbc-c77273099f5f,2026-04-18,Couple,Right Vehicle,26,0.46
+9af470ac-aa4e-4fe3-95d0-9b6d60b47782,2026-04-16,Couple,Availability,2,0.14
+34088672-d449-4227-be74-b60ef2b9f6f2,2026-04-20,Business,Budget,9,0.57
+f0a2fab1-5db9-4b24-a4aa-efd1c45750be,2026-03-18,Family,Right Vehicle,12,-0.64
+d2633dc0-8d4d-4819-8b25-5f75a3faffa5,2026-05-20,Family,Budget,2,-0.09
+d03411f5-9a0a-401b-b48a-a1f8c6c15510,2026-03-03,Student,Budget,16,0.11
+3157faa0-3660-4935-8866-cfe21be865d2,2026-04-01,Family,Budget,39,-0.9
+24eac74c-6f14-4bbd-9978-f01533f9a32c,2026-05-10,Student,Financing,10,0.48
+3f3a6fc3-dfd1-4477-946d-b51bd244ba21,2026-04-22,Student,Right Vehicle,25,0.78
+86a71351-513b-4f18-bce7-c9f15b22ab28,2026-05-17,Student,Availability,13,0.7
+68eb472f-0468-4024-ba49-07fcd091724f,2026-04-03,Business,Availability,37,0.01
+766efffd-bdfb-4b88-843f-519dd41413ea,2026-02-22,Low Income,Right Vehicle,3,0.88
+ce193bf3-2a15-472c-8bf9-112172056072,2026-02-24,Large Family,Availability,14,-0.23
+e1feb2f2-9917-412a-a121-8b1524c19c87,2026-04-17,Student,Financing,13,0.1
