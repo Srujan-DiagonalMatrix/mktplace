@@ -17,10 +17,12 @@ def _nav_item_html(label: str, icon: str, active: str) -> str:
     is_active = label == active
     classes = "nav-item active" if is_active else "nav-item"
     aria_current = ' aria-current="page"' if is_active else ""
+    route = f"/{escape(label)}"
     return (
+        f'<a class="nav-link" href="{route}">'
         f'<div class="{classes}"{aria_current}>'
         f"<span>{escape(icon)}</span>{escape(label)}"
-        "</div>"
+        "</div></a>"
     )
 
 
