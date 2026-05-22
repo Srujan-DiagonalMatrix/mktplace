@@ -564,7 +564,7 @@ def main(active_page: str = "Chat", configure_page: bool = True):
         st.set_page_config(page_title=f"{active_page} · AI Car Buying Assistant", layout="wide")
     _render_page_css()
 
-    if active_page in {"Recommendations", "Finance", "Shortlist"}:
+    if active_page in {"Deals", "Finance", "Shortlist"}:
         _render_empty_page(active_page)
         _render_safety_footer()
         return

@@ -6,7 +6,7 @@ import streamlit as st
 
 NAV_ITEMS: tuple[tuple[str, str, str], ...] = (
     ("Chat", "💬", "/Chat"),
-    ("Recommendations", "✨", "/Recommendations"),
+    ("Deals", "✨", "/Deals"),
     ("Finance", "💳", "/Finance"),
     ("Shortlist", "♡", "/Shortlist"),
     ("Admin", "⚙️", "/Admin"),
