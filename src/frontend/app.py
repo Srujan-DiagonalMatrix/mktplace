@@ -94,57 +94,70 @@ input, textarea {
 
 .nav-card {
   min-height: calc(100vh - 3rem);
-  padding: 1rem 0.65rem;
+  padding: 1.15rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .logo-tile {
-  width: 56px;
-  height: 56px;
-  border-radius: 20px;
+  width: min(112px, 100%);
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   color: white;
-  font-size: 1.55rem;
+  font-size: 2.2rem;
   background: linear-gradient(145deg, #0b7cff, #6bbdff);
   box-shadow: 0 14px 28px rgba(11, 124, 255, 0.28);
-  margin: 0.4rem auto 1.4rem;
+  margin: 0.65rem auto 1.8rem;
 }
 
 .nav-stack {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.95rem;
   width: 100%;
 }
 
-.nav-link {
-  text-decoration: none;
+.nav-link,
+.nav-link:hover,
+.nav-link:focus,
+.nav-link:visited,
+.nav-link * {
+  text-decoration: none !important;
 }
 
 .nav-item {
-  min-height: 66px;
-  border-radius: 18px;
-  color: #50627f;
+  min-height: 104px;
+  border-radius: 24px;
+  color: #4c5c7d;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.6rem;
   font-size: 0.72rem;
   font-weight: 700;
+  line-height: 1;
 }
 
-.nav-item span { font-size: 1.15rem; }
+.nav-icon { font-size: 2.05rem; }
+
+.nav-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
 
 .nav-item.active {
   background: linear-gradient(180deg, #f3f9ff, #e8f4ff);
-  border: 1px solid #d7eaff;
-  color: var(--sky);
-  box-shadow: inset 4px 0 0 var(--sky), 0 12px 24px rgba(37, 99, 235, 0.08);
+  border: 2px solid #2f78ff;
+  color: #1458d8;
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.12);
 }
 
 .chat-region, .recommendation-region {
@@ -551,7 +564,7 @@ def main(active_page: str = "Chat", configure_page: bool = True):
         st.set_page_config(page_title=f"{active_page} · AI Car Buying Assistant", layout="wide")
     _render_page_css()
 
-    if active_page in {"Recommendations", "Finance", "Shortlist"}:
+    if active_page in {"Deals", "Finance", "Shortlist"}:
         _render_empty_page(active_page)
         _render_safety_footer()
         return
