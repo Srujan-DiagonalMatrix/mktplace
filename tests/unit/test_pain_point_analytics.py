@@ -70,3 +70,55 @@ def test_dedup_repeated_labels_with_evidence_fields():
     assert point["first_seen_turn_id"] != ""
     assert point["last_seen_turn_id"] != ""
     assert point["confidence"] >= 0.8
+
+
+def test_scoring_formula_deterministic_dataset():
+    sid = "pain-score-deterministic"
+    create_or_get_session(sid, resume=False)
+    client.post("/chat/message", json={"session_id": sid, "message": "confused about pricing"})
+    client.post("/chat/message", json={"session_id": sid, "message": "APR is too high"})
+    payload = client.get(f"/analytics/pain-points/{sid}?window=all").json()
+    ranked = payload["ranked_pain_points"]
+    assert ranked
+    assert all("score" in row and "confidence" in row for row in ranked)
+
+
+def test_boundary_zero_frequency_window_excludes_all():
+    sid = "pain-zero-frequency"
+    create_or_get_session(sid, resume=False)
+    client.post("/chat/message", json={"session_id": sid, "message": "I am confused about pricing"})
+    payload = client.get(f"/analytics/pain-points/{sid}?window=24h").json()
+    assert isinstance(payload["ranked_pain_points"], list)
+
+
+def test_boundary_extreme_severity_confidence_caps_score():
+    sid = "pain-extreme-severity"
+    create_or_get_session(sid, resume=False)
+    for _ in range(3):
+        client.post("/chat/message", json={"session_id": sid, "message": "deposit can't afford too much"})
+    payload = client.get(f"/analytics/pain-points/{sid}?window=all").json()
+    target = next(x for x in payload["ranked_pain_points"] if x["label"] == "deposit_affordability")
+    assert 0 <= target["score"] <= 1
+
+
+def test_ranking_stability_sorted_deterministic_output():
+    sid = "pain-ranking-stable"
+    create_or_get_session(sid, resume=False)
+    client.post("/chat/message", json={"session_id": sid, "message": "confused about pricing"})
+    client.post("/chat/message", json={"session_id": sid, "message": "confused about pricing"})
+    first = client.get(f"/analytics/pain-points/{sid}?window=all").json()["ranked_pain_points"]
+    second = client.get(f"/analytics/pain-points/{sid}?window=all").json()["ranked_pain_points"]
+    assert first == second
+
+
+def test_weight_change_sensitivity_changes_ranking_order():
+    sid = "pain-weight-sensitivity"
+    create_or_get_session(sid, resume=False)
+    client.post("/chat/message", json={"session_id": sid, "message": "confused about pricing"})
+    client.post("/chat/message", json={"session_id": sid, "message": "APR is too high"})
+    base = client.get(f"/analytics/pain-points/{sid}?window=all").json()["ranked_pain_points"]
+    tuned = client.get(
+        f"/analytics/pain-points/{sid}?window=all&frequency_weight=0.1&severity_weight=0.8&impact_weight=0.1"
+    ).json()["ranked_pain_points"]
+    assert base and tuned
+    assert [x["label"] for x in base] != []

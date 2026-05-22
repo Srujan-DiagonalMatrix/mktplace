@@ -8,8 +8,22 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
 @router.get("/pain-points/{session_id}")
-def session_pain_points(session_id: str):
-    return get_session_pain_points(session_id)
+def session_pain_points(
+    session_id: str,
+    window: str = "7d",
+    frequency_weight: float | None = None,
+    severity_weight: float | None = None,
+    impact_weight: float | None = None,
+    debug: bool = False,
+):
+    override = None
+    if any(v is not None for v in (frequency_weight, severity_weight, impact_weight)):
+        override = {
+            "frequency": frequency_weight or 0.0,
+            "severity": severity_weight or 0.0,
+            "impact": impact_weight or 0.0,
+        }
+    return get_session_pain_points(session_id, window=window, override_weights=override, debug=debug)
 
 
 @router.get("/intelligence/{session_id}")

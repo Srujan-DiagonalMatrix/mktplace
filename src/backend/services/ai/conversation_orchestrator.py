@@ -5,7 +5,7 @@ from typing import Any, Dict
 import copy
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 CANONICAL_PREFERENCE_SCHEMA: dict[str, type] = {
@@ -185,7 +185,7 @@ def get_session_intelligence(session_id: str) -> dict[str, Any]:
 
 
 def aggregate_intelligence_trends(start_date: str | None = None, end_date: str | None = None) -> dict[str, Any]:
-    from datetime import datetime
+    from datetime import datetime, timedelta
     sd = datetime.fromisoformat(start_date) if start_date else None
     ed = datetime.fromisoformat(end_date) if end_date else None
     by_date: dict[str, dict[str, Any]] = {}
@@ -280,12 +280,96 @@ def extract_pain_points_for_turn(session_id: str, turn_id: str, text: str) -> li
     return list(deduped_turn.values())
 
 
-def get_session_pain_points(session_id: str) -> dict[str, Any]:
+def _window_start_for_label(window: str, now: datetime) -> datetime:
+    mapping = {"24h": timedelta(hours=24), "7d": timedelta(days=7), "30d": timedelta(days=30), "all": None}
+    delta = mapping.get(window, timedelta(days=7))
+    return datetime.min if delta is None else now - delta
+
+
+def _score_pain_points(entries: list[dict[str, Any]], weights: dict[str, float], confidence_floor: float, debug: bool) -> list[dict[str, Any]]:
+    if not entries:
+        return []
+    max_frequency = max(e["frequency"] for e in entries) or 1
+    ranked = []
+    for e in entries:
+        frequency_score = e["frequency"] / max_frequency
+        severity_score = e["avg_severity"]
+        impact_score = e["avg_impact"]
+        confidence = max(confidence_floor, min(1.0, 0.5 * e["avg_confidence"] + 0.5 * min(1.0, e["frequency"] / 3.0)))
+        final = (
+            weights["frequency"] * frequency_score
+            + weights["severity"] * severity_score
+            + weights["impact"] * impact_score
+        ) * confidence
+        row = {
+            "label": e["label"],
+            "score": round(final, 6),
+            "frequency": e["frequency"],
+            "avg_severity": round(severity_score, 6),
+            "avg_impact": round(impact_score, 6),
+            "confidence": round(confidence, 6),
+        }
+        if debug:
+            row["debug"] = {
+                "frequency_score": round(frequency_score, 6),
+                "weights": weights,
+                "raw_avg_confidence": round(e["avg_confidence"], 6),
+            }
+        ranked.append(row)
+    ranked.sort(key=lambda x: (-x["score"], -x["frequency"], x["label"]))
+    return ranked
+
+
+def get_session_pain_points(session_id: str, window: str = "7d", override_weights: dict[str, float] | None = None, debug: bool = False) -> dict[str, Any]:
+    from src.shared.config.settings import get_settings
+
     s = create_or_get_session(session_id)
+    settings = get_settings()
+    configured = settings.pain_point_scoring.normalized()
+    confidence_floor = settings.pain_point_scoring.confidence_floor
+    if override_weights:
+        total = sum(max(v, 0.0) for v in override_weights.values())
+        if total > 0:
+            configured = {
+                "frequency": max(override_weights.get("frequency", 0.0), 0.0) / total,
+                "severity": max(override_weights.get("severity", 0.0), 0.0) / total,
+                "impact": max(override_weights.get("impact", 0.0), 0.0) / total,
+            }
+
+    now = datetime.utcnow()
+    cutoff = _window_start_for_label(window, now)
+    buckets: dict[str, dict[str, Any]] = {}
+    for meta in s.get("messages_meta", []):
+        if meta["created_at"] < cutoff:
+            continue
+        turn_id = meta["turn_id"]
+        for item in s.get("pain_points_by_turn", {}).get(turn_id, []):
+            b = buckets.setdefault(item["label"], {"label": item["label"], "frequency": 0, "severity_sum": 0.0, "impact_sum": 0.0, "confidence_sum": 0.0})
+            b["frequency"] += 1
+            b["severity_sum"] += float(item.get("confidence", 0.0))
+            impact = min(1.0, 0.55 + 0.1 * len(item.get("label", "")) / 10.0)
+            b["impact_sum"] += impact
+            b["confidence_sum"] += float(item.get("confidence", 0.0))
+
+    entries = []
+    for b in buckets.values():
+        freq = b["frequency"]
+        entries.append({
+            "label": b["label"],
+            "frequency": freq,
+            "avg_severity": b["severity_sum"] / freq if freq else 0.0,
+            "avg_impact": b["impact_sum"] / freq if freq else 0.0,
+            "avg_confidence": b["confidence_sum"] / freq if freq else 0.0,
+        })
+
+    ranked = _score_pain_points(entries, configured, confidence_floor, debug)
     return {
         "session_id": session_id,
+        "window": window,
         "pain_points": sorted(copy.deepcopy(list(s.get("pain_points", {}).values())), key=lambda p: p["label"]),
         "pain_points_by_turn": copy.deepcopy(s.get("pain_points_by_turn", {})),
+        "ranked_pain_points": ranked,
+        "scoring": {"weights": configured, "confidence_floor": confidence_floor, "debug_enabled": debug},
     }
 
 
