@@ -42,5 +42,6 @@ def test_sidebar_nav_marks_requested_active_item(monkeypatch):
     sidebar_nav(active="Finance")
 
     body = rendered[0]
+    assert 'href="/Finance"' in body
     assert '<div class="nav-item active" aria-current="page"><span>💳</span>Finance</div>' in body
     assert '<div class="nav-item active" aria-current="page"><span>💬</span>Chat</div>' not in body

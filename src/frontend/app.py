@@ -116,6 +116,10 @@ input, textarea {
   width: 100%;
 }
 
+.nav-link {
+  text-decoration: none;
+}
+
 .nav-item {
   min-height: 66px;
   border-radius: 18px;
