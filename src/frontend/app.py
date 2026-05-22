@@ -575,7 +575,6 @@ def main(active_page: str = "Chat", configure_page: bool = True):
             sidebar_nav(active=active_page)
         with admin_col:
             render_analytics_dashboard(client)
-        _render_safety_footer()
         return
 
     session_id = get_session_id()

@@ -69,7 +69,15 @@ def _render_section(title: str) -> None:
 
 
 def render_analytics_dashboard(client: Any) -> None:
-    st.subheader('Reports · Executive Analytics')
+    st.markdown(
+        """
+        <div style="padding: 0.35rem 0 0.9rem 0;">
+          <h1 style="margin:0; font-size:2rem; font-weight:800; letter-spacing:-0.02em;">Customer Insights</h1>
+          <p style="margin:0.35rem 0 0; color:#6b7280; font-size:0.98rem;">Executive analytics for customer conversations, funnel health, and outcomes.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     start = date.today() - timedelta(days=29)
     end = date.today()
@@ -82,7 +90,6 @@ def render_analytics_dashboard(client: Any) -> None:
         stage=None,
     )
 
-    st.caption(f"As of {date.today().isoformat()}")
     _kpi_cards(_build_demo_dataframe(payload))
 
     trend_df = _build_demo_dataframe(payload)
@@ -156,7 +163,3 @@ def render_analytics_dashboard(client: Any) -> None:
     )
     r4c3.line_chart(ai_df, x='date', y=['api_cost_estimate', 'latency_ms'], use_container_width=True)
 
-    _render_section('Operational tables')
-    t1, t2 = st.columns(2)
-    t1.dataframe(payload.get('session_drilldown', []), use_container_width=True, hide_index=True)
-    t2.dataframe(payload.get('top_pain_points', []), use_container_width=True, hide_index=True)
