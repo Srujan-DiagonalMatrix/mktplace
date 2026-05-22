@@ -45,6 +45,11 @@ html, body, [data-testid="stAppViewContainer"], .stApp {
   background: transparent;
 }
 
+
+[data-testid="stSidebar"] {
+  display: none;
+}
+
 [data-testid="stVerticalBlock"] { gap: 0.85rem; }
 
 button[kind="secondary"], .stButton > button {
