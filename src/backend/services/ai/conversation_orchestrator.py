@@ -80,6 +80,8 @@ def _new_session(session_id: str) -> Dict[str, Any]:
         "memory_snapshots": [],
         "last_question_key": None,
         "last_question_asked_at": 0.0,
+        "asked_question_keys": [],
+        "hesitation_count": 0,
     }
 
 
@@ -194,3 +196,31 @@ def set_last_question_asked_at(session_id: str, timestamp: float | None = None) 
 def get_last_question_asked_at(session_id: str) -> float:
     s = create_or_get_session(session_id)
     return float(s.get("last_question_asked_at", 0.0))
+
+
+def add_asked_question_key(session_id: str, key: str) -> None:
+    s = create_or_get_session(session_id)
+    keys = s.setdefault("asked_question_keys", [])
+    if key and key not in keys:
+        keys.append(key)
+
+
+def get_asked_question_keys(session_id: str) -> list[str]:
+    s = create_or_get_session(session_id)
+    return list(s.get("asked_question_keys", []))
+
+
+def increment_hesitation(session_id: str) -> int:
+    s = create_or_get_session(session_id)
+    s["hesitation_count"] = int(s.get("hesitation_count", 0)) + 1
+    return s["hesitation_count"]
+
+
+def reset_hesitation(session_id: str) -> None:
+    s = create_or_get_session(session_id)
+    s["hesitation_count"] = 0
+
+
+def get_hesitation_count(session_id: str) -> int:
+    s = create_or_get_session(session_id)
+    return int(s.get("hesitation_count", 0))
