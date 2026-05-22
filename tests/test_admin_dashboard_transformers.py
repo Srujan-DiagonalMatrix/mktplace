@@ -1,4 +1,5 @@
 from src.frontend.components.analytics_dashboard import (
+    _build_conversation_history_rows,
     _build_interaction_rows,
     _infer_icp_mix,
     _normalize_top_pain_points,
@@ -25,3 +26,38 @@ def test_build_interaction_rows_shape():
     rows = _build_interaction_rows(payload)
     assert rows[0]["interaction_id"] == "abc"
     assert rows[0]["duration_min"] == 8
+
+
+def test_build_conversation_history_rows_has_required_columns_and_view():
+    payload = {
+        "session_drilldown": [
+            {
+                "session_id": "abc",
+                "turns": 6,
+                "pain_points": ["budget", "financing", "availability"],
+                "sentiment": -0.4,
+                "summary": "Customer is interested but blocked on financing.",
+            }
+        ]
+    }
+    rows = _build_conversation_history_rows(payload)
+    required_columns = {
+        "interaction_id",
+        "date_of_interaction",
+        "time_of_interaction",
+        "customer_name",
+        "contact_details",
+        "channel",
+        "summary_of_interaction",
+        "top_5_pain_points",
+        "weights",
+        "seriousness_to_proceed",
+        "icp_primary",
+        "conversation_duration_min",
+        "assigned_manager",
+        "status",
+        "view",
+    }
+    assert required_columns.issubset(rows[0].keys())
+    assert rows[0]["view"] == "View"
+    assert rows[0]["seriousness_to_proceed"] == "High"

@@ -59,6 +59,34 @@ def _build_interaction_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
+def _build_conversation_history_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for s in payload.get("session_drilldown", []) or []:
+        pain_list = [str(p).replace("_", " ").title() for p in (s.get("pain_points") or [])]
+        sentiment = float(s.get("sentiment", 0.0))
+        seriousness = "High" if sentiment < -0.25 else "Medium" if sentiment < 0.15 else "Low"
+        rows.append(
+            {
+                "interaction_id": s.get("session_id", "unknown"),
+                "date_of_interaction": str(date.today()),
+                "time_of_interaction": "--:--",
+                "customer_name": s.get("customer_name", "Prospect"),
+                "contact_details": s.get("contact", "not_provided@example.com"),
+                "channel": s.get("channel", "chat"),
+                "summary_of_interaction": s.get("summary", "Customer discussed vehicle preferences and constraints."),
+                "top_5_pain_points": ", ".join(pain_list[:5]) if pain_list else "N/A",
+                "weights": int(s.get("turns", 0)),
+                "seriousness_to_proceed": seriousness,
+                "icp_primary": s.get("icp_primary", "Inferred"),
+                "conversation_duration_min": int(s.get("turns", 0)) * 2,
+                "assigned_manager": s.get("owner", "Unassigned"),
+                "status": s.get("status", "open"),
+                "view": "View",
+            }
+        )
+    return rows
+
+
 def render_analytics_dashboard(client: Any) -> None:
     # Step 1 from plan: reset legacy admin fields and show redesigned admin IA.
     st.subheader("Admin Intelligence Console")
@@ -113,7 +141,26 @@ def render_analytics_dashboard(client: Any) -> None:
     else:
         st.warning("No interactions found for current filters.")
 
-    st.markdown("### 5) Dashboard Reports")
+    st.markdown("### 5) Conversation History")
+    history_rows = _build_conversation_history_rows(payload)
+    if history_rows:
+        st.dataframe(history_rows, use_container_width=True, hide_index=True)
+        selected_interaction = st.selectbox(
+            "Select interaction row to view details",
+            [r["interaction_id"] for r in history_rows],
+            key="conversation_history_view",
+        )
+        st.button("View", key="conversation_history_view_btn")
+        st.json(
+            {
+                "interaction_id": selected_interaction,
+                "report": "Detailed conversation report placeholder with transcript and metadata.",
+            }
+        )
+    else:
+        st.warning("No conversation history available for current filters.")
+
+    st.markdown("### 6) Dashboard Reports")
     trend_rows = payload.get("sentiment_trends", {})
     if trend_rows:
         chart_rows = [{"date": d, **vals} for d, vals in trend_rows.items()]
