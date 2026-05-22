@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+from datetime import datetime
 from fastapi import APIRouter
 
-from src.backend.services.ai.conversation_orchestrator import get_session_pain_points, get_session_intelligence, aggregate_intelligence_trends
+from src.backend.services.ai.conversation_orchestrator import (
+    SENTIMENT_LABEL_NEGATIVE,
+    aggregate_intelligence_trends,
+    get_session_intelligence,
+    get_session_pain_points,
+    summarize_analytics_dashboard,
+)
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -34,3 +41,20 @@ def session_intelligence(session_id: str):
 @router.get("/trends")
 def intelligence_trends(start_date: str | None = None, end_date: str | None = None):
     return aggregate_intelligence_trends(start_date=start_date, end_date=end_date)
+
+
+@router.get('/dashboard')
+def analytics_dashboard(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    vehicle_type: str | None = None,
+    fuel_type: str | None = None,
+    stage: str | None = None,
+):
+    return summarize_analytics_dashboard(
+        start_date=start_date,
+        end_date=end_date,
+        vehicle_type=vehicle_type,
+        fuel_type=fuel_type,
+        stage=stage,
+    )

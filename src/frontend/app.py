@@ -9,6 +9,7 @@ from src.frontend.components.car_detail import car_detail
 from src.frontend.components.enquiry_form import enquiry_form
 from src.frontend.components.finance_summary import finance_summary
 from src.frontend.components.header import render_header
+from src.frontend.components.analytics_dashboard import render_analytics_dashboard
 from src.frontend.components.summary_cards import summary_cards
 from src.frontend.state.session_state import get_preferences, get_session_id
 
@@ -515,6 +516,9 @@ def main():
         _render_chat_panel()
     with rec_col:
         _render_recommendations_panel(session_id)
+
+    st.divider()
+    render_analytics_dashboard(client)
 
     selected_vehicle = st.session_state.get("selected_vehicle_obj")
     if selected_vehicle:
