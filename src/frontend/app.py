@@ -318,12 +318,14 @@ input, textarea {
 }
 
 .car-img {
+  display: block;
   width: 100%;
-  height: 150px;
+  height: 240px;
   object-fit: contain;
+  object-position: center center;
   background: linear-gradient(180deg, #ffffff, #f5fbff);
   border-radius: 18px;
-  margin-bottom: 1rem;
+  margin: 0 auto 1rem;
 }
 
 .badge {
