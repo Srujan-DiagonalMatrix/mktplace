@@ -1,5 +1,6 @@
 from __future__ import annotations
 
-import streamlit as st
+from src.frontend.app import main
 
-st.set_page_config(page_title="Settings", layout="wide")
+
+main(active_page="Admin")

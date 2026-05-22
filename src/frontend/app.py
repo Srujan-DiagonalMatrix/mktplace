@@ -511,15 +511,16 @@ def _render_safety_footer() -> None:
     )
 
 
-def main():
-    st.set_page_config(page_title="AI Car Buying Assistant", layout="wide")
+def main(active_page: str = "Chat", configure_page: bool = True):
+    if configure_page:
+        st.set_page_config(page_title=f"{active_page} · AI Car Buying Assistant", layout="wide")
     _render_page_css()
 
     session_id = get_session_id()
 
     nav_col, chat_col, rec_col = st.columns([0.62, 2.8, 5.4], gap="large")
     with nav_col:
-        sidebar_nav(active="Chat")
+        sidebar_nav(active=active_page)
     with chat_col:
         _render_title_card()
         _render_chat_panel()
