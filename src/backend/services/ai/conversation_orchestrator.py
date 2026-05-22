@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict
 import copy
+import re
 import time
 
 
@@ -69,6 +70,17 @@ class MemoryValue:
 # Minimal in-memory orchestrator for sessions (demo-only)
 _SESSIONS: Dict[str, Dict[str, Any]] = {}
 
+PAIN_POINT_TAXONOMY: dict[str, tuple[tuple[str, float], ...]] = {
+    "pricing_confusion": ((r"\b(confus(?:ed|ing)|don't understand|unclear|explain)\b.*\b(price|pricing|cost)\b", 0.9),),
+    "apr_interest_concern": ((r"\b(apr|interest|rate|rates)\b", 0.8), (r"\btoo high|high\b.*\b(apr|interest)\b", 0.95)),
+    "deposit_affordability": ((r"\bdeposit\b.*\b(can't|cannot|afford|too much|high)\b", 0.95), (r"\bafford\b.*\bdeposit\b", 0.9)),
+    "term_uncertainty": ((r"\b(term|months|length|duration)\b.*\b(not sure|unsure|don't know|unclear)\b", 0.9),),
+    "trust_reliability_concerns": ((r"\b(trust|reliable|reliability|scam|legit|honest)\b", 0.85),),
+    "process_friction": ((r"\b(too many steps|complicated|friction|difficult process|takes too long|slow process)\b", 0.9),),
+}
+
+PAIN_POINT_CONFIDENCE_THRESHOLD = 0.78
+
 
 def _new_session(session_id: str) -> Dict[str, Any]:
     return {
@@ -82,6 +94,8 @@ def _new_session(session_id: str) -> Dict[str, Any]:
         "last_question_asked_at": 0.0,
         "asked_question_keys": [],
         "hesitation_count": 0,
+        "pain_points": {},
+        "pain_points_by_turn": {},
     }
 
 
@@ -97,6 +111,52 @@ def create_or_get_session(session_id: str | None, resume: bool = True) -> Dict[s
 def add_message(session_id: str, message: str) -> None:
     s = create_or_get_session(session_id)
     s["messages"].append(message)
+    s["turn_counter"] += 1
+
+
+def extract_pain_points_for_turn(session_id: str, turn_id: str, text: str) -> list[dict[str, Any]]:
+    s = create_or_get_session(session_id)
+    normalized = text.strip().lower()
+    if not normalized:
+        return []
+
+    matched: list[dict[str, Any]] = []
+    for label, patterns in PAIN_POINT_TAXONOMY.items():
+        confidence = 0.0
+        for pattern, score in patterns:
+            if re.search(pattern, normalized):
+                confidence = max(confidence, score)
+        if confidence < PAIN_POINT_CONFIDENCE_THRESHOLD:
+            continue
+        matched.append({"label": label, "confidence": confidence})
+
+        existing = s["pain_points"].get(label)
+        if existing:
+            existing["confidence"] = max(float(existing["confidence"]), confidence)
+            existing["last_seen_turn_id"] = turn_id
+            existing["source_turn_ids"] = sorted(set(existing["source_turn_ids"] + [turn_id]))
+        else:
+            s["pain_points"][label] = {
+                "label": label,
+                "confidence": confidence,
+                "source_turn_ids": [turn_id],
+                "first_seen_turn_id": turn_id,
+                "last_seen_turn_id": turn_id,
+            }
+
+    # De-dup labels for a turn (multi-pattern hits)
+    deduped_turn = {item["label"]: item for item in matched}
+    s["pain_points_by_turn"][turn_id] = list(deduped_turn.values())
+    return list(deduped_turn.values())
+
+
+def get_session_pain_points(session_id: str) -> dict[str, Any]:
+    s = create_or_get_session(session_id)
+    return {
+        "session_id": session_id,
+        "pain_points": sorted(copy.deepcopy(list(s.get("pain_points", {}).values())), key=lambda p: p["label"]),
+        "pain_points_by_turn": copy.deepcopy(s.get("pain_points_by_turn", {})),
+    }
 
 
 def _set_memory_value(session: Dict[str, Any], key: str, value: Any, confidence: float) -> None:
@@ -112,7 +172,6 @@ def _set_memory_value(session: Dict[str, Any], key: str, value: Any, confidence:
 
 def update_preferences(session_id: str, prefs: Dict[str, Any], overwrite: bool = True, min_confidence: float = 0.5) -> None:
     s = create_or_get_session(session_id)
-    s["turn_counter"] += 1
     for raw_key, value in prefs.items():
         key = _normalize_key(raw_key)
         if key not in CANONICAL_PREFERENCE_SCHEMA:
