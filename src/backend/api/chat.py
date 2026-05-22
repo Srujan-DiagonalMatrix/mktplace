@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import time
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 from src.backend.schemas.chat import ChatMessage, ChatResponse
+from src.backend.core.database import get_db
+from src.backend.repositories.sessions import SessionsRepository
 from src.backend.services.ai.preference_extractor import extract_preferences_from_text
 from src.backend.services.inventory.catalog import get_default_catalog
 from src.backend.services.ai.conversation_orchestrator import (
@@ -92,16 +95,27 @@ def _build_next_reply(preferences: dict) -> tuple[str, list[str] | None, str | N
 
 
 @router.post("/message", response_model=ChatResponse)
-def post_message(payload: ChatMessage):
+def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
     s = create_or_get_session(payload.session_id)
     if not s:
         raise HTTPException(status_code=500, detail="Failed to create session")
     session_id = s["session_id"]
+    repo = SessionsRepository(db)
+    persistence_enabled = True
+    try:
+        if not repo.get_session(session_id):
+            repo.create_session(session_id=session_id, stage="chat")
+    except Exception:
+        persistence_enabled = False
     add_message(session_id, payload.message)
+    if persistence_enabled:
+        repo.create_turn(session_id=session_id, role="user", content=payload.message)
     prefs = extract_preferences_from_text(payload.message)
     existing = get_preferences(session_id)
     last_question_key = get_last_question_key(session_id)
     if last_question_key:
+        if persistence_enabled:
+            repo.log_event(session_id=session_id, event_type="question_answered", stage=last_question_key, details={"answer": payload.message})
         prefs[last_question_key] = prefs.get(last_question_key) or payload.message.strip()
         if last_question_key in {"doors", "seats", "term_months", "annual_mileage_limit"} and str(payload.message).strip().isdigit():
             prefs[last_question_key] = int(str(payload.message).strip())
@@ -115,10 +129,14 @@ def post_message(payload: ChatMessage):
             prefs.pop("monthly_budget", None)
     update_preferences(session_id, prefs)
     current = get_preferences(session_id)
+    if persistence_enabled:
+        repo.create_preference_snapshot(session_id=session_id, stage="chat", payload=current)
     if not _has_matching_inventory(current):
         current.clear()
         set_last_question_key(session_id, "fuel_type")
         set_last_question_asked_at(session_id, time.time())
+        if persistence_enabled:
+            repo.log_event(session_id=session_id, event_type="unanswered_timeout_drop", stage="fuel_type")
         return ChatResponse(
             session_id=session_id,
             reply=(
@@ -143,6 +161,13 @@ def post_message(payload: ChatMessage):
     elif next_question_key is not None:
         set_last_question_asked_at(session_id, now)
     set_last_question_key(session_id, next_question_key)
+    if persistence_enabled:
+        if next_question_key is not None:
+            repo.log_event(session_id=session_id, event_type="question_asked", stage=next_question_key, details={"reply": reply})
+        else:
+            repo.log_event(session_id=session_id, event_type="user_exit", stage="completed")
+        repo.create_turn(session_id=session_id, role="assistant", content=reply)
+        repo.update_stage(session_id, next_question_key or "completed")
     return ChatResponse(
         session_id=session_id,
         reply=reply,
