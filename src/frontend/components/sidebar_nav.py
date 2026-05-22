@@ -4,22 +4,21 @@ from html import escape
 
 import streamlit as st
 
-NAV_ITEMS: tuple[tuple[str, str], ...] = (
-    ("Chat", "💬"),
-    ("Recommendations", "✨"),
-    ("Finance", "💳"),
-    ("Shortlist", "♡"),
-    ("Settings", "⚙️"),
+NAV_ITEMS: tuple[tuple[str, str, str], ...] = (
+    ("Chat", "💬", "/chat"),
+    ("Recommendations", "✨", "/recommendations"),
+    ("Finance", "💳", "/finance"),
+    ("Shortlist", "♡", "/shortlist"),
+    ("Admin", "⚙️", "/Admin"),
 )
 
 
-def _nav_item_html(label: str, icon: str, active: str) -> str:
+def _nav_item_html(label: str, icon: str, route: str, active: str) -> str:
     is_active = label == active
     classes = "nav-item active" if is_active else "nav-item"
     aria_current = ' aria-current="page"' if is_active else ""
-    route = f"/{escape(label)}"
     return (
-        f'<a class="nav-link" href="{route}">'
+        f'<a class="nav-link" href="{escape(route)}" target="_self">'
         f'<div class="{classes}"{aria_current}>'
         f"<span>{escape(icon)}</span>{escape(label)}"
         "</div></a>"
@@ -28,7 +27,8 @@ def _nav_item_html(label: str, icon: str, active: str) -> str:
 
 def _sidebar_nav_html(active: str) -> str:
     nav_items = "\n".join(
-        _nav_item_html(label=label, icon=icon, active=active) for label, icon in NAV_ITEMS
+        _nav_item_html(label=label, icon=icon, route=route, active=active)
+        for label, icon, route in NAV_ITEMS
     )
     return f"""
     <aside class="glass-card nav-card" aria-label="Primary navigation">
