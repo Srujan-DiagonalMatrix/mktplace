@@ -20,7 +20,8 @@ def _nav_item_html(label: str, icon: str, route: str, active: str) -> str:
     return (
         f'<a class="nav-link" href="{escape(route)}" target="_self">'
         f'<div class="{classes}"{aria_current}>'
-        f"<span>{escape(icon)}</span>{escape(label)}"
+        f'<span class="nav-icon">{escape(icon)}</span>'
+        f'<span class="nav-label">{escape(label)}</span>'
         "</div></a>"
     )
 
