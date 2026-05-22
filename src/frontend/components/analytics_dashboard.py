@@ -68,6 +68,22 @@ def _render_section(title: str) -> None:
     st.markdown(f"### {title}")
 
 
+
+
+def _load_dashboard_payload(client: Any, start: date, end: date) -> dict[str, Any]:
+    try:
+        payload = client.get_analytics_dashboard(
+            start_date=str(start) if start else None,
+            end_date=str(end) if end else None,
+            vehicle_type=None,
+            fuel_type=None,
+            stage=None,
+        )
+        return payload if isinstance(payload, dict) else {}
+    except Exception:
+        st.warning('Analytics backend is unavailable. Showing demo insights.')
+        return {}
+
 def render_analytics_dashboard(client: Any) -> None:
     st.markdown(
         """
@@ -82,13 +98,7 @@ def render_analytics_dashboard(client: Any) -> None:
     start = date.today() - timedelta(days=29)
     end = date.today()
 
-    payload = client.get_analytics_dashboard(
-        start_date=str(start) if start else None,
-        end_date=str(end) if end else None,
-        vehicle_type=None,
-        fuel_type=None,
-        stage=None,
-    )
+    payload = _load_dashboard_payload(client, start, end)
 
     _kpi_cards(_build_demo_dataframe(payload))
 
