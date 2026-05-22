@@ -9,7 +9,6 @@ from src.frontend.components.car_detail import car_detail
 from src.frontend.components.enquiry_form import enquiry_form
 from src.frontend.components.finance_summary import finance_summary
 from src.frontend.components.header import render_header
-from src.frontend.components.analytics_dashboard import render_analytics_dashboard
 from src.frontend.components.summary_cards import summary_cards
 from src.frontend.state.session_state import get_preferences, get_session_id
 
@@ -566,15 +565,6 @@ def main(active_page: str = "Chat", configure_page: bool = True):
 
     if active_page in {"Deals", "Finance", "Shortlist"}:
         _render_empty_page(active_page)
-        _render_safety_footer()
-        return
-
-    if active_page == "Admin":
-        nav_col, admin_col = st.columns([0.62, 8.2], gap="large")
-        with nav_col:
-            sidebar_nav(active=active_page)
-        with admin_col:
-            render_analytics_dashboard(client)
         _render_safety_footer()
         return
 

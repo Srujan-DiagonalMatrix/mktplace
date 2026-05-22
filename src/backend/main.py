@@ -13,7 +13,6 @@ from src.backend.api.recommendations import router as recommendations_router
 from src.backend.api.finance import router as finance_router
 from src.backend.api.shortlist import router as shortlist_router
 from src.backend.api.comparisons import router as comparisons_router
-from src.backend.api.admin import router as admin_router
 from src.backend.api.analytics import router as analytics_router
 
 app = FastAPI(title="AI Car Buying Assistant Backend", version="0.1.0")
@@ -29,7 +28,6 @@ app.include_router(recommendations_router)
 app.include_router(finance_router)
 app.include_router(shortlist_router)
 app.include_router(comparisons_router)
-app.include_router(admin_router)
 app.include_router(analytics_router)
 
 
