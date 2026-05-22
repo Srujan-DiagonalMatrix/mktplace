@@ -71,22 +71,18 @@ def _render_section(title: str) -> None:
 def render_analytics_dashboard(client: Any) -> None:
     st.subheader('Reports · Executive Analytics')
 
-    f1, f2, f3, f4, f5 = st.columns(5)
-    start = f1.date_input('Start date', value=date.today() - timedelta(days=29))
-    end = f2.date_input('End date', value=date.today())
-    stage = f3.selectbox('Session stage', ['all', 'awareness', 'consideration', 'decision'])
-    channel = f4.selectbox('Channel', ['all', 'web', 'chat', 'whatsapp'])
-    granularity = f5.selectbox('Granularity', ['day', 'week', 'month'])
+    start = date.today() - timedelta(days=29)
+    end = date.today()
 
     payload = client.get_analytics_dashboard(
         start_date=str(start) if start else None,
         end_date=str(end) if end else None,
         vehicle_type=None,
         fuel_type=None,
-        stage=None if stage == 'all' else stage,
+        stage=None,
     )
 
-    st.caption(f"As of {date.today().isoformat()} · Channel: {channel} · Granularity: {granularity}")
+    st.caption(f"As of {date.today().isoformat()}")
     _kpi_cards(_build_demo_dataframe(payload))
 
     trend_df = _build_demo_dataframe(payload)
