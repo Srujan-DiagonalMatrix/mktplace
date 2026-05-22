@@ -38,3 +38,7 @@ class BackendClient:
 
     def get_finance(self, vehicle_id: str, deposit: float = 0.0, term_months: int = 36) -> Any:
         return requests.get(f"{self.base}/finance/estimate", params={"vehicle_id": vehicle_id, "deposit": deposit, "term_months": term_months}).json()
+
+    def get_analytics_dashboard(self, **params) -> Any:
+        clean = {k: v for k, v in params.items() if v is not None and v != "None"}
+        return requests.get(f"{self.base}/analytics/dashboard", params=clean).json()

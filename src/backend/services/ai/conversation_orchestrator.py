@@ -497,3 +497,111 @@ def reset_hesitation(session_id: str) -> None:
 def get_hesitation_count(session_id: str) -> int:
     s = create_or_get_session(session_id)
     return int(s.get("hesitation_count", 0))
+
+
+
+def _turn_stage(turn_id: str) -> str:
+    try:
+        idx = int(turn_id.split('-')[-1])
+    except Exception:
+        return 'consideration'
+    if idx <= 2:
+        return 'awareness'
+    if idx <= 4:
+        return 'consideration'
+    return 'decision'
+
+
+def summarize_analytics_dashboard(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    vehicle_type: str | None = None,
+    fuel_type: str | None = None,
+    stage: str | None = None,
+) -> dict[str, Any]:
+    sd = datetime.fromisoformat(start_date).date() if start_date else None
+    ed = datetime.fromisoformat(end_date).date() if end_date else None
+    sentiment_by_date: dict[str, dict[str, int]] = {}
+    funnel_counts = {'awareness': 0, 'consideration': 0, 'decision': 0}
+    pain_counts: dict[str, dict[str, Any]] = {}
+    objections: dict[str, int] = {}
+    faqs: dict[str, int] = {}
+    filtered_sessions = 0
+    for session in _SESSIONS.values():
+        prefs = session.get('preferences', {})
+        if vehicle_type and str(prefs.get('vehicle_type', '')).lower() != vehicle_type.lower():
+            continue
+        if fuel_type and str(prefs.get('fuel_type', '')).lower() != fuel_type.lower():
+            continue
+        filtered_sessions += 1
+        for meta in session.get('messages_meta', []):
+            created = meta.get('created_at')
+            if not created:
+                continue
+            created_date = created.date()
+            if sd and created_date < sd:
+                continue
+            if ed and created_date > ed:
+                continue
+            current_stage = _turn_stage(meta.get('turn_id', ''))
+            if stage and current_stage != stage:
+                continue
+            funnel_counts[current_stage] += 1
+            day = created_date.isoformat()
+            sentiment_by_date.setdefault(day, {'positive': 0, 'neutral': 0, 'negative': 0})
+            intel = session.get('turn_intelligence', {}).get(meta.get('turn_id'))
+            if intel:
+                label = intel.get('sentiment', {}).get('label', 'neutral')
+                sentiment_by_date[day][label] = sentiment_by_date[day].get(label, 0) + 1
+            text = next((m for m in session.get('messages', []) if isinstance(m, str)), '')
+            t = text.lower()
+            if '?' in t:
+                faqs['general_question'] = faqs.get('general_question', 0) + 1
+            if any(x in t for x in ('worried', 'concern', 'not sure', "can't", 'cannot')):
+                objections['budget_or_trust'] = objections.get('budget_or_trust', 0) + 1
+        for label, info in session.get('pain_points', {}).items():
+            pain_counts[label] = {
+                'label': label,
+                'frequency': pain_counts.get(label, {}).get('frequency', 0) + int(info.get('frequency', 0)),
+                'max_confidence': max(float(info.get('confidence', 0.0)), float(pain_counts.get(label, {}).get('max_confidence', 0.0))),
+            }
+
+    top_pain_points = sorted(pain_counts.values(), key=lambda x: (-x['frequency'], -x['max_confidence'], x['label']))
+    dropoff = {
+        'awareness_to_consideration': max(funnel_counts['awareness'] - funnel_counts['consideration'], 0),
+        'consideration_to_decision': max(funnel_counts['consideration'] - funnel_counts['decision'], 0),
+    }
+    recommended_actions = [
+        {'issue': item['label'], 'action': f"Prioritize playbook for {item['label'].replace('_', ' ')}", 'priority': i + 1}
+        for i, item in enumerate(top_pain_points[:3])
+    ]
+    return {
+        'filters': {
+            'start_date': start_date,
+            'end_date': end_date,
+            'vehicle_type': vehicle_type,
+            'fuel_type': fuel_type,
+            'stage': stage,
+        },
+        'kpis': {
+            'sessions': filtered_sessions,
+            'top_negative_sentiment_days': sum(1 for d in sentiment_by_date.values() if d.get('negative', 0) > d.get('positive', 0)),
+            'dropoff_total': sum(dropoff.values()),
+            'unique_pain_points': len(top_pain_points),
+        },
+        'top_pain_points': top_pain_points,
+        'sentiment_trends': dict(sorted(sentiment_by_date.items())),
+        'dropoff_funnel': {'stages': funnel_counts, 'dropoff': dropoff},
+        'recurring_objections': sorted([{'label': k, 'count': v} for k, v in objections.items()], key=lambda x: -x['count']),
+        'recurring_faqs': sorted([{'label': k, 'count': v} for k, v in faqs.items()], key=lambda x: -x['count']),
+        'session_drilldown': [
+            {
+                'session_id': s['session_id'],
+                'turns': len(s.get('messages_meta', [])),
+                'pain_points': sorted(list(s.get('pain_points', {}).keys())),
+                'sentiment': get_session_intelligence(s['session_id'])['session_sentiment_score'],
+            }
+            for s in _SESSIONS.values()
+        ],
+        'recommended_actions': recommended_actions,
+    }
