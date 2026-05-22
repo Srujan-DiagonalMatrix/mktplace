@@ -8,6 +8,8 @@ from src.backend.core.database import get_db
 from src.backend.repositories.sessions import SessionsRepository
 from src.backend.services.ai.preference_extractor import extract_preferences_from_text
 from src.backend.services.inventory.catalog import get_default_catalog
+from src.backend.services.ai.chat_llm_orchestrator import ChatOrchestrator, PromptTemplate
+
 from src.backend.services.ai.conversation_orchestrator import (
     create_or_get_session,
     add_message,
@@ -20,6 +22,8 @@ from src.backend.services.ai.conversation_orchestrator import (
 )
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+_orchestrator = ChatOrchestrator()
 
 def _catalog_options(field_name: str) -> list[str]:
     try:
@@ -161,6 +165,10 @@ def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
     elif next_question_key is not None:
         set_last_question_asked_at(session_id, now)
     set_last_question_key(session_id, next_question_key)
+    llm_payload = _orchestrator.run(session=s, user_message=payload.message, template=PromptTemplate.FOLLOW_UP)
+    if llm_payload.used_llm and llm_payload.response is not None:
+        reply = llm_payload.response.reply
+
     if persistence_enabled:
         if next_question_key is not None:
             repo.log_event(session_id=session_id, event_type="question_asked", stage=next_question_key, details={"reply": reply})
