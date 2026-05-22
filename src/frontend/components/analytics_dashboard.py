@@ -7,13 +7,13 @@ import pandas as pd
 import streamlit as st
 
 
-
-
 def transform_sentiment_trends(payload: dict[str, Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for day, sentiments in payload.get('sentiment_trends', {}).items():
         rows.append({'date': day, **sentiments})
     return rows
+
+
 def _date_range(start: date, periods: int) -> list[str]:
     return [(start + timedelta(days=i)).isoformat() for i in range(periods)]
 
@@ -47,6 +47,20 @@ def _build_demo_dataframe(payload: dict[str, Any], days: int = 30) -> pd.DataFra
     return pd.DataFrame(rows)
 
 
+def _render_theme() -> None:
+    st.markdown(
+        """
+        <style>
+          .stApp { background: #F5F7FB; }
+          .insights-header h1 { margin:0; font-size: 2rem; font-weight: 700; color:#0B1F4D; }
+          .insights-header p { margin:.2rem 0 0; color:#475569; font-size:1rem; }
+          .filter-pill { background:#fff; border:1px solid #E5EAF2; border-radius:12px; padding:10px 12px; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def _kpi_cards(df: pd.DataFrame) -> None:
     total_sessions = int(df['sessions'].sum())
     total_enquiries = int(df['enquiries'].sum())
@@ -68,8 +82,6 @@ def _render_section(title: str) -> None:
     st.markdown(f"### {title}")
 
 
-
-
 def _load_dashboard_payload(client: Any, start: date, end: date) -> dict[str, Any]:
     try:
         payload = client.get_analytics_dashboard(
@@ -84,92 +96,52 @@ def _load_dashboard_payload(client: Any, start: date, end: date) -> dict[str, An
         st.warning('Analytics backend is unavailable. Showing demo insights.')
         return {}
 
+
+def _render_filters(start: date, end: date) -> None:
+    c1, c2, c3, c4, c5 = st.columns([2.1, 1.2, 1.2, 1.2, 1])
+    c1.markdown(f"<div class='filter-pill'><b>Date Range</b><br>{start.strftime('%b %d, %Y')} – {end.strftime('%b %d, %Y')}</div>", unsafe_allow_html=True)
+    c2.markdown("<div class='filter-pill'><b>Channel</b><br>All</div>", unsafe_allow_html=True)
+    c3.markdown("<div class='filter-pill'><b>Region</b><br>All</div>", unsafe_allow_html=True)
+    c4.markdown("<div class='filter-pill'><b>Vehicle</b><br>All</div>", unsafe_allow_html=True)
+    c5.button('Refresh', use_container_width=True)
+
+
 def render_analytics_dashboard(client: Any) -> None:
-    st.markdown(
-        """
-        <div style="padding: 0.35rem 0 0.9rem 0;">
-          <h1 style="margin:0; font-size:2rem; font-weight:800; letter-spacing:-0.02em;">Customer Insights</h1>
-          <p style="margin:0.35rem 0 0; color:#6b7280; font-size:0.98rem;">Executive analytics for customer conversations, funnel health, and outcomes.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    _render_theme()
+    st.markdown('<div class="insights-header"><h1>Analytics Dashboard</h1><p>Executive Insights</p></div>', unsafe_allow_html=True)
 
     start = date.today() - timedelta(days=29)
     end = date.today()
+    _render_filters(start, end)
 
     payload = _load_dashboard_payload(client, start, end)
-
-    _kpi_cards(_build_demo_dataframe(payload))
-
     trend_df = _build_demo_dataframe(payload)
 
-    _render_section('Conversation & Conversion')
-    r1c1, r1c2 = st.columns(2)
+    _kpi_cards(trend_df)
+
+    _render_section('1. Conversation & Conversion')
+    r1c1, r1c2, r1c3, r1c4 = st.columns(4)
     r1c1.line_chart(trend_df, x='date', y=['sessions', 'enquiries', 'conversions'], use_container_width=True)
     r1c2.area_chart(trend_df, x='date', y=['dropoffs'], use_container_width=True)
 
-    r2c1, r2c2 = st.columns(2)
-    funnel = pd.DataFrame(
-        {
-            'stage': ['Conversation started', 'Enquiry submitted', 'Shortlisted', 'Converted'],
-            'count': [
-                int(trend_df['sessions'].sum()),
-                int(trend_df['enquiries'].sum()),
-                int(trend_df['enquiries'].sum() * 0.45),
-                int(trend_df['conversions'].sum()),
-            ],
-        }
-    ).set_index('stage')
-    r2c1.bar_chart(funnel, horizontal=True, use_container_width=True)
-    channel_df = pd.DataFrame(
-        {
-            'channel': ['Web', 'Chat', 'WhatsApp', 'Phone'],
-            'Enquiry rate': [36, 40, 31, 24],
-            'Conversion rate': [11, 13, 9, 7],
-            'Drop-off rate': [17, 14, 19, 22],
-        }
-    ).set_index('channel')
-    r2c2.bar_chart(channel_df, use_container_width=True)
+    funnel = pd.DataFrame({'stage': ['Conversation started', 'Converted', 'Enquiry submitted', 'Shortlisted'], 'count': [int(trend_df['sessions'].sum()), int(trend_df['conversions'].sum()), int(trend_df['enquiries'].sum()), int(trend_df['enquiries'].sum() * 0.45)]}).set_index('stage')
+    r1c3.bar_chart(funnel, horizontal=True, use_container_width=True)
+    channel_df = pd.DataFrame({'channel': ['Chat', 'Phone', 'Web', 'WhatsApp'], 'Enquiry rate': [60, 44, 63, 55], 'Drop-off rate': [25, 33, 24, 29], 'Conversion rate': [15, 23, 13, 16]}).set_index('channel')
+    r1c4.bar_chart(channel_df, use_container_width=True)
 
-    _render_section('Sentiment, Intent & Themes')
+    _render_section('2. Sentiment, Intent & Themes')
+    r2c1, r2c2, r2c3 = st.columns(3)
+    sentiment = pd.DataFrame({'sentiment': ['Negative', 'Neutral', 'Positive'], 'count': [14, 34, 52]}).set_index('sentiment')
+    r2c1.bar_chart(sentiment, use_container_width=True)
+    r2c2.line_chart(trend_df, x='date', y=['intent_score'], use_container_width=True)
+    themes = pd.DataFrame({'theme': ['Availability', 'Features', 'Finance', 'Pricing', 'Trade-in'], 'frequency': [115, 90, 98, 110, 65]}).set_index('theme')
+    r2c3.bar_chart(themes, horizontal=True, use_container_width=True)
+
+    _render_section('3. Vehicle, Finance & AI Operations')
     r3c1, r3c2, r3c3 = st.columns(3)
-    sentiment = pd.DataFrame({'sentiment': ['Positive', 'Neutral', 'Negative'], 'count': [52, 34, 14]}).set_index('sentiment')
-    r3c1.bar_chart(sentiment, use_container_width=True)
-    r3c2.line_chart(trend_df, x='date', y=['sentiment_score', 'intent_score'], use_container_width=True)
-    themes = pd.DataFrame(
-        {
-            'theme': ['Pricing', 'Availability', 'Finance', 'Trade-in', 'Features'],
-            'frequency': [112, 96, 88, 61, 59],
-        }
-    ).set_index('theme')
-    r3c3.bar_chart(themes, horizontal=True, use_container_width=True)
-
-    _render_section('Vehicle, Finance & AI Operations')
-    r4c1, r4c2, r4c3 = st.columns(3)
-    top_cars = pd.DataFrame(
-        {
-            'car': ['Tesla Model Y', 'Kia EV6', 'Hyundai Tucson', 'Toyota RAV4', 'BMW iX1'],
-            'views': [182, 165, 154, 139, 128],
-            'shortlists': [61, 55, 47, 43, 39],
-        }
-    ).set_index('car')
-    r4c1.bar_chart(top_cars[['views', 'shortlists']], horizontal=True, use_container_width=True)
-
-    finance = pd.DataFrame(
-        {
-            'category': ['Ready', 'Need Advice', 'Not Ready'],
-            'count': [44, 38, 18],
-        }
-    ).set_index('category')
-    r4c2.bar_chart(finance, use_container_width=True)
-
-    ai_df = pd.DataFrame(
-        {
-            'date': trend_df['date'],
-            'api_cost_estimate': [22 + i * 0.6 for i in range(len(trend_df))],
-            'latency_ms': [620 + (i % 8) * 14 for i in range(len(trend_df))],
-        }
-    )
-    r4c3.line_chart(ai_df, x='date', y=['api_cost_estimate', 'latency_ms'], use_container_width=True)
-
+    top_cars = pd.DataFrame({'car': ['BMW iX1', 'Hyundai Tucson', 'Kia EV6', 'Tesla Model Y', 'Toyota RAV4'], 'shortlists': [60, 45, 50, 55, 40], 'views': [240, 210, 240, 240, 180]}).set_index('car')
+    r3c1.bar_chart(top_cars[['shortlists', 'views']], horizontal=True, use_container_width=True)
+    finance = pd.DataFrame({'category': ['Need Advice', 'Not Ready', 'Ready'], 'count': [38, 18, 45]}).set_index('category')
+    r3c2.bar_chart(finance, use_container_width=True)
+    ai_df = pd.DataFrame({'date': trend_df['date'], 'api_cost_estimate': [620 + (i % 8) * 25 for i in range(len(trend_df))], 'latency_ms': [14 + (i % 8) * 1.5 for i in range(len(trend_df))]})
+    r3c3.line_chart(ai_df, x='date', y=['api_cost_estimate', 'latency_ms'], use_container_width=True)
