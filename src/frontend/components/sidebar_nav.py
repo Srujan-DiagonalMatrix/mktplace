@@ -5,10 +5,10 @@ from html import escape
 import streamlit as st
 
 NAV_ITEMS: tuple[tuple[str, str, str], ...] = (
-    ("Chat", "💬", "/chat"),
-    ("Recommendations", "✨", "/recommendations"),
-    ("Finance", "💳", "/finance"),
-    ("Shortlist", "♡", "/shortlist"),
+    ("Chat", "💬", "/Chat"),
+    ("Recommendations", "✨", "/Recommendations"),
+    ("Finance", "💳", "/Finance"),
+    ("Shortlist", "♡", "/Shortlist"),
     ("Admin", "⚙️", "/Admin"),
 )
 

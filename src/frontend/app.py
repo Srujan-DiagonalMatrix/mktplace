@@ -511,23 +511,30 @@ def _render_safety_footer() -> None:
     )
 
 
-def main():
-    st.set_page_config(page_title="AI Car Buying Assistant", layout="wide")
+def main(active_page: str = "Chat", configure_page: bool = True):
+    if configure_page:
+        st.set_page_config(page_title=f"{active_page} · AI Car Buying Assistant", layout="wide")
     _render_page_css()
+
+    if active_page == "Admin":
+        nav_col, admin_col = st.columns([0.62, 8.2], gap="large")
+        with nav_col:
+            sidebar_nav(active=active_page)
+        with admin_col:
+            render_analytics_dashboard(client)
+        _render_safety_footer()
+        return
 
     session_id = get_session_id()
 
     nav_col, chat_col, rec_col = st.columns([0.62, 2.8, 5.4], gap="large")
     with nav_col:
-        sidebar_nav(active="Chat")
+        sidebar_nav(active=active_page)
     with chat_col:
         _render_title_card()
         _render_chat_panel()
     with rec_col:
         _render_recommendations_panel(session_id)
-
-    st.divider()
-    render_analytics_dashboard(client)
 
     selected_vehicle = st.session_state.get("selected_vehicle_obj")
     if selected_vehicle:
