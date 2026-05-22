@@ -101,12 +101,14 @@ input, textarea {
 }
 
 .logo-tile {
-  width: 112px;
-  height: 112px;
+  width: min(112px, 100%);
+  height: auto;
+  aspect-ratio: 1 / 1;
   border-radius: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   color: white;
   font-size: 2.2rem;
   background: linear-gradient(145deg, #0b7cff, #6bbdff);
