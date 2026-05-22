@@ -339,6 +339,32 @@ input, textarea {
 .heart { color: #64748b; }
 .heart:hover { color: var(--sky); }
 
+.recommendation-region .stButton > button {
+  min-height: 2.4rem;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.8rem;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(1) .stButton > button {
+  background: #DBEAFE;
+  border-color: #BFDBFE;
+  color: #1D4ED8;
+}
+
+.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(2) .stButton > button {
+  background: #DCFCE7;
+  border-color: #BBF7D0;
+  color: #166534;
+}
+
+.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(3) .stButton > button {
+  background: #FEE2E2;
+  border-color: #FECACA;
+  color: #991B1B;
+}
+
 .finance-summary {
   margin-top: 1rem;
   padding: 1rem;

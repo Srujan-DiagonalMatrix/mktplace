@@ -3,7 +3,8 @@
     "path": "data/dataset.csv",
     "columns": {
       "inventory": "Car Inventory Data",
-      "pricing": "Pricing Details"
+      "pricing": "Pricing Details",
+      "image": "Car Inventory Data.image"
     },
     "format": "json-in-cells"
   },
@@ -25,8 +26,14 @@
     "disclaimer": "All finance figures are examples only and subject to approval. No credit check is performed in this demo."
   },
   "recommendations": {
-    "min_required_inputs": ["intent", "monthly_budget"],
-    "initial_count": { "min": 1, "max": 3 },
+    "min_required_inputs": [
+      "intent",
+      "monthly_budget"
+    ],
+    "initial_count": {
+      "min": 1,
+      "max": 3
+    },
     "within_turns": 3,
     "within_turns_policy": "acceptance"
   },
