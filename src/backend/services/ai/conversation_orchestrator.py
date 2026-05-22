@@ -5,6 +5,7 @@ from typing import Any, Dict
 import copy
 import re
 import time
+from datetime import datetime
 
 
 CANONICAL_PREFERENCE_SCHEMA: dict[str, type] = {
@@ -82,6 +83,130 @@ PAIN_POINT_TAXONOMY: dict[str, tuple[tuple[str, float], ...]] = {
 PAIN_POINT_CONFIDENCE_THRESHOLD = 0.78
 
 
+SENTIMENT_LABEL_POSITIVE = "positive"
+SENTIMENT_LABEL_NEUTRAL = "neutral"
+SENTIMENT_LABEL_NEGATIVE = "negative"
+
+SENTIMENT_RULES: dict[str, tuple[tuple[str, float], ...]] = {
+    SENTIMENT_LABEL_POSITIVE: ((r"\b(great|good|love|excellent|happy|perfect|thanks|awesome)\b", 0.85),),
+    SENTIMENT_LABEL_NEGATIVE: ((r"\b(worried|anxious|confused|frustrated|can'?t|cannot|too high|expensive|uncertain|unsure)\b", 0.85),),
+}
+
+THEME_RULES: dict[str, tuple[str, ...]] = {
+    "budget_anxiety": ("budget", "afford", "expensive", "too high", "deposit", "monthly"),
+    "ev_uncertainty": ("ev", "electric", "charging", "battery range", "range anxiety"),
+    "apr_concern": ("apr", "interest", "rate"),
+}
+
+THEME_SYNONYM_MAP: dict[str, str] = {
+    "cost_stress": "budget_anxiety",
+    "price_worry": "budget_anxiety",
+    "electric_vehicle_uncertainty": "ev_uncertainty",
+    "charging_concern": "ev_uncertainty",
+}
+
+
+def normalize_theme_label(label: str) -> str:
+    normalized = label.strip().lower().replace(" ", "_")
+    return THEME_SYNONYM_MAP.get(normalized, normalized)
+
+
+def classify_sentiment_for_turn(text: str) -> dict[str, Any]:
+    normalized = text.strip().lower()
+    if not normalized:
+        return {"label": SENTIMENT_LABEL_NEUTRAL, "score": 0.0, "confidence": 0.0, "explainability": {"matched_rules": []}}
+
+    pos_score = max((score for pattern, score in SENTIMENT_RULES[SENTIMENT_LABEL_POSITIVE] if re.search(pattern, normalized)), default=0.0)
+    neg_score = max((score for pattern, score in SENTIMENT_RULES[SENTIMENT_LABEL_NEGATIVE] if re.search(pattern, normalized)), default=0.0)
+    polarity = round(pos_score - neg_score, 3)
+    if polarity > 0.15:
+        label = SENTIMENT_LABEL_POSITIVE
+        confidence = pos_score
+    elif polarity < -0.15:
+        label = SENTIMENT_LABEL_NEGATIVE
+        confidence = neg_score
+    else:
+        label = SENTIMENT_LABEL_NEUTRAL
+        confidence = max(pos_score, neg_score, 0.6 if normalized else 0.0)
+    return {
+        "label": label,
+        "score": polarity,
+        "confidence": round(confidence, 3),
+        "explainability": {"positive_score": pos_score, "negative_score": neg_score},
+    }
+
+
+def extract_themes_for_turn(text: str) -> list[dict[str, Any]]:
+    normalized = text.strip().lower()
+    found: list[dict[str, Any]] = []
+    for label, phrases in THEME_RULES.items():
+        matches = [phrase for phrase in phrases if phrase in normalized]
+        if matches:
+            found.append({"label": label, "confidence": round(min(1.0, 0.55 + 0.1 * len(matches)), 3), "explainability": {"matched_phrases": matches}})
+    return found
+
+
+def record_turn_intelligence(session_id: str, turn_id: str, text: str) -> dict[str, Any]:
+    s = create_or_get_session(session_id)
+    sentiment = classify_sentiment_for_turn(text)
+    themes = extract_themes_for_turn(text)
+    normalized_themes = []
+    for t in themes:
+        canonical = normalize_theme_label(t["label"])
+        entry = {**t, "label": canonical}
+        normalized_themes.append(entry)
+        agg = s["themes"].setdefault(canonical, {"label": canonical, "count": 0, "max_confidence": 0.0, "source_turn_ids": []})
+        agg["count"] += 1
+        agg["max_confidence"] = max(float(agg["max_confidence"]), float(t["confidence"]))
+        agg["source_turn_ids"] = sorted(set(agg["source_turn_ids"] + [turn_id]))
+
+    s["turn_intelligence"][turn_id] = {
+        "turn_id": turn_id,
+        "sentiment": sentiment,
+        "themes": normalized_themes,
+    }
+    s["sentiment_summary"][sentiment["label"]] = s["sentiment_summary"].get(sentiment["label"], 0) + 1
+    return s["turn_intelligence"][turn_id]
+
+
+def get_session_intelligence(session_id: str) -> dict[str, Any]:
+    s = create_or_get_session(session_id)
+    total = sum(s["sentiment_summary"].values()) or 1
+    weighted = (
+        s["sentiment_summary"].get(SENTIMENT_LABEL_POSITIVE, 0) - s["sentiment_summary"].get(SENTIMENT_LABEL_NEGATIVE, 0)
+    ) / total
+    return {
+        "session_id": session_id,
+        "turn_intelligence": copy.deepcopy(s["turn_intelligence"]),
+        "sentiment_summary": copy.deepcopy(s["sentiment_summary"]),
+        "session_sentiment_score": round(weighted, 3),
+        "themes": sorted(copy.deepcopy(list(s["themes"].values())), key=lambda t: (-t["count"], t["label"])),
+    }
+
+
+def aggregate_intelligence_trends(start_date: str | None = None, end_date: str | None = None) -> dict[str, Any]:
+    from datetime import datetime
+    sd = datetime.fromisoformat(start_date) if start_date else None
+    ed = datetime.fromisoformat(end_date) if end_date else None
+    by_date: dict[str, dict[str, Any]] = {}
+    for session in _SESSIONS.values():
+        for turn in session.get("messages_meta", []):
+            created_at = turn["created_at"]
+            if sd and created_at.date() < sd.date():
+                continue
+            if ed and created_at.date() > ed.date():
+                continue
+            key = created_at.date().isoformat()
+            bucket = by_date.setdefault(key, {"sentiment": {SENTIMENT_LABEL_POSITIVE: 0, SENTIMENT_LABEL_NEUTRAL: 0, SENTIMENT_LABEL_NEGATIVE: 0}, "themes": {}})
+            intel = session.get("turn_intelligence", {}).get(turn["turn_id"])
+            if not intel:
+                continue
+            bucket["sentiment"][intel["sentiment"]["label"]] += 1
+            for theme in intel["themes"]:
+                bucket["themes"][theme["label"]] = bucket["themes"].get(theme["label"], 0) + 1
+    return {"start_date": start_date, "end_date": end_date, "by_date": dict(sorted(by_date.items()))}
+
+
 def _new_session(session_id: str) -> Dict[str, Any]:
     return {
         "session_id": session_id,
@@ -96,6 +221,10 @@ def _new_session(session_id: str) -> Dict[str, Any]:
         "hesitation_count": 0,
         "pain_points": {},
         "pain_points_by_turn": {},
+        "turn_intelligence": {},
+        "sentiment_summary": {SENTIMENT_LABEL_POSITIVE: 0, SENTIMENT_LABEL_NEUTRAL: 0, SENTIMENT_LABEL_NEGATIVE: 0},
+        "themes": {},
+        "messages_meta": [],
     }
 
 
@@ -112,6 +241,7 @@ def add_message(session_id: str, message: str) -> None:
     s = create_or_get_session(session_id)
     s["messages"].append(message)
     s["turn_counter"] += 1
+    s["messages_meta"].append({"turn_id": f"turn-{s['turn_counter']}", "created_at": datetime.utcnow()})
 
 
 def extract_pain_points_for_turn(session_id: str, turn_id: str, text: str) -> list[dict[str, Any]]:
