@@ -100,6 +100,8 @@ def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
         created_turn = repo.create_turn(session_id=session_id, role="user", content=payload.message)
         turn_id = created_turn.turn_id
     extract_pain_points_for_turn(session_id, turn_id=turn_id, text=payload.message)
+    from src.backend.services.ai.conversation_orchestrator import record_turn_intelligence
+    record_turn_intelligence(session_id, turn_id=turn_id, text=payload.message)
     prefs = extract_preferences_from_text(payload.message)
     existing = get_preferences(session_id)
     last_question_key = get_last_question_key(session_id)
