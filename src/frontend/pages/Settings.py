@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from src.frontend.app import main
+import streamlit as st
 
-
-main(active_page="Admin")
+st.switch_page("pages/Admin.py")

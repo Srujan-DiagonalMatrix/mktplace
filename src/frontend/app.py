@@ -527,8 +527,9 @@ def main(active_page: str = "Chat", configure_page: bool = True):
     with rec_col:
         _render_recommendations_panel(session_id)
 
-    st.divider()
-    render_analytics_dashboard(client)
+    if active_page == "Admin":
+        st.divider()
+        render_analytics_dashboard(client)
 
     selected_vehicle = st.session_state.get("selected_vehicle_obj")
     if selected_vehicle:

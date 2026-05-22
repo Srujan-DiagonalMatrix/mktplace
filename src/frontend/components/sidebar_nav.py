@@ -9,7 +9,7 @@ NAV_ITEMS: tuple[tuple[str, str, str], ...] = (
     ("Recommendations", "✨", "/Recommendations"),
     ("Finance", "💳", "/Finance"),
     ("Shortlist", "♡", "/Shortlist"),
-    ("Admin", "⚙️", "/Settings"),
+    ("Admin", "⚙️", "/Admin"),
 )
 
 
