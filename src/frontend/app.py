@@ -511,10 +511,24 @@ def _render_safety_footer() -> None:
     )
 
 
+
+
+def _render_empty_page(active_page: str) -> None:
+    nav_col, content_col = st.columns([0.62, 8.2], gap="large")
+    with nav_col:
+        sidebar_nav(active=active_page)
+    with content_col:
+        st.markdown('<div class="glass-card" style="min-height: calc(100vh - 3rem);"></div>', unsafe_allow_html=True)
+
 def main(active_page: str = "Chat", configure_page: bool = True):
     if configure_page:
         st.set_page_config(page_title=f"{active_page} · AI Car Buying Assistant", layout="wide")
     _render_page_css()
+
+    if active_page in {"Recommendations", "Finance", "Shortlist"}:
+        _render_empty_page(active_page)
+        _render_safety_footer()
+        return
 
     if active_page == "Admin":
         nav_col, admin_col = st.columns([0.62, 8.2], gap="large")
