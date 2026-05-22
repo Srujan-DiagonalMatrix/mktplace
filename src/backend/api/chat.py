@@ -19,7 +19,13 @@ from src.backend.services.ai.conversation_orchestrator import (
     get_last_question_key,
     set_last_question_asked_at,
     get_last_question_asked_at,
+    add_asked_question_key,
+    get_asked_question_keys,
+    get_hesitation_count,
+    increment_hesitation,
+    reset_hesitation,
 )
+from src.backend.services.ai.question_policy import select_next_question
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -37,21 +43,6 @@ def _catalog_options(field_name: str) -> list[str]:
         return []
     return sorted(values)
 
-
-QUESTION_SEQUENCE: list[tuple[str, str]] = [
-    ("fuel_type", "What type of fuel would you prefer for your next vehicle?"),
-    ("transmission", "Do you have a preferred transmission type?"),
-    ("mileage_range", "What mileage range would you ideally like?"),
-    ("doors", "How many doors would you prefer?"),
-    ("seats", "How many seats do you need?"),
-    ("monthly_from_gbp", "What monthly budget would you like to stay within?"),
-    ("deposit_gbp", "How much deposit would you ideally like to put down?"),
-    ("term_months", "What finance term would suit you best?"),
-    ("annual_mileage_limit", "Roughly how many miles do you expect to drive each year?"),
-    ("employment_status", "What is your current employment status?"),
-    ("part_exchange", "Do you have a vehicle you would like to part exchange?"),
-    ("callback_opt_in", "When would you ideally like to place your order, I can arrange a callback?"),
-]
 
 STATEMENTS_BY_KEY = {
     "transmission": "That makes sense. I’ll use your preferences to find vehicles that feel practical and suitable for your needs.",
@@ -80,22 +71,13 @@ def _has_matching_inventory(preferences: dict) -> bool:
     return False
 
 
-def _build_next_reply(preferences: dict) -> tuple[str, list[str] | None, str | None]:
-    if not preferences.get("fuel_type"):
-        fuel_options = _catalog_options("fuel_type")
-        return QUESTION_SEQUENCE[0][1], fuel_options or None, "fuel_type"
-    if not preferences.get("transmission"):
-        transmission_options = _catalog_options("transmission")
-        return QUESTION_SEQUENCE[1][1], transmission_options or None, "transmission"
-    for key, question in QUESTION_SEQUENCE[2:]:
-        if preferences.get(key) in (None, ""):
-            return question, None, key
-
-    return (
-        "It was a great experience talking to you conversation, Thank you!",
-        None,
-        None,
-    )
+def _build_next_reply(preferences: dict, asked_keys: list[str], user_message: str, hesitation_count: int) -> tuple[str, list[str] | None, str | None, dict | None]:
+    next_question = select_next_question(preferences, asked_keys=asked_keys, user_message=user_message, hesitation_count=hesitation_count)
+    if not next_question:
+        return ("It was a great experience talking to you conversation, Thank you!", None, None, None)
+    quick_replies = _catalog_options(next_question.key) if next_question.key in {"fuel_type", "transmission"} else None
+    metadata = {"slot": next_question.key, "purpose": next_question.purpose, "category": next_question.category, "required": next_question.required}
+    return (next_question.question, quick_replies or None, next_question.key, metadata)
 
 
 @router.post("/message", response_model=ChatResponse)
@@ -138,6 +120,7 @@ def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
     if not _has_matching_inventory(current):
         current.clear()
         set_last_question_key(session_id, "fuel_type")
+        add_asked_question_key(session_id, "fuel_type")
         set_last_question_asked_at(session_id, time.time())
         if persistence_enabled:
             repo.log_event(session_id=session_id, event_type="unanswered_timeout_drop", stage="fuel_type")
@@ -150,20 +133,29 @@ def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
             ),
             quick_replies=_catalog_options("fuel_type") or None,
         )
+    normalized = payload.message.strip().lower()
+    if normalized in {"maybe", "not sure", "idk", "unsure", "depends"}:
+        hesitation_count = increment_hesitation(session_id)
+    else:
+        reset_hesitation(session_id)
+        hesitation_count = get_hesitation_count(session_id)
     previous_key = last_question_key
     statement = STATEMENTS_BY_KEY.get(previous_key)
     if statement:
-        current_reply, _, _ = _build_next_reply(current)
+        current_reply, _, _, question_metadata = _build_next_reply(current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count)
         reply = f"{statement}\n\n{current_reply}"
-        next_question_key = _build_next_reply(current)[2]
+        next_question_key = _build_next_reply(current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count)[2]
         quick_replies = None
     else:
-        reply, quick_replies, next_question_key = _build_next_reply(current)
+        reply, quick_replies, next_question_key, question_metadata = _build_next_reply(
+            current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count
+        )
     now = time.time()
     if now - get_last_question_asked_at(session_id) < 4 and next_question_key is not None:
         reply = f"Give me a moment while I filter the latest results for you. {reply}"
     elif next_question_key is not None:
         set_last_question_asked_at(session_id, now)
+        add_asked_question_key(session_id, next_question_key)
     set_last_question_key(session_id, next_question_key)
     llm_payload = _orchestrator.run(session=s, user_message=payload.message, template=PromptTemplate.FOLLOW_UP)
     if llm_payload.used_llm and llm_payload.response is not None:
@@ -194,4 +186,5 @@ def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
         part_exchange=current.get("part_exchange"),
         callback_opt_in=current.get("callback_opt_in"),
         quick_replies=quick_replies,
+        question_metadata=question_metadata if next_question_key is not None else None,
     )
