@@ -292,7 +292,7 @@ def test_backend_client_get_recommendations_includes_session_id(monkeypatch):
     assert calls == [
         (
             "http://backend.test/recommendations/from_session",
-            {"session_id": "sess-123"},
+            {"limit": 3, "session_id": "sess-123"},
         )
     ]
 
