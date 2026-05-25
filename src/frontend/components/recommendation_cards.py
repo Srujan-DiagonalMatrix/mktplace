@@ -136,7 +136,7 @@ def _vehicle_id(rec: dict, fallback: str) -> str:
     return str(vehicle_id)
 
 
-def _render_vehicle_card_html(rec: dict, *, idx: int, variant: str) -> None:
+def _render_card_body_html(rec: dict, *, idx: int, variant: str) -> str:
     safe_title = escape(_vehicle_title(rec))
     safe_subtitle = escape(_vehicle_subtitle(rec))
     safe_img_src = escape(_normalise_image_src(rec.get("image")), quote=True)
@@ -144,52 +144,37 @@ def _render_vehicle_card_html(rec: dict, *, idx: int, variant: str) -> None:
     safe_transmission = escape(_spec_value(rec, "transmission"))
     safe_seats = escape(_spec_value(rec, "seats"))
     safe_monthly = escape(_monthly_amount(rec))
-    badge_html = "<div class='badge'>Best Match</div>" if idx == 0 else ""
-
-    if variant == "compact":
-        st.markdown(
-            f"""
-            <div class='car-card' data-testid='recommendation-card'>
-              <div style='position:relative;'>
-                <div style='position:absolute;right:12px;top:12px;' class='heart' aria-label='Shortlist vehicle'>♡</div>
-                <div style='position:absolute;left:12px;top:12px;'>{badge_html}</div>
-                <img class='car-img' src='{safe_img_src}' alt='{safe_title}' />
-              </div>
-              <div style='font-size:18px;font-weight:700;color:#0F2A5F;margin-bottom:6px;'>{safe_title}</div>
-              <div style='font-size:13px;color:#526580;margin-bottom:12px;'>{safe_subtitle}</div>
-              <div style='display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;color:#526580;font-size:13px;'>
-                <div>⛽ {safe_fuel_type}</div>
-                <div>⚙️ {safe_transmission}</div>
-                <div>👥 {safe_seats} seats</div>
-              </div>
-              <div style='font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748B;'>Estimated Monthly</div>
-              <div style='margin-top:4px;font-size:28px;font-weight:800;color:#0B7CFF;'>{safe_monthly}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        return
-
-    st.markdown(
-        f"""
-        <div class='car-card car-card-hero' data-testid='recommendation-card'>
-          <div style='position:relative;'>
-            <div style='position:absolute;left:12px;top:12px;'>{badge_html}</div>
-            <img class='car-img' src='{safe_img_src}' alt='{safe_title}' />
-          </div>
-          <div style='font-size:22px;font-weight:700;color:#0F2A5F;margin-bottom:6px;'>{safe_title}</div>
-          <div style='font-size:14px;color:#526580;margin-bottom:12px;'>{safe_subtitle}</div>
-          <div style='display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;color:#526580;font-size:14px;'>
-            <div>⛽ {safe_fuel_type}</div>
-            <div>⚙️ {safe_transmission}</div>
-            <div>👥 {safe_seats} seats</div>
-          </div>
-          <div style='font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748B;'>Estimated Monthly</div>
-          <div style='margin-top:4px;font-size:30px;font-weight:800;color:#0B7CFF;'>{safe_monthly}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    best_match_html = (
+        "<div class='recommendation-badge'>Best Match</div>" if idx == 0 else ""
     )
+    card_class = "recommendation-card recommendation-card--hero"
+    if variant == "compact":
+        card_class = "recommendation-card recommendation-card--compact"
+
+    return f"""
+        <div class='{card_class}' data-testid='recommendation-card'>
+          <div class='recommendation-image-panel'>
+            {best_match_html}
+            <div class='recommendation-heart' aria-label='Shortlist vehicle'>♡</div>
+            <img class='recommendation-image' src='{safe_img_src}' alt='{safe_title}' />
+          </div>
+          <div class='recommendation-content'>
+            <div class='recommendation-title'>{safe_title}</div>
+            <div class='recommendation-subtitle'>{safe_subtitle}</div>
+            <div class='recommendation-spec-row'>
+              <div class='recommendation-spec-item'>⛽ {safe_fuel_type}</div>
+              <div class='recommendation-spec-item'>⚙️ {safe_transmission}</div>
+              <div class='recommendation-spec-item'>👥 {safe_seats} seats</div>
+            </div>
+            <div class='recommendation-estimated-label'>Estimated Monthly</div>
+            <div class='recommendation-price'>{safe_monthly}</div>
+          </div>
+        </div>
+    """
+
+
+def _render_vehicle_card_html(rec: dict, *, idx: int, variant: str) -> None:
+    st.markdown(_render_card_body_html(rec, idx=idx, variant=variant), unsafe_allow_html=True)
 
 
 def _handle_view_details(rec: dict) -> None:
