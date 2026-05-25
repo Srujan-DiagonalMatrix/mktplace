@@ -60,6 +60,12 @@ Key session-state fields:
 - `selected_vehicle_obj`: stores the selected recommendation object and controls whether `car_detail()` is shown.
 - `selected_vehicle`: stores the selected vehicle id and controls whether `enquiry_form(default_vehicle_id=...)` is shown.
 
+### Recommendation card HTML rendering guardrail
+
+- Recommendation card body uses one `st.markdown(..., unsafe_allow_html=True)` block per card for the visual shell.
+- Action buttons are rendered in native Streamlit containers/columns (not wrapped by manually opened/closed raw HTML tags across multiple `st.markdown` calls).
+- This avoids malformed DOM/markdown boundary issues where later cards can show literal HTML text (for example, `<div ...><img ...>`) instead of rendering images.
+
 ## Chat interaction flow
 
 The Chat area is the primary complete interaction path in the current UI.

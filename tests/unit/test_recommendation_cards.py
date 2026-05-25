@@ -28,6 +28,9 @@ class _FakeStreamlit:
         count = spec if isinstance(spec, int) else len(spec)
         return [_Context() for _ in range(count)]
 
+    def container(self):
+        return _Context()
+
     def button(self, label: str, **kwargs):
         self.button_calls.append((label, kwargs))
         return False
