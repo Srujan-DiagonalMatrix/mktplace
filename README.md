@@ -157,3 +157,18 @@ See `docs/frontend-ui.md` for a fuller UI map and `docs/testing.md` for test str
 - Backend uses `uvicorn --reload`; frontend Streamlit reloads on source changes. Use `scripts/auto-refresh-compose.sh` if you want code/configuration changes to trigger a full `docker compose down` followed by `docker compose up -d --build`.
 - Inventory CSV defaults to `data/dataset.csv`; car images are served from `assets/` where available.
 - If Postgres is unavailable during enquiry submission, the API queues the enquiry in `data/offline_enquiries.jsonl` and returns HTTP `202`. Flush queued enquiries after Postgres is restored with `docker compose exec app python -m src.backend.scripts.flush_offline_enquiries` or `POST /admin/flush_offline`.
+
+
+### docker commands ###
+clear
+git pull
+docker compose -f "docker-compose-ubuntu.yml" down
+docker compose -f "docker-compose-ubuntu.yml" build
+docker compose -f "docker-compose-ubuntu.yml" up -d
+clear
+
+clear
+git pull
+docker compose -f "docker-compose-ubuntu.yml" down
+docker compose -f "docker-compose-ubuntu.yml" up -d
+clear
