@@ -45,6 +45,10 @@ def _normalise_image_src(image_path: Any) -> str:
     Remote URLs and existing data URIs are preserved.
     """
     raw = str(image_path).strip() if image_path else ""
+    # Defensive guard: malformed upstream payloads can occasionally carry
+    # HTML fragments in the image field; never pass those through to <img src>.
+    if raw and ("<" in raw or ">" in raw):
+        raw = ""
     if raw and _is_browser_safe_image_src(raw):
         return raw
 
