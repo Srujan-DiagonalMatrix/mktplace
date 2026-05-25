@@ -330,52 +330,151 @@ input, textarea {
   box-shadow: 0 22px 44px rgba(37, 99, 235, 0.14);
 }
 
-.car-img {
-  width: 100%;
+.st-key-recommendation_card_0,
+.st-key-recommendation_card_1,
+.st-key-recommendation_card_2 {
+  height: 100%;
+  min-height: 450px;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #cfe0ff;
+  border-radius: 24px;
+  padding: 1rem;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.st-key-recommendation_card_0 [data-testid="stVerticalBlock"],
+.st-key-recommendation_card_1 [data-testid="stVerticalBlock"],
+.st-key-recommendation_card_2 [data-testid="stVerticalBlock"] {
+  height: 100%;
+  gap: 0.7rem;
+}
+
+.recommendation-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+.recommendation-image-panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #f7fbff 0%, #eef4f9 100%);
   height: 150px;
-  object-fit: contain;
-  background: linear-gradient(180deg, #ffffff, #f5fbff);
-  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 1rem;
 }
 
-.badge {
+.recommendation-image-panel img {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  display: block;
+}
+
+.recommendation-card-badge {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 2;
   background: #d7faf0;
   color: #0e9f6e;
   border-radius: 999px;
-  padding: 0.38rem 0.65rem;
+  padding: 0.36rem 0.62rem;
   font-size: 0.68rem;
   font-weight: 800;
-  display: inline-block;
 }
 
-.heart { color: #64748b; }
-.heart:hover { color: var(--sky); }
-
-.recommendation-region .stButton > button {
-  min-height: 2.4rem;
-  padding: 0.45rem 0.7rem;
-  font-size: 0.8rem;
-  border-radius: 12px;
-  font-weight: 700;
+.recommendation-card-heart {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  z-index: 2;
+  color: #64748b;
+  font-size: 1.35rem;
+  line-height: 1;
 }
 
-.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(1) .stButton > button {
-  background: #DBEAFE;
-  border-color: #BFDBFE;
-  color: #1D4ED8;
+.recommendation-card-title {
+  color: #0f2a5f;
+  font-size: clamp(1.2rem, 1.6vw, 1.45rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 0.55rem;
 }
 
-.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(2) .stButton > button {
-  background: #DCFCE7;
-  border-color: #BBF7D0;
-  color: #166534;
+.recommendation-card-subtitle {
+  color: #526580;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.95rem;
 }
 
-.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(3) .stButton > button {
-  background: #FEE2E2;
-  border-color: #FECACA;
-  color: #991B1B;
+.recommendation-card-specs {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  color: #526580;
+  font-size: 0.82rem;
+  margin-bottom: 1.1rem;
+}
+
+.recommendation-card-spec {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.recommendation-card-divider {
+  width: 1px;
+  height: 18px;
+  background: #d8e2ef;
+}
+
+.recommendation-card-kicker {
+  margin-top: auto;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 0.45rem;
+}
+
+.recommendation-card-price {
+  color: #1455ff;
+  font-size: clamp(1.65rem, 2.3vw, 2rem);
+  font-weight: 800;
+  line-height: 1.05;
+  margin-bottom: 1rem;
+}
+
+.st-key-recommendation_card_0 .stButton > button,
+.st-key-recommendation_card_1 .stButton > button,
+.st-key-recommendation_card_2 .stButton > button {
+  min-height: 44px;
+  border-radius: 14px;
+  border: 1px solid #1455ff;
+  background: #ffffff;
+  color: #1455ff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.st-key-recommendation_card_0 .stButton > button:hover,
+.st-key-recommendation_card_1 .stButton > button:hover,
+.st-key-recommendation_card_2 .stButton > button:hover {
+  border-color: #003fff;
+  color: #003fff;
+  background: #f8fbff;
 }
 
 .finance-summary {
@@ -460,6 +559,32 @@ input, textarea {
   .car-grid { grid-template-columns: repeat(2, minmax(190px, 1fr)); }
   .summary-cards { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 900px) {
+  .st-key-recommendation_card_0,
+  .st-key-recommendation_card_1,
+  .st-key-recommendation_card_2 {
+    min-height: auto;
+    padding: 1.05rem;
+    border-radius: 22px;
+  }
+  .recommendation-image-panel {
+    border-radius: 18px;
+  }
+  .recommendation-image-panel img {
+    width: 90%;
+    height: 80%;
+  }
+  .recommendation-card-title {
+    font-size: 1.22rem;
+  }
+  .recommendation-card-specs {
+    gap: 0.6rem;
+  }
+  .recommendation-card-divider {
+    display: none;
+  }
+}
 </style>
 """
 
@@ -534,7 +659,7 @@ def _render_recommendations_panel(session_id: str) -> None:
             "Backend is not connected yet, so this page is showing the base UI. "
             "Start the API to load personalised vehicles."
         )
-    render_recommendation_cards(recs[:9])
+    render_recommendation_cards(recs[:3], variant="top3", session_id=session_id, client=client)
     finance_summary(budget, term, deposit)
 
 

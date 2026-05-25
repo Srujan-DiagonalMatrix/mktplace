@@ -8,140 +8,169 @@ import streamlit as st
 
 
 def transform_sentiment_trends(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    trend_rows = payload.get("sentiment_trends", {}) or {}
+    if not isinstance(trend_rows, dict):
+        return []
+    return [{"date": day, **(values or {})} for day, values in trend_rows.items()]
+
+
+def _normalize_top_pain_points(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    points = payload.get("top_pain_points", []) or []
+    normalized: list[dict[str, Any]] = []
+    for idx, item in enumerate(points[:5], start=1):
+        label = str(item.get("label", "unknown")).replace("_", " ").title()
+        normalized.append(
+            {
+                "rank": idx,
+                "pain_area": label,
+                "weight": int(item.get("frequency", 0)),
+                "confidence": round(float(item.get("max_confidence", 0.0)), 2),
+            }
+        )
+    return normalized
+
+
+def _infer_icp_mix(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    sessions = payload.get("session_drilldown", []) or []
+    buckets = {"Family": 0, "Student": 0, "Business": 0, "Couple": 0, "Large Family": 0, "Low Income": 0}
+    for session in sessions:
+        pain_points = [str(x).lower() for x in session.get("pain_points", [])]
+        turns = int(session.get("turns", 0))
+        if "family_size" in pain_points or turns > 10:
+            buckets["Family"] += 1
+        elif "budget" in pain_points or "financing" in pain_points:
+            buckets["Low Income"] += 1
+        elif "commercial" in pain_points:
+            buckets["Business"] += 1
+        elif turns <= 4:
+            buckets["Student"] += 1
+        else:
+            buckets["Couple"] += 1
+    return [{"profile": k, "sessions": v} for k, v in buckets.items() if v > 0]
+
+
+def _build_interaction_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    for day, sentiments in payload.get('sentiment_trends', {}).items():
-        rows.append({'date': day, **sentiments})
+    for s in payload.get("session_drilldown", []) or []:
+        pain_list = s.get("pain_points") or []
+        rows.append(
+            {
+                "interaction_id": s.get("session_id"),
+                "date": str(date.today()),
+                "time": "--:--",
+                "duration_min": int(s.get("turns", 0)) * 2,
+                "top_pain_area": pain_list[0].replace("_", " ").title() if pain_list else "N/A",
+                "icp_primary": "Inferred",
+                "conversation_score": round(float(s.get("sentiment", 0.0)), 2),
+            }
+        )
     return rows
 
 
-def _date_range(start: date, periods: int) -> list[str]:
-    return [(start + timedelta(days=i)).isoformat() for i in range(periods)]
-
-
-def _build_demo_dataframe(payload: dict[str, Any], days: int = 30) -> pd.DataFrame:
-    base = payload.get('trend_rows') or []
-    if base:
-        return pd.DataFrame(base)
-
-    dates = _date_range(date.today() - timedelta(days=days - 1), days)
-    rows = []
-    for idx, day in enumerate(dates):
-        sessions = 120 + (idx % 7) * 8 + (idx // 5)
-        enquiries = int(sessions * 0.36)
-        conversions = int(enquiries * 0.28)
-        dropoffs = int(sessions * 0.17)
-        sentiment_score = 60 + (idx % 10)
-        intent_score = 52 + (idx % 14)
+def _build_conversation_history_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for s in payload.get("session_drilldown", []) or []:
+        pain_list = [str(p).replace("_", " ").title() for p in (s.get("pain_points") or [])]
+        sentiment = float(s.get("sentiment", 0.0))
+        seriousness = "High" if sentiment < -0.25 else "Medium" if sentiment < 0.15 else "Low"
         rows.append(
             {
-                'date': day,
-                'sessions': sessions,
-                'enquiries': enquiries,
-                'conversions': conversions,
-                'dropoffs': dropoffs,
-                'avg_duration_seconds': 145 + (idx % 20) * 3,
-                'sentiment_score': sentiment_score,
-                'intent_score': intent_score,
+                "interaction_id": s.get("session_id", "unknown"),
+                "date_of_interaction": str(date.today()),
+                "time_of_interaction": "--:--",
+                "customer_name": s.get("customer_name", "Prospect"),
+                "contact_details": s.get("contact", "not_provided@example.com"),
+                "channel": s.get("channel", "chat"),
+                "summary_of_interaction": s.get("summary", "Customer discussed vehicle preferences and constraints."),
+                "top_5_pain_points": ", ".join(pain_list[:5]) if pain_list else "N/A",
+                "weights": int(s.get("turns", 0)),
+                "seriousness_to_proceed": seriousness,
+                "icp_primary": s.get("icp_primary", "Inferred"),
+                "conversation_duration_min": int(s.get("turns", 0)) * 2,
+                "assigned_manager": s.get("owner", "Unassigned"),
+                "status": s.get("status", "open"),
+                "view": "View",
             }
         )
-    return pd.DataFrame(rows)
-
-
-def _render_theme() -> None:
-    st.markdown(
-        """
-        <style>
-          .stApp { background: #F5F7FB; }
-          .insights-header h1 { margin:0; font-size: 2rem; font-weight: 700; color:#0B1F4D; }
-          .insights-header p { margin:.2rem 0 0; color:#475569; font-size:1rem; }
-          .filter-pill { background:#fff; border:1px solid #E5EAF2; border-radius:12px; padding:10px 12px; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def _kpi_cards(df: pd.DataFrame) -> None:
-    total_sessions = int(df['sessions'].sum())
-    total_enquiries = int(df['enquiries'].sum())
-    total_conversions = int(df['conversions'].sum())
-    total_dropoffs = int(df['dropoffs'].sum())
-    avg_duration = float(df['avg_duration_seconds'].mean())
-    conversion_rate = (total_conversions / total_enquiries * 100) if total_enquiries else 0
-
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric('Total conversations', f'{total_sessions:,}')
-    c2.metric('Enquiries', f'{total_enquiries:,}')
-    c3.metric('Conversions', f'{total_conversions:,}', delta=f'{conversion_rate:.1f}% rate')
-    c4.metric('Callbacks', f"{max(total_conversions // 3, 1):,}")
-    c5.metric('Drop-offs', f'{total_dropoffs:,}')
-    c6.metric('Avg duration', f'{avg_duration:.0f}s')
-
-
-def _render_section(title: str) -> None:
-    st.markdown(f"### {title}")
-
-
-def _load_dashboard_payload(client: Any, start: date, end: date) -> dict[str, Any]:
-    try:
-        payload = client.get_analytics_dashboard(
-            start_date=str(start) if start else None,
-            end_date=str(end) if end else None,
-            vehicle_type=None,
-            fuel_type=None,
-            stage=None,
-        )
-        return payload if isinstance(payload, dict) else {}
-    except Exception:
-        st.warning('Analytics backend is unavailable. Showing demo insights.')
-        return {}
-
-
-def _render_filters(start: date, end: date) -> None:
-    c1, c2, c3, c4, c5 = st.columns([2.1, 1.2, 1.2, 1.2, 1])
-    c1.markdown(f"<div class='filter-pill'><b>Date Range</b><br>{start.strftime('%b %d, %Y')} – {end.strftime('%b %d, %Y')}</div>", unsafe_allow_html=True)
-    c2.markdown("<div class='filter-pill'><b>Channel</b><br>All</div>", unsafe_allow_html=True)
-    c3.markdown("<div class='filter-pill'><b>Region</b><br>All</div>", unsafe_allow_html=True)
-    c4.markdown("<div class='filter-pill'><b>Vehicle</b><br>All</div>", unsafe_allow_html=True)
-    c5.button('Refresh', use_container_width=True)
+    return rows
 
 
 def render_analytics_dashboard(client: Any) -> None:
-    _render_theme()
-    st.markdown('<div class="insights-header"><h1>Analytics Dashboard</h1><p>Executive Insights</p></div>', unsafe_allow_html=True)
+    # Step 1 from plan: reset legacy admin fields and show redesigned admin IA.
+    st.subheader("Admin Intelligence Console")
+    st.caption("Redesigned admin tab with conversation summary, weighted pain areas, ICP mix, interaction explorer, and reporting visuals.")
 
-    start = date.today() - timedelta(days=29)
-    end = date.today()
-    _render_filters(start, end)
+    filters = st.container(border=True)
+    with filters:
+        c1, c2, c3 = st.columns(3)
+        start = c1.date_input("Start date", value=None)
+        end = c2.date_input("End date", value=None)
+        stage = c3.selectbox("Session stage", ["all", "awareness", "consideration", "decision"])
 
-    payload = _load_dashboard_payload(client, start, end)
-    trend_df = _build_demo_dataframe(payload)
+    payload = client.get_analytics_dashboard(
+        start_date=str(start) if start else None,
+        end_date=str(end) if end else None,
+        stage=None if stage == "all" else stage,
+    )
 
-    _kpi_cards(trend_df)
+    kpis = payload.get("kpis", {})
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Interactions", kpis.get("sessions", 0))
+    k2.metric("Negative sentiment days", kpis.get("top_negative_sentiment_days", 0))
+    k3.metric("Drop-off total", kpis.get("dropoff_total", 0))
+    k4.metric("Unique pain points", kpis.get("unique_pain_points", 0))
 
-    _render_section('1. Conversation & Conversion')
-    r1c1, r1c2, r1c3, r1c4 = st.columns(4)
-    r1c1.line_chart(trend_df, x='date', y=['sessions', 'enquiries', 'conversions'], use_container_width=True)
-    r1c2.area_chart(trend_df, x='date', y=['dropoffs'], use_container_width=True)
+    st.markdown("### 1) Summary of Conversation")
+    st.info(
+        "This summary is generated from the selected date range and stage filters. "
+        "Use interaction details to inspect full transcript and metadata."
+    )
 
-    funnel = pd.DataFrame({'stage': ['Conversation started', 'Converted', 'Enquiry submitted', 'Shortlisted'], 'count': [int(trend_df['sessions'].sum()), int(trend_df['conversions'].sum()), int(trend_df['enquiries'].sum()), int(trend_df['enquiries'].sum() * 0.45)]}).set_index('stage')
-    r1c3.bar_chart(funnel, horizontal=True, use_container_width=True)
-    channel_df = pd.DataFrame({'channel': ['Chat', 'Phone', 'Web', 'WhatsApp'], 'Enquiry rate': [60, 44, 63, 55], 'Drop-off rate': [25, 33, 24, 29], 'Conversion rate': [15, 23, 13, 16]}).set_index('channel')
-    r1c4.bar_chart(channel_df, use_container_width=True)
+    st.markdown("### 2) Top 5 Pain Point Weights")
+    top_pains = _normalize_top_pain_points(payload)
+    if top_pains:
+        st.dataframe(top_pains, use_container_width=True, hide_index=True)
+    else:
+        st.warning("No weighted pain points available for current filters.")
 
-    _render_section('2. Sentiment, Intent & Themes')
-    r2c1, r2c2, r2c3 = st.columns(3)
-    sentiment = pd.DataFrame({'sentiment': ['Negative', 'Neutral', 'Positive'], 'count': [14, 34, 52]}).set_index('sentiment')
-    r2c1.bar_chart(sentiment, use_container_width=True)
-    r2c2.line_chart(trend_df, x='date', y=['intent_score'], use_container_width=True)
-    themes = pd.DataFrame({'theme': ['Availability', 'Features', 'Finance', 'Pricing', 'Trade-in'], 'frequency': [115, 90, 98, 110, 65]}).set_index('theme')
-    r2c3.bar_chart(themes, horizontal=True, use_container_width=True)
+    st.markdown("### 3) Ideal Customer Profile (Inferred Mix)")
+    icp_mix = _infer_icp_mix(payload)
+    if icp_mix:
+        st.bar_chart(icp_mix, x="profile", y="sessions")
+    else:
+        st.warning("No ICP segments available for current filters.")
 
-    _render_section('3. Vehicle, Finance & AI Operations')
-    r3c1, r3c2, r3c3 = st.columns(3)
-    top_cars = pd.DataFrame({'car': ['BMW iX1', 'Hyundai Tucson', 'Kia EV6', 'Tesla Model Y', 'Toyota RAV4'], 'shortlists': [60, 45, 50, 55, 40], 'views': [240, 210, 240, 240, 180]}).set_index('car')
-    r3c1.bar_chart(top_cars[['shortlists', 'views']], horizontal=True, use_container_width=True)
-    finance = pd.DataFrame({'category': ['Need Advice', 'Not Ready', 'Ready'], 'count': [38, 18, 45]}).set_index('category')
-    r3c2.bar_chart(finance, use_container_width=True)
-    ai_df = pd.DataFrame({'date': trend_df['date'], 'api_cost_estimate': [620 + (i % 8) * 25 for i in range(len(trend_df))], 'latency_ms': [14 + (i % 8) * 1.5 for i in range(len(trend_df))]})
-    r3c3.line_chart(ai_df, x='date', y=['api_cost_estimate', 'latency_ms'], use_container_width=True)
+    st.markdown("### 4) Interactions Table")
+    rows = _build_interaction_rows(payload)
+    if rows:
+        st.dataframe(rows, use_container_width=True, hide_index=True)
+        selected = st.selectbox("View interaction details", [r["interaction_id"] for r in rows])
+        st.json({"interaction_id": selected, "meta": "Detailed transcript and metadata integration point."})
+    else:
+        st.warning("No interactions found for current filters.")
+
+    st.markdown("### 5) Conversation History")
+    history_rows = _build_conversation_history_rows(payload)
+    if history_rows:
+        st.dataframe(history_rows, use_container_width=True, hide_index=True)
+        selected_interaction = st.selectbox(
+            "Select interaction row to view details",
+            [r["interaction_id"] for r in history_rows],
+            key="conversation_history_view",
+        )
+        st.button("View", key="conversation_history_view_btn")
+        st.json(
+            {
+                "interaction_id": selected_interaction,
+                "report": "Detailed conversation report placeholder with transcript and metadata.",
+            }
+        )
+    else:
+        st.warning("No conversation history available for current filters.")
+
+    st.markdown("### 6) Dashboard Reports")
+    chart_rows = transform_sentiment_trends(payload)
+    if chart_rows:
+        st.line_chart(chart_rows, x="date", y=["positive", "neutral", "negative"])
+    else:
+        st.info("No trend data available.")

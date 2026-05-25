@@ -28,6 +28,9 @@ class _FakeStreamlit:
         count = spec if isinstance(spec, int) else len(spec)
         return [_Context() for _ in range(count)]
 
+    def container(self):
+        return _Context()
+
     def button(self, label: str, **kwargs):
         self.button_calls.append((label, kwargs))
         return False
@@ -116,3 +119,11 @@ def test_recommendation_card_remote_images_are_preserved(monkeypatch):
     assert module._normalise_image_src("https://example.com/car.png") == (
         "https://example.com/car.png"
     )
+
+
+def test_recommendation_card_html_fragment_images_fallback_to_placeholder(monkeypatch):
+    fake_st = _FakeStreamlit()
+    module = _load_module(fake_st, monkeypatch)
+
+    src = module._normalise_image_src('<div class="recommendation-card-heart">♡</div>')
+    assert src.startswith("data:image/png;base64,")
