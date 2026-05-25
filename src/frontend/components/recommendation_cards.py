@@ -193,8 +193,8 @@ def _render_vehicle_card_html(rec: dict, *, idx: int, variant: str) -> None:
 
 
 def _handle_view_details(rec: dict) -> None:
+    st.session_state["selected_vehicle_obj"] = rec
     st.session_state["selected_vehicle"] = _vehicle_id(rec, fallback="")
-    st.success("Vehicle selected. Open details view to continue.")
 
 
 def _handle_shortlist(
@@ -215,8 +215,9 @@ def _handle_shortlist(
 
 
 def _handle_enquire(rec: dict) -> None:
+    st.session_state["selected_vehicle_obj"] = rec
     st.session_state["selected_vehicle"] = _vehicle_id(rec, fallback="")
-    st.success("Open enquiry form in main view")
+    st.success("Enquiry form opened below")
 
 
 def _render_card_actions(
@@ -268,7 +269,7 @@ def _render_compact_cards(
 def render_recommendation_cards(
     recs: list[dict],
     *,
-    variant: str = "hero",
+    variant: str = "compact",
     session_id: str | None = None,
     client: BackendClient | None = None,
 ) -> None:

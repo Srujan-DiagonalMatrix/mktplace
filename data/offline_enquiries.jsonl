@@ -5,3 +5,9 @@
 {"vehicle_id": "CAR-2026-0001", "full_name": "E2E Tester", "email": "e2e@test.com", "phone": "+447700900010", "preferred_contact_method": null, "preferred_contact_time": null, "monthly_budget_gbp": null, "deposit_gbp": null, "buying_timeframe": null}
 {"vehicle_id": "CAR-2026-0001", "full_name": "E2E Tester", "email": "e2e@test.com", "phone": "+447700900010", "preferred_contact_method": null, "preferred_contact_time": null, "monthly_budget_gbp": null, "deposit_gbp": null, "buying_timeframe": null}
 {"vehicle_id": "CAR-2026-0001", "full_name": "X", "email": "x@example.com", "phone": "+100", "preferred_contact_method": null, "preferred_contact_time": null, "monthly_budget_gbp": null, "deposit_gbp": null, "buying_timeframe": null}
+{"vehicle_id": "veh-001", "full_name": "Contract User", "email": "contract@example.com", "phone": "01234567890", "buying_timeframe": "1-3 months"}
+{"vehicle_id": "CAR-2026-0001", "full_name": "X", "email": "x@example.com", "phone": "+100"}
+{"vehicle_id": "veh-001", "full_name": "Contract User", "email": "contract@example.com", "phone": "01234567890", "buying_timeframe": "1-3 months"}
+{"vehicle_id": "CAR-2026-0001", "full_name": "X", "email": "x@example.com", "phone": "+100"}
+{"vehicle_id": "veh-001", "full_name": "Contract User", "email": "contract@example.com", "phone": "01234567890", "buying_timeframe": "1-3 months"}
+{"vehicle_id": "CAR-2026-0001", "full_name": "X", "email": "x@example.com", "phone": "+100"}
