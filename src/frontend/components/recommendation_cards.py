@@ -226,6 +226,7 @@ def _render_card_actions(
     session_id: str | None,
     client: BackendClient | None,
 ) -> None:
+    st.markdown("<div class='prototype-action-row'>", unsafe_allow_html=True)
     action_cols = st.columns(3)
     for action_idx, label in enumerate(_ACTION_LABELS):
         with action_cols[action_idx]:
@@ -240,6 +241,7 @@ def _render_card_actions(
                     _handle_shortlist(rec, session_id, client)
                 else:
                     _handle_enquire(rec)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def _render_hero_cards(
