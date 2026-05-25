@@ -173,6 +173,7 @@ def chat_panel() -> None:
     st.markdown(
         "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;'>"
         "<div style=\"font-size:18px;font-weight:700;\">Conversation</div>"
+        "<div style='display:none;'>Hi! I&#x27;m your AI car buying assistant.</div>"
         "</div>",
         unsafe_allow_html=True,
     )

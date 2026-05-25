@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import streamlit as st
-from uuid import uuid4
 
 
 RESET_SESSION_STATE_KEYS = (
@@ -23,7 +22,9 @@ def reset_session_state(keys: tuple[str, ...] | list[str] | None = None) -> None
 
 def get_session_id() -> str:
     if "session_id" not in st.session_state:
-        st.session_state["session_id"] = f"sess-{uuid4().hex[:12]}"
+        next_index = int(st.session_state.get("_session_seq", 0))
+        st.session_state["_session_seq"] = next_index + 1
+        st.session_state["session_id"] = f"sess-{next_index}"
     return st.session_state["session_id"]
 
 

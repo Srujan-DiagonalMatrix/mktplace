@@ -6,6 +6,13 @@ from typing import Any
 import streamlit as st
 
 
+def transform_sentiment_trends(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    trend_rows = payload.get("sentiment_trends", {}) or {}
+    if not isinstance(trend_rows, dict):
+        return []
+    return [{"date": day, **(values or {})} for day, values in trend_rows.items()]
+
+
 def _normalize_top_pain_points(payload: dict[str, Any]) -> list[dict[str, Any]]:
     points = payload.get("top_pain_points", []) or []
     normalized: list[dict[str, Any]] = []
@@ -161,9 +168,8 @@ def render_analytics_dashboard(client: Any) -> None:
         st.warning("No conversation history available for current filters.")
 
     st.markdown("### 6) Dashboard Reports")
-    trend_rows = payload.get("sentiment_trends", {})
-    if trend_rows:
-        chart_rows = [{"date": d, **vals} for d, vals in trend_rows.items()]
+    chart_rows = transform_sentiment_trends(payload)
+    if chart_rows:
         st.line_chart(chart_rows, x="date", y=["positive", "neutral", "negative"])
     else:
         st.info("No trend data available.")

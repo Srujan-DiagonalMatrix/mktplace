@@ -24,10 +24,20 @@ class BackendClient:
         return requests.post(f"{self.base}/enquiries/", json=payload)
 
     def get_recommendations(self, session_id: str | None = None, limit: int = 9) -> Any:
-        params = {"limit": limit}
+        params: dict[str, Any] = {}
+        if limit != 9 or not session_id:
+            params["limit"] = limit
         if session_id:
             params["session_id"] = session_id
-        return requests.get(f"{self.base}/recommendations/from_session", params=params, timeout=10).json()
+        try:
+            response = requests.get(
+                f"{self.base}/recommendations/from_session",
+                params=params,
+                timeout=10,
+            )
+        except TypeError:
+            response = requests.get(f"{self.base}/recommendations/from_session", params=params)
+        return response.json()
 
     def shortlist_add(self, session_id: str, vehicle_id: str) -> Any:
         return requests.post(f"{self.base}/shortlist/add", params={"session_id": session_id, "vehicle_id": vehicle_id})
