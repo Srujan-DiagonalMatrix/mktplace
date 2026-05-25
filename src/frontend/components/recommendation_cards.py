@@ -61,27 +61,7 @@ def _normalise_image_src(image_path: Any) -> str:
     return placeholder_data_uri or _PLACEHOLDER_IMAGE
 
 
-def _resolve_streamlit_image(image_path: Any) -> str:
-    """Return a Streamlit-compatible image source for recommendation cards."""
-    raw = str(image_path).strip() if image_path else ""
-    if raw and ("<" in raw or ">" in raw):
-        raw = ""
-    if raw and _is_browser_safe_image_src(raw):
-        return raw
-    if raw:
-        path = Path(raw)
-        candidates = [path] if path.is_absolute() else [path, PROJECT_ROOT / path]
-        for candidate in candidates:
-            if candidate.exists() and candidate.is_file():
-                return str(candidate)
-    return str(DEFAULT_PLACEHOLDER_IMAGE_PATH)
-
-
 def _render_card_image(image_path: Any, alt_text: str) -> str:
-    image_src = _resolve_streamlit_image(image_path)
-    if hasattr(st, "image"):
-        st.image(image_src, use_container_width=True)
-        return ""
     safe_img_src = escape(_normalise_image_src(image_path), quote=True)
     safe_alt = escape(alt_text, quote=True)
     return f'<img src="{safe_img_src}" alt="{safe_alt}" />'
