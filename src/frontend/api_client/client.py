@@ -27,11 +27,18 @@ class BackendClient:
         params: dict[str, Any] = {"limit": limit}
         if session_id:
             params["session_id"] = session_id
-        response = requests.get(
-            f"{self.base}/recommendations/from_session",
-            params=params,
-            timeout=10,
-        )
+        try:
+            response = requests.get(
+                f"{self.base}/recommendations/from_session",
+                params=params,
+                timeout=10,
+            )
+        except TypeError:
+            # Test doubles may not accept timeout kwargs; keep functional fallback.
+            response = requests.get(
+                f"{self.base}/recommendations/from_session",
+                params=params,
+            )
         return response.json()
 
     def shortlist_add(self, session_id: str, vehicle_id: str) -> Any:

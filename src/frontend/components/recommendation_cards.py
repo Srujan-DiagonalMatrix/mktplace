@@ -132,11 +132,11 @@ def _render_empty_state() -> None:
 
 
 def _vehicle_id(rec: dict, fallback: str) -> str:
-    vehicle_id = rec.get("vehicle_id") or rec.get("id") or fallback
+    vehicle_id = rec.get("vehicle_id") or rec.get("car_id") or rec.get("id") or fallback
     return str(vehicle_id)
 
 
-def _render_card_body_html(rec: dict, *, idx: int, variant: str) -> str:
+def _render_card_body_html(rec: dict, *, idx: int) -> None:
     safe_title = escape(_vehicle_title(rec))
     safe_subtitle = escape(_vehicle_subtitle(rec))
     safe_img_src = escape(_normalise_image_src(rec.get("image")), quote=True)
@@ -144,37 +144,30 @@ def _render_card_body_html(rec: dict, *, idx: int, variant: str) -> str:
     safe_transmission = escape(_spec_value(rec, "transmission"))
     safe_seats = escape(_spec_value(rec, "seats"))
     safe_monthly = escape(_monthly_amount(rec))
-    best_match_html = (
-        "<div class='recommendation-badge'>Best Match</div>" if idx == 0 else ""
-    )
-    card_class = "recommendation-card recommendation-card--hero"
-    if variant == "compact":
-        card_class = "recommendation-card recommendation-card--compact"
-
-    return f"""
-        <div class='{card_class}' data-testid='recommendation-card'>
-          <div class='recommendation-image-panel'>
+    best_match_html = "<div class='recommendation-card-badge'>Best Match</div>" if idx == 0 else ""
+    st.markdown(
+        f"""
+        <div class="recommendation-top3-card">
+          <div class="recommendation-image-panel">
             {best_match_html}
-            <div class='recommendation-heart' aria-label='Shortlist vehicle'>♡</div>
-            <img class='recommendation-image' src='{safe_img_src}' alt='{safe_title}' />
+            <div class="recommendation-card-heart" aria-hidden="true">♡</div>
+            <img src="{safe_img_src}" alt="{safe_title}" />
           </div>
-          <div class='recommendation-content'>
-            <div class='recommendation-title'>{safe_title}</div>
-            <div class='recommendation-subtitle'>{safe_subtitle}</div>
-            <div class='recommendation-spec-row'>
-              <div class='recommendation-spec-item'>⛽ {safe_fuel_type}</div>
-              <div class='recommendation-spec-item'>⚙️ {safe_transmission}</div>
-              <div class='recommendation-spec-item'>👥 {safe_seats} seats</div>
-            </div>
-            <div class='recommendation-estimated-label'>Estimated Monthly</div>
-            <div class='recommendation-price'>{safe_monthly}</div>
+          <div class="recommendation-card-title">{safe_title}</div>
+          <div class="recommendation-card-subtitle">{safe_subtitle}</div>
+          <div class="recommendation-card-specs">
+            <div class="recommendation-card-spec">⛽ {safe_fuel_type}</div>
+            <div class="recommendation-card-divider"></div>
+            <div class="recommendation-card-spec">⚙️ {safe_transmission}</div>
+            <div class="recommendation-card-divider"></div>
+            <div class="recommendation-card-spec">👥 {safe_seats} seats</div>
           </div>
+          <div class="recommendation-card-kicker">Estimated Monthly</div>
+          <div class="recommendation-card-price">{safe_monthly}</div>
         </div>
-    """
-
-
-def _render_vehicle_card_html(rec: dict, *, idx: int, variant: str) -> None:
-    st.markdown(_render_card_body_html(rec, idx=idx, variant=variant), unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def _handle_view_details(rec: dict) -> None:
@@ -212,32 +205,42 @@ def _render_card_actions(
     session_id: str | None,
     client: BackendClient | None,
 ) -> None:
-    st.markdown("<div class='prototype-action-row'>", unsafe_allow_html=True)
-    action_cols = st.columns(3)
-    for action_idx, label in enumerate(_ACTION_LABELS):
-        with action_cols[action_idx]:
-            if st.button(
-                label,
-                key=f"recommendation_{idx}_{label.lower().replace(' ', '_')}",
-                use_container_width=True,
-            ):
-                if label == "View Details":
-                    _handle_view_details(rec)
-                elif label == "Shortlist":
-                    _handle_shortlist(rec, session_id, client)
-                else:
-                    _handle_enquire(rec)
+    st.markdown("<div class='recommendation-card-action-row'>", unsafe_allow_html=True)
+    view_col, shortlist_col, enquire_col = st.columns(3)
+    with view_col:
+        if st.button(
+            _ACTION_LABELS[0],
+            key=f"recommendation_{idx}_view_details",
+            use_container_width=True,
+        ):
+            _handle_view_details(rec)
+    with shortlist_col:
+        if st.button(
+            _ACTION_LABELS[1],
+            key=f"recommendation_{idx}_shortlist",
+            use_container_width=True,
+        ):
+            _handle_shortlist(rec, session_id, client)
+    with enquire_col:
+        if st.button(
+            _ACTION_LABELS[2],
+            key=f"recommendation_{idx}_enquire",
+            use_container_width=True,
+        ):
+            _handle_enquire(rec)
     st.markdown("</div>", unsafe_allow_html=True)
 
 
 def _render_top3_cards(
     recs: list[dict], session_id: str | None, client: BackendClient | None
 ) -> None:
+    st.markdown("<div class='recommendation-top3-grid'>", unsafe_allow_html=True)
     cols = st.columns(3)
     for idx, rec in enumerate(recs[:3]):
         with cols[idx]:
-            _render_vehicle_card_html(rec, idx=idx, variant="hero")
+            _render_card_body_html(rec, idx=idx)
             _render_card_actions(rec, idx=idx, session_id=session_id, client=client)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def _render_compact_cards(
@@ -249,7 +252,7 @@ def _render_compact_cards(
         for offset, rec in enumerate(row_recs):
             idx = row_start + offset
             with cols[offset]:
-                _render_vehicle_card_html(rec, idx=idx, variant="compact")
+                _render_card_body_html(rec, idx=idx)
                 _render_card_actions(rec, idx=idx, session_id=session_id, client=client)
 
 

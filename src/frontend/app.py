@@ -342,13 +342,13 @@ input, textarea {
 .st-key-recommendation-card-2,
 .st-key-recommendation-card-3 {
   background: #ffffff;
-  border: 1px solid #dbe7ff;
-  border-radius: 28px;
-  padding: 1.35rem;
-  box-shadow: 0 18px 42px rgba(20, 85, 255, 0.1);
+  border: 1px solid #cfe0ff;
+  border-radius: 24px;
+  padding: 1rem;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
 }
 
-.recommendation-top3-image-panel {
+.recommendation-image-panel {
   position: relative;
   border-radius: 22px;
   background: linear-gradient(180deg, #f4f9ff 0%, #edf4ff 100%);
@@ -356,7 +356,7 @@ input, textarea {
   margin-bottom: 1rem;
 }
 
-.recommendation-top3-image-panel img {
+.recommendation-image-panel img {
   width: 100%;
   height: 210px;
   object-fit: contain;
@@ -364,7 +364,7 @@ input, textarea {
   display: block;
 }
 
-.recommendation-top3-badge {
+.recommendation-card-badge {
   position: absolute;
   left: 12px;
   top: 12px;
@@ -377,7 +377,7 @@ input, textarea {
   display: inline-block;
 }
 
-.recommendation-top3-heart {
+.recommendation-card-heart {
   position: absolute;
   right: 12px;
   top: 12px;
@@ -385,9 +385,9 @@ input, textarea {
   font-size: 1.1rem;
 }
 
-.recommendation-top3-heart:hover { color: var(--sky); }
+.recommendation-card-heart:hover { color: var(--sky); }
 
-.recommendation-top3-title {
+.recommendation-card-title {
   margin: 0 0 0.4rem;
   color: #0f2a5f;
   font-size: clamp(1.35rem, 1.95vw, 1.65rem);
@@ -395,13 +395,13 @@ input, textarea {
   line-height: 1.2;
 }
 
-.recommendation-top3-subtitle {
+.recommendation-card-subtitle {
   margin: 0 0 0.85rem;
   color: #526580;
   font-size: 0.92rem;
 }
 
-.recommendation-top3-specs {
+.recommendation-card-specs {
   display: flex;
   gap: 0.85rem;
   align-items: center;
@@ -409,18 +409,22 @@ input, textarea {
   margin-bottom: 0.95rem;
 }
 
-.recommendation-top3-spec {
+.recommendation-card-spec {
   color: #526580;
   font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
 }
 
-.recommendation-top3-spec-divider {
+.recommendation-card-divider {
   width: 1px;
-  height: 14px;
-  background: #d6e3fb;
+  height: 18px;
+  background: #d8e2ef;
 }
 
-.recommendation-top3-price-kicker {
+.recommendation-card-kicker {
   margin: 0;
   font-size: 0.72rem;
   font-weight: 800;
@@ -429,7 +433,7 @@ input, textarea {
   color: #64748b;
 }
 
-.recommendation-top3-price {
+.recommendation-card-price {
   margin: 0.3rem 0 0.95rem;
   color: #1455ff;
   font-size: clamp(1.8rem, 3vw, 2.15rem);
@@ -437,47 +441,30 @@ input, textarea {
   line-height: 1.05;
 }
 
-.recommendation-top3-action-row {
-  display: flex;
-  gap: 0.7rem;
+.recommendation-card-action-row {
+  margin-top: -0.25rem;
+  padding: 0 1rem 1rem;
 }
 
-.recommendation-top3-action-row [data-testid="stHorizontalBlock"] {
-  gap: 0.7rem;
+.recommendation-card-action-row [data-testid="stHorizontalBlock"] {
+  gap: 0.55rem;
 }
 
-.recommendation-top3-action-row .stButton > button {
-  min-height: 52px;
-  border-radius: 16px;
+.recommendation-card-action-row .stButton > button {
+  min-height: 44px;
+  border-radius: 14px;
   border: 1px solid #1455ff;
   background: #ffffff;
   color: #1455ff;
+  font-size: 0.85rem;
   font-weight: 800;
-  transition: all .16s ease;
+  box-shadow: none;
 }
 
-.recommendation-top3-action-row .stButton > button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(20, 85, 255, 0.14);
-}
-
-/* fallback: column-scoped action rows for environments where key selectors are unstable */
-.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(1) .recommendation-top3-action-row .stButton > button {
-  background: #DBEAFE;
-  border-color: #BFDBFE;
-  color: #1D4ED8;
-}
-
-.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(2) .recommendation-top3-action-row .stButton > button {
-  background: #DCFCE7;
-  border-color: #BBF7D0;
-  color: #166534;
-}
-
-.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(3) .recommendation-top3-action-row .stButton > button {
-  background: #FEE2E2;
-  border-color: #FECACA;
-  color: #991B1B;
+.recommendation-card-action-row .stButton > button:hover {
+  border-color: #003fff;
+  color: #003fff;
+  background: #f8fbff;
 }
 
 .finance-summary {
@@ -572,23 +559,23 @@ input, textarea {
     padding: 1.05rem;
     border-radius: 22px;
   }
-  .recommendation-top3-image-panel {
+  .recommendation-image-panel {
     border-radius: 18px;
   }
-  .recommendation-top3-image-panel img {
+  .recommendation-image-panel img {
     height: 182px;
     border-radius: 14px;
   }
-  .recommendation-top3-title {
+  .recommendation-card-title {
     font-size: 1.22rem;
   }
-  .recommendation-top3-specs {
+  .recommendation-card-specs {
     gap: 0.6rem;
   }
-  .recommendation-top3-spec-divider {
-    height: 11px;
+  .recommendation-card-divider {
+    display: none;
   }
-  .recommendation-top3-action-row [data-testid="stHorizontalBlock"] {
+  .recommendation-card-action-row [data-testid="stHorizontalBlock"] {
     flex-direction: column;
   }
 }
