@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 import streamlit as st
 
+from src.frontend.api_client.client import BackendClient
 from src.shared.config.constants import DEFAULT_PLACEHOLDER_IMAGE_PATH, PROJECT_ROOT
 
 _PLACEHOLDER_IMAGE = "/assets/placeholder.png"
@@ -44,6 +45,10 @@ def _normalise_image_src(image_path: Any) -> str:
     Remote URLs and existing data URIs are preserved.
     """
     raw = str(image_path).strip() if image_path else ""
+    # Defensive guard: malformed upstream payloads can occasionally carry
+    # HTML fragments in the image field; never pass those through to <img src>.
+    if raw and ("<" in raw or ">" in raw):
+        raw = ""
     if raw and _is_browser_safe_image_src(raw):
         return raw
 
@@ -54,6 +59,12 @@ def _normalise_image_src(image_path: Any) -> str:
 
     placeholder_data_uri = _image_file_to_data_uri(str(DEFAULT_PLACEHOLDER_IMAGE_PATH))
     return placeholder_data_uri or _PLACEHOLDER_IMAGE
+
+
+def _render_card_image(image_path: Any, alt_text: str) -> str:
+    safe_img_src = escape(_normalise_image_src(image_path), quote=True)
+    safe_alt = escape(alt_text, quote=True)
+    return f'<img src="{safe_img_src}" alt="{safe_alt}" />'
 
 
 def _money(value: Any) -> str:
@@ -130,7 +141,149 @@ def _render_empty_state() -> None:
     )
 
 
-def render_recommendation_cards(recs: List[dict]):
+def _vehicle_id(rec: dict, fallback: str) -> str:
+    vehicle_id = rec.get("vehicle_id") or rec.get("car_id") or rec.get("id") or fallback
+    return str(vehicle_id)
+
+
+def _columns(count: int, *, gap: str) -> List[Any]:
+    try:
+        return st.columns(count, gap=gap)
+    except TypeError:
+        return st.columns(count)
+
+
+def _card_container(idx: int) -> Any:
+    try:
+        return st.container(key=f"recommendation_card_{idx}")
+    except TypeError:
+        return st.container()
+
+
+def _render_card_body_html(rec: dict, *, idx: int) -> None:
+    safe_title = escape(_vehicle_title(rec))
+    safe_subtitle = escape(_vehicle_subtitle(rec))
+    safe_fuel_type = escape(_spec_value(rec, "fuel_type"))
+    safe_transmission = escape(_spec_value(rec, "transmission"))
+    safe_seats = escape(_spec_value(rec, "seats"))
+    safe_monthly = escape(_monthly_amount(rec))
+    panel_children: list[str] = []
+    if idx == 0:
+        panel_children.append("<div class='recommendation-card-badge'>Best Match</div>")
+    panel_children.append("<div class='recommendation-card-heart' aria-hidden='true'>♡</div>")
+    panel_children.append(_render_card_image(rec.get("image"), _vehicle_title(rec)))
+    panel_html = "".join(panel_children)
+    st.markdown(
+        f"""
+        <div class="recommendation-card-body">
+          <div class="recommendation-image-panel">{panel_html}</div>
+          <div class="recommendation-card-title">{safe_title}</div>
+          <div class="recommendation-card-subtitle">{safe_subtitle}</div>
+          <div class="recommendation-card-specs">
+            <div class="recommendation-card-spec">⛽ {safe_fuel_type}</div>
+            <div class="recommendation-card-divider"></div>
+            <div class="recommendation-card-spec">⚙️ {safe_transmission}</div>
+            <div class="recommendation-card-divider"></div>
+            <div class="recommendation-card-spec">👥 {safe_seats} seats</div>
+          </div>
+          <div class="recommendation-card-kicker">Estimated Monthly</div>
+          <div class="recommendation-card-price">{safe_monthly}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _handle_view_details(rec: dict) -> None:
+    st.session_state["selected_vehicle_obj"] = rec
+    st.session_state["selected_vehicle"] = _vehicle_id(rec, fallback="")
+
+
+def _handle_shortlist(
+    rec: dict, session_id: str | None, client: BackendClient | None
+) -> None:
+    if not client:
+        st.info("Shortlist is unavailable right now.")
+        return
+    sid = session_id or st.session_state.get("session_id")
+    if not sid:
+        st.info("Start a session to shortlist vehicles.")
+        return
+    try:
+        client.shortlist_add(str(sid), _vehicle_id(rec, fallback=""))
+        st.success("Added to shortlist")
+    except Exception:
+        st.error("Failed to add to shortlist")
+
+
+def _handle_enquire(rec: dict) -> None:
+    st.session_state["selected_vehicle_obj"] = rec
+    st.session_state["selected_vehicle"] = _vehicle_id(rec, fallback="")
+    st.success("Enquiry form opened below")
+
+
+def _render_card_actions(
+    rec: dict,
+    *,
+    idx: int,
+    session_id: str | None,
+    client: BackendClient | None,
+) -> None:
+    view_col, shortlist_col, enquire_col = _columns(3, gap="small")
+    with view_col:
+        if st.button(
+            _ACTION_LABELS[0],
+            key=f"recommendation_{idx}_view_details",
+            use_container_width=True,
+        ):
+            _handle_view_details(rec)
+    with shortlist_col:
+        if st.button(
+            _ACTION_LABELS[1],
+            key=f"recommendation_{idx}_shortlist",
+            use_container_width=True,
+        ):
+            _handle_shortlist(rec, session_id, client)
+    with enquire_col:
+        if st.button(
+            _ACTION_LABELS[2],
+            key=f"recommendation_{idx}_enquire",
+            use_container_width=True,
+        ):
+            _handle_enquire(rec)
+
+
+def _render_top3_cards(
+    recs: list[dict], session_id: str | None, client: BackendClient | None
+) -> None:
+    cols = _columns(3, gap="medium")
+    for idx, rec in enumerate(recs[:3]):
+        with cols[idx]:
+            with _card_container(idx):
+                _render_card_body_html(rec, idx=idx)
+                _render_card_actions(rec, idx=idx, session_id=session_id, client=client)
+
+
+def _render_compact_cards(
+    recs: list[dict], session_id: str | None, client: BackendClient | None
+) -> None:
+    for row_start in range(0, len(recs), 3):
+        row_recs = recs[row_start : row_start + 3]
+        cols = st.columns(len(row_recs))
+        for offset, rec in enumerate(row_recs):
+            idx = row_start + offset
+            with cols[offset]:
+                _render_card_body_html(rec, idx=idx)
+                _render_card_actions(rec, idx=idx, session_id=session_id, client=client)
+
+
+def render_recommendation_cards(
+    recs: list[dict],
+    *,
+    variant: str = "top3",
+    session_id: str | None = None,
+    client: BackendClient | None = None,
+) -> None:
     st.markdown(
         """
         <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
@@ -145,48 +298,7 @@ def render_recommendation_cards(recs: List[dict]):
         _render_empty_state()
         return
 
-    for row_start in range(0, len(recs), 3):
-        row_recs = recs[row_start : row_start + 3]
-        cols = st.columns(len(row_recs))
-        for offset, rec in enumerate(row_recs):
-            idx = row_start + offset
-            safe_title = escape(_vehicle_title(rec))
-            safe_subtitle = escape(_vehicle_subtitle(rec))
-            safe_img_src = escape(_normalise_image_src(rec.get("image")), quote=True)
-            safe_fuel_type = escape(_spec_value(rec, "fuel_type"))
-            safe_transmission = escape(_spec_value(rec, "transmission"))
-            safe_seats = escape(_spec_value(rec, "seats"))
-            safe_monthly = escape(_monthly_amount(rec))
-            badge_html = "<div class='badge'>Best Match</div>" if idx == 0 else ""
-
-            with cols[offset]:
-                st.markdown(
-                    f"""
-                    <div class='car-card' data-testid='recommendation-card'>
-                      <div style='position:relative;'>
-                        <div style='position:absolute;right:12px;top:12px;' class='heart' aria-label='Shortlist vehicle'>♡</div>
-                        <div style='position:absolute;left:12px;top:12px;'>{badge_html}</div>
-                        <img class='car-img' src='{safe_img_src}' alt='{safe_title}' />
-                      </div>
-                      <div style='font-size:18px;font-weight:700;color:#0F2A5F;margin-bottom:6px;'>{safe_title}</div>
-                      <div style='font-size:13px;color:#526580;margin-bottom:12px;'>{safe_subtitle}</div>
-                      <div style='display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;color:#526580;font-size:13px;'>
-                        <div>⛽ {safe_fuel_type}</div>
-                        <div>⚙️ {safe_transmission}</div>
-                        <div>👥 {safe_seats} seats</div>
-                      </div>
-                      <div style='font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748B;'>Estimated Monthly</div>
-                      <div style='margin-top:4px;font-size:28px;font-weight:800;color:#0B7CFF;'>{safe_monthly}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-                action_cols = st.columns(3)
-                for action_idx, label in enumerate(_ACTION_LABELS):
-                    with action_cols[action_idx]:
-                        st.button(
-                            label,
-                            key=f"recommendation_{idx}_{label.lower().replace(' ', '_')}",
-                            use_container_width=True,
-                        )
+    if variant == "compact":
+        _render_compact_cards(recs, session_id, client)
+        return
+    _render_top3_cards(recs[:3], session_id, client)

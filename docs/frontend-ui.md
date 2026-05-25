@@ -24,7 +24,7 @@ The current Streamlit page is a wide, three-column layout:
      - `Live recommendations` when the backend call succeeds,
      - `Offline preview` when the backend cannot be reached.
    - Displays summary cards for monthly budget, finance term, and deposit.
-   - Displays up to nine recommendation cards.
+   - Displays Top Recommendations as a fixed maximum of 3 cards, in the exact order returned by the backend (no frontend re-sorting).
    - Ends with a compact Finance Summary card.
 
 4. **Conditional detail/enquiry area**
@@ -39,12 +39,32 @@ The current Streamlit page is a wide, three-column layout:
 The current UI intentionally includes several visual/demo controls that do not yet provide complete page-level navigation or workflows:
 
 - **Sidebar navigation**: Chat, Recommendations, Finance, Shortlist, and Settings are static labels; clicking between full pages is not implemented yet.
-- **Recommendation card action buttons**: `View Details`, `Shortlist`, and `Enquire` are rendered on each card, but the card grid currently behaves as a display shell rather than wiring each button to the full detail, shortlist, and enquiry workflows.
+- **Recommendation cards renderer**: `render_recommendation_cards(recs, variant="top3", ...)` defaults to `variant="top3"`; it also supports `variant="compact"`; any unknown variant falls back to the top-3 renderer.
+- **Recommendations API call defaults**: `BackendClient.get_recommendations(session_id=None, limit=3)` defaults to `limit=3`, always sends the `limit` query parameter, conditionally adds `session_id`, and uses `timeout=10` for the HTTP request.
 - **Heart icon on recommendation cards**: the heart is a visual shortlist affordance only in the recommendation card shell.
 - **Finance Summary button**: `View Finance Options` is a display button; detailed finance option navigation is not implemented in the current main page.
 - **Finance term and deposit summary values**: the summary components read from session state, but the current main page does not expose controls for changing them.
 
 The separately rendered `car_detail()` and `enquiry_form()` components contain working backend calls, but they only appear when session state already contains a selected vehicle value.
+
+### Recommendation card button behavior and related session state
+
+Each recommendation card includes three action buttons with the following behavior:
+
+- **View Details**: writes both `st.session_state["selected_vehicle_obj"]` (full recommendation object) and `st.session_state["selected_vehicle"]` (vehicle id), then triggers a rerun so the detail panel can render below the main layout.
+- **Shortlist**: writes the same two session keys and calls shortlist add (`/shortlist/add`) when a session id and backend client are available.
+- **Enquire**: writes the same two session keys and triggers a rerun so the enquiry form can render prefilled with `selected_vehicle`.
+
+Key session-state fields:
+
+- `selected_vehicle_obj`: stores the selected recommendation object and controls whether `car_detail()` is shown.
+- `selected_vehicle`: stores the selected vehicle id and controls whether `enquiry_form(default_vehicle_id=...)` is shown.
+
+### Recommendation card HTML rendering guardrail
+
+- Recommendation card body uses one `st.markdown(..., unsafe_allow_html=True)` block per card for the visual shell.
+- Action buttons are rendered in native Streamlit containers/columns (not wrapped by manually opened/closed raw HTML tags across multiple `st.markdown` calls).
+- This avoids malformed DOM/markdown boundary issues where later cards can show literal HTML text (for example, `<div ...><img ...>`) instead of rendering images.
 
 ## Chat interaction flow
 
