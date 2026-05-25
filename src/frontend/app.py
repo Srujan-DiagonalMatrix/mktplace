@@ -330,7 +330,17 @@ input, textarea {
   box-shadow: 0 22px 44px rgba(37, 99, 235, 0.14);
 }
 
-.prototype-car-card {
+.recommendation-top3-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 0.9rem;
+}
+
+.recommendation-top3-card,
+.st-key-recommendation-card-1,
+.st-key-recommendation-card-2,
+.st-key-recommendation-card-3 {
   background: #ffffff;
   border: 1px solid #dbe7ff;
   border-radius: 28px;
@@ -338,7 +348,7 @@ input, textarea {
   box-shadow: 0 18px 42px rgba(20, 85, 255, 0.1);
 }
 
-.prototype-image-wrap {
+.recommendation-top3-image-panel {
   position: relative;
   border-radius: 22px;
   background: linear-gradient(180deg, #f4f9ff 0%, #edf4ff 100%);
@@ -346,7 +356,7 @@ input, textarea {
   margin-bottom: 1rem;
 }
 
-.prototype-image-wrap img {
+.recommendation-top3-image-panel img {
   width: 100%;
   height: 210px;
   object-fit: contain;
@@ -354,92 +364,10 @@ input, textarea {
   display: block;
 }
 
-.prototype-heart {
+.recommendation-top3-badge {
   position: absolute;
-  right: 12px;
+  left: 12px;
   top: 12px;
-  color: #64748b;
-  font-size: 1.1rem;
-}
-
-.prototype-title {
-  margin: 0 0 0.4rem;
-  color: #0f2a5f;
-  font-size: clamp(1.35rem, 1.95vw, 1.65rem);
-  font-weight: 800;
-  line-height: 1.2;
-}
-
-.prototype-subtitle {
-  margin: 0 0 0.85rem;
-  color: #526580;
-  font-size: 0.92rem;
-}
-
-.prototype-specs {
-  display: flex;
-  gap: 0.85rem;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 0.95rem;
-}
-
-.prototype-spec {
-  color: #526580;
-  font-size: 0.88rem;
-}
-
-.prototype-divider {
-  width: 1px;
-  height: 14px;
-  background: #d6e3fb;
-}
-
-.prototype-kicker {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #64748b;
-}
-
-.prototype-price {
-  margin: 0.3rem 0 0.95rem;
-  color: #1455ff;
-  font-size: clamp(1.8rem, 3vw, 2.15rem);
-  font-weight: 800;
-  line-height: 1.05;
-}
-
-.prototype-action-row {
-  display: flex;
-  gap: 0.7rem;
-}
-
-.prototype-action-row [data-testid="stHorizontalBlock"] {
-  gap: 0.7rem;
-}
-
-.prototype-action-row .stButton > button {
-  min-height: 52px;
-  border-radius: 16px;
-  border: 1px solid #1455ff;
-  background: #ffffff;
-  color: #1455ff;
-  font-weight: 800;
-}
-
-.car-img {
-  width: 100%;
-  height: 150px;
-  object-fit: contain;
-  background: linear-gradient(180deg, #ffffff, #f5fbff);
-  border-radius: 18px;
-  margin-bottom: 1rem;
-}
-
-.badge {
   background: #d7faf0;
   color: #0e9f6e;
   border-radius: 999px;
@@ -449,30 +377,104 @@ input, textarea {
   display: inline-block;
 }
 
-.heart { color: #64748b; }
-.heart:hover { color: var(--sky); }
-
-.recommendation-region .stButton > button {
-  min-height: 2.4rem;
-  padding: 0.45rem 0.7rem;
-  font-size: 0.8rem;
-  border-radius: 12px;
-  font-weight: 700;
+.recommendation-top3-heart {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  color: #64748b;
+  font-size: 1.1rem;
 }
 
-.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(1) .stButton > button {
+.recommendation-top3-heart:hover { color: var(--sky); }
+
+.recommendation-top3-title {
+  margin: 0 0 0.4rem;
+  color: #0f2a5f;
+  font-size: clamp(1.35rem, 1.95vw, 1.65rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.recommendation-top3-subtitle {
+  margin: 0 0 0.85rem;
+  color: #526580;
+  font-size: 0.92rem;
+}
+
+.recommendation-top3-specs {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.95rem;
+}
+
+.recommendation-top3-spec {
+  color: #526580;
+  font-size: 0.88rem;
+}
+
+.recommendation-top3-spec-divider {
+  width: 1px;
+  height: 14px;
+  background: #d6e3fb;
+}
+
+.recommendation-top3-price-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.recommendation-top3-price {
+  margin: 0.3rem 0 0.95rem;
+  color: #1455ff;
+  font-size: clamp(1.8rem, 3vw, 2.15rem);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.recommendation-top3-action-row {
+  display: flex;
+  gap: 0.7rem;
+}
+
+.recommendation-top3-action-row [data-testid="stHorizontalBlock"] {
+  gap: 0.7rem;
+}
+
+.recommendation-top3-action-row .stButton > button {
+  min-height: 52px;
+  border-radius: 16px;
+  border: 1px solid #1455ff;
+  background: #ffffff;
+  color: #1455ff;
+  font-weight: 800;
+  transition: all .16s ease;
+}
+
+.recommendation-top3-action-row .stButton > button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(20, 85, 255, 0.14);
+}
+
+/* fallback: column-scoped action rows for environments where key selectors are unstable */
+.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(1) .recommendation-top3-action-row .stButton > button {
   background: #DBEAFE;
   border-color: #BFDBFE;
   color: #1D4ED8;
 }
 
-.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(2) .stButton > button {
+.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(2) .recommendation-top3-action-row .stButton > button {
   background: #DCFCE7;
   border-color: #BBF7D0;
   color: #166534;
 }
 
-.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(3) .stButton > button {
+.recommendation-region [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(3) .recommendation-top3-action-row .stButton > button {
   background: #FEE2E2;
   border-color: #FECACA;
   color: #991B1B;
@@ -562,30 +564,31 @@ input, textarea {
 }
 
 @media (max-width: 900px) {
-  .prototype-car-card {
+  .recommendation-top3-grid { grid-template-columns: 1fr; }
+  .recommendation-top3-card,
+  .st-key-recommendation-card-1,
+  .st-key-recommendation-card-2,
+  .st-key-recommendation-card-3 {
     padding: 1.05rem;
     border-radius: 22px;
   }
-  .prototype-image-wrap {
+  .recommendation-top3-image-panel {
     border-radius: 18px;
   }
-  .prototype-image-wrap img {
+  .recommendation-top3-image-panel img {
     height: 182px;
     border-radius: 14px;
   }
-  .prototype-title {
+  .recommendation-top3-title {
     font-size: 1.22rem;
   }
-  .prototype-specs {
+  .recommendation-top3-specs {
     gap: 0.6rem;
   }
-  .prototype-divider {
+  .recommendation-top3-spec-divider {
     height: 11px;
   }
-}
-
-@media (max-width: 640px) {
-  .prototype-action-row [data-testid="stHorizontalBlock"] {
+  .recommendation-top3-action-row [data-testid="stHorizontalBlock"] {
     flex-direction: column;
   }
 }
