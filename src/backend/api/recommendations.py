@@ -16,6 +16,7 @@ router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
 @router.get("/from_session")
 def recommendations_from_session(session_id: Optional[str] = None, limit: int = 3):
+    # Keep endpoint default aligned with ranker default/top-N product requirement.
     catalog = get_catalog()
     if not catalog:
         raise HTTPException(status_code=503, detail="Catalog not loaded")

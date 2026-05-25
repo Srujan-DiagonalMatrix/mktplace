@@ -19,9 +19,11 @@ def rank_vehicles(candidate_list: List[Dict[str, Any]], pricing: Dict[str, Any],
             "term_months",
             "apr_percent",
         ):
+            # Preserve flattened pricing merge fields for API response compatibility.
             if key in p:
                 v_copy[key] = p[key]
         v_copy["match_score"] = score
         scored.append(v_copy)
+    # Highest-scoring matches first (descending), then truncate to requested limit.
     scored.sort(key=lambda x: x.get("match_score", 0), reverse=True)
     return scored[:limit]
