@@ -209,30 +209,30 @@ def _render_card_actions(
     session_id: str | None,
     client: BackendClient | None,
 ) -> None:
-    st.markdown("<div class='recommendation-card-action-row'>", unsafe_allow_html=True)
-    view_col, shortlist_col, enquire_col = st.columns(3)
-    with view_col:
-        if st.button(
-            _ACTION_LABELS[0],
-            key=f"recommendation_{idx}_view_details",
-            use_container_width=True,
-        ):
-            _handle_view_details(rec)
-    with shortlist_col:
-        if st.button(
-            _ACTION_LABELS[1],
-            key=f"recommendation_{idx}_shortlist",
-            use_container_width=True,
-        ):
-            _handle_shortlist(rec, session_id, client)
-    with enquire_col:
-        if st.button(
-            _ACTION_LABELS[2],
-            key=f"recommendation_{idx}_enquire",
-            use_container_width=True,
-        ):
-            _handle_enquire(rec)
-    st.markdown("</div>", unsafe_allow_html=True)
+    action_row = st.container()
+    with action_row:
+        view_col, shortlist_col, enquire_col = st.columns(3)
+        with view_col:
+            if st.button(
+                _ACTION_LABELS[0],
+                key=f"recommendation_{idx}_view_details",
+                use_container_width=True,
+            ):
+                _handle_view_details(rec)
+        with shortlist_col:
+            if st.button(
+                _ACTION_LABELS[1],
+                key=f"recommendation_{idx}_shortlist",
+                use_container_width=True,
+            ):
+                _handle_shortlist(rec, session_id, client)
+        with enquire_col:
+            if st.button(
+                _ACTION_LABELS[2],
+                key=f"recommendation_{idx}_enquire",
+                use_container_width=True,
+            ):
+                _handle_enquire(rec)
 
 
 def _render_top3_cards(
