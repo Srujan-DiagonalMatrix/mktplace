@@ -245,12 +245,14 @@ def _render_card_actions(
     st.markdown("</div>", unsafe_allow_html=True)
 
 
-def _render_hero_cards(
+def _render_top3_cards(
     recs: list[dict], session_id: str | None, client: BackendClient | None
 ) -> None:
-    rec = recs[0]
-    _render_vehicle_card_html(rec, idx=0, variant="hero")
-    _render_card_actions(rec, idx=0, session_id=session_id, client=client)
+    cols = st.columns(3)
+    for idx, rec in enumerate(recs[:3]):
+        with cols[idx]:
+            _render_vehicle_card_html(rec, idx=idx, variant="hero")
+            _render_card_actions(rec, idx=idx, session_id=session_id, client=client)
 
 
 def _render_compact_cards(
@@ -269,7 +271,7 @@ def _render_compact_cards(
 def render_recommendation_cards(
     recs: list[dict],
     *,
-    variant: str = "compact",
+    variant: str = "top3",
     session_id: str | None = None,
     client: BackendClient | None = None,
 ) -> None:
@@ -287,8 +289,7 @@ def render_recommendation_cards(
         _render_empty_state()
         return
 
-    selected_variant = variant if variant in {"hero", "compact"} else "hero"
-    if selected_variant == "compact":
+    if variant == "compact":
         _render_compact_cards(recs, session_id, client)
         return
-    _render_hero_cards(recs, session_id, client)
+    _render_top3_cards(recs[:3], session_id, client)
