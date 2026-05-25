@@ -663,7 +663,7 @@ def _render_recommendations_panel(session_id: str) -> None:
             "Backend is not connected yet, so this page is showing the base UI. "
             "Start the API to load personalised vehicles."
         )
-    render_recommendation_cards(recs[:9], variant="hero", session_id=session_id, client=client)
+    render_recommendation_cards(recs[:3], variant="top3", session_id=session_id, client=client)
     finance_summary(budget, term, deposit)
 
 
