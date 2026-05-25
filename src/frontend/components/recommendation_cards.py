@@ -146,6 +146,20 @@ def _vehicle_id(rec: dict, fallback: str) -> str:
     return str(vehicle_id)
 
 
+def _columns(count: int, *, gap: str) -> List[Any]:
+    try:
+        return st.columns(count, gap=gap)
+    except TypeError:
+        return st.columns(count)
+
+
+def _card_container(idx: int) -> Any:
+    try:
+        return st.container(key=f"recommendation_card_{idx}")
+    except TypeError:
+        return st.container()
+
+
 def _render_card_body_html(rec: dict, *, idx: int) -> None:
     safe_title = escape(_vehicle_title(rec))
     safe_subtitle = escape(_vehicle_subtitle(rec))
@@ -153,16 +167,16 @@ def _render_card_body_html(rec: dict, *, idx: int) -> None:
     safe_transmission = escape(_spec_value(rec, "transmission"))
     safe_seats = escape(_spec_value(rec, "seats"))
     safe_monthly = escape(_monthly_amount(rec))
-    fallback_image_html = _render_card_image(rec.get("image"), safe_title)
-    best_match_html = "<div class='recommendation-card-badge'>Best Match</div>" if idx == 0 else ""
+    panel_children: list[str] = []
+    if idx == 0:
+        panel_children.append("<div class='recommendation-card-badge'>Best Match</div>")
+    panel_children.append("<div class='recommendation-card-heart' aria-hidden='true'>♡</div>")
+    panel_children.append(_render_card_image(rec.get("image"), _vehicle_title(rec)))
+    panel_html = "".join(panel_children)
     st.markdown(
         f"""
-        <div class="recommendation-top3-card">
-          <div class="recommendation-image-panel">
-            {best_match_html}
-            <div class="recommendation-card-heart" aria-hidden="true">♡</div>
-            {fallback_image_html}
-          </div>
+        <div class="recommendation-card-body">
+          <div class="recommendation-image-panel">{panel_html}</div>
           <div class="recommendation-card-title">{safe_title}</div>
           <div class="recommendation-card-subtitle">{safe_subtitle}</div>
           <div class="recommendation-card-specs">
@@ -215,42 +229,39 @@ def _render_card_actions(
     session_id: str | None,
     client: BackendClient | None,
 ) -> None:
-    action_row = st.container()
-    with action_row:
-        view_col, shortlist_col, enquire_col = st.columns(3)
-        with view_col:
-            if st.button(
-                _ACTION_LABELS[0],
-                key=f"recommendation_{idx}_view_details",
-                use_container_width=True,
-            ):
-                _handle_view_details(rec)
-        with shortlist_col:
-            if st.button(
-                _ACTION_LABELS[1],
-                key=f"recommendation_{idx}_shortlist",
-                use_container_width=True,
-            ):
-                _handle_shortlist(rec, session_id, client)
-        with enquire_col:
-            if st.button(
-                _ACTION_LABELS[2],
-                key=f"recommendation_{idx}_enquire",
-                use_container_width=True,
-            ):
-                _handle_enquire(rec)
+    view_col, shortlist_col, enquire_col = _columns(3, gap="small")
+    with view_col:
+        if st.button(
+            _ACTION_LABELS[0],
+            key=f"recommendation_{idx}_view_details",
+            use_container_width=True,
+        ):
+            _handle_view_details(rec)
+    with shortlist_col:
+        if st.button(
+            _ACTION_LABELS[1],
+            key=f"recommendation_{idx}_shortlist",
+            use_container_width=True,
+        ):
+            _handle_shortlist(rec, session_id, client)
+    with enquire_col:
+        if st.button(
+            _ACTION_LABELS[2],
+            key=f"recommendation_{idx}_enquire",
+            use_container_width=True,
+        ):
+            _handle_enquire(rec)
 
 
 def _render_top3_cards(
     recs: list[dict], session_id: str | None, client: BackendClient | None
 ) -> None:
-    st.markdown("<div class='recommendation-top3-grid'>", unsafe_allow_html=True)
-    cols = st.columns(3)
+    cols = _columns(3, gap="medium")
     for idx, rec in enumerate(recs[:3]):
         with cols[idx]:
-            _render_card_body_html(rec, idx=idx)
-            _render_card_actions(rec, idx=idx, session_id=session_id, client=client)
-    st.markdown("</div>", unsafe_allow_html=True)
+            with _card_container(idx):
+                _render_card_body_html(rec, idx=idx)
+                _render_card_actions(rec, idx=idx, session_id=session_id, client=client)
 
 
 def _render_compact_cards(
