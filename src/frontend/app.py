@@ -350,6 +350,7 @@ input, textarea {
 
 .recommendation-image-panel {
   position: relative;
+  overflow: hidden;
   border-radius: 22px;
   background: linear-gradient(180deg, #f4f9ff 0%, #edf4ff 100%);
   padding: 0.45rem;
@@ -368,6 +369,7 @@ input, textarea {
   position: absolute;
   left: 12px;
   top: 12px;
+  z-index: 2;
   background: #d7faf0;
   color: #0e9f6e;
   border-radius: 999px;
@@ -381,6 +383,7 @@ input, textarea {
   position: absolute;
   right: 12px;
   top: 12px;
+  z-index: 2;
   color: #64748b;
   font-size: 1.1rem;
 }
