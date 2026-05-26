@@ -150,7 +150,7 @@ Current UI behaviour to be aware of:
 
 See `docs/frontend-ui.md` for a fuller UI map and `docs/testing.md` for test strategy and Docker/offline-queue notes.
 
-## Operational notes
+### Operational notes
 
 - Source code, data, and assets are mounted into the app container via volumes, so local edits are reflected in the running container.
 - FastAPI and Streamlit are packaged together in `docker/Dockerfile` and run in the single `app` Compose service while still exposing host ports `8000` and `8501`.
