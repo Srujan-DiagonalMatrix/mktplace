@@ -26,7 +26,7 @@ python -m uvicorn src.backend.main:app \
   --reload &
 pids+=("$!")
 
-python -m streamlit run src/frontend/app.py \
+python -m streamlit run streamlit_app.py \
   --server.address="${frontend_host}" \
   --server.port="${frontend_port}" \
   --server.headless=true \

@@ -5,7 +5,7 @@ Lloyds Market Place — an AI-assisted car buying MVP with a FastAPI backend and
 ## Current application entrypoints
 
 - Main backend entrypoint: `src.backend.main:app` (FastAPI app for Uvicorn).
-- Main frontend entrypoint: `src/frontend/app.py` (Streamlit app).
+- Main frontend entrypoint: `streamlit_app.py` (root launcher for the Streamlit app in `src/frontend/app.py`).
 
 ## Service URLs
 
@@ -108,7 +108,7 @@ Useful direct run commands, if you already have dependencies and required servic
 
 ```bash
 uvicorn src.backend.main:app --reload --host 127.0.0.1 --port 8000
-streamlit run src/frontend/app.py --server.address=127.0.0.1 --server.port=8501
+streamlit run streamlit_app.py --server.address=127.0.0.1 --server.port=8501
 ```
 
 ## Full Docker validation commands
