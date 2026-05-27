@@ -101,6 +101,18 @@ def _build_next_reply(preferences: dict, asked_keys: list[str], user_message: st
     return (next_question.question, quick_replies or None, next_question.key, metadata, metadata)
 
 
+def _build_policy_decision_payload(next_question_key: str | None, question_metadata: dict | None, preferences: dict) -> dict:
+    unresolved_required_slots = []
+    if next_question_key and question_metadata and question_metadata.get("required"):
+        unresolved_required_slots.append(next_question_key)
+    return {
+        "assistant_action": "ask_follow_up" if next_question_key else "complete",
+        "target_slot": next_question_key,
+        "unresolved_required_slots": unresolved_required_slots,
+        "preferences_snapshot": preferences,
+    }
+
+
 @router.post("/message", response_model=ChatResponse)
 def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
     s = create_or_get_session(payload.session_id)
@@ -182,9 +194,22 @@ def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
         set_last_question_asked_at(session_id, now)
         add_asked_question_key(session_id, next_question_key)
     set_last_question_key(session_id, next_question_key)
-    llm_payload = _orchestrator.run(session=s, user_message=payload.message, template=PromptTemplate.FOLLOW_UP)
+    policy_decision = _build_policy_decision_payload(next_question_key=next_question_key, question_metadata=question_metadata, preferences=current)
+    llm_payload = _orchestrator.run(
+        session=s,
+        user_message=payload.message,
+        template=PromptTemplate.FOLLOW_UP,
+        policy_decision=policy_decision,
+    )
     if llm_payload.used_llm and llm_payload.response is not None:
         reply = llm_payload.response.reply
+    elif persistence_enabled and llm_payload.fallback_reason is not None:
+        repo.log_event(
+            session_id=session_id,
+            event_type="llm_fallback",
+            stage=next_question_key or "completed",
+            details={"reason": llm_payload.fallback_reason.value},
+        )
 
     if persistence_enabled:
         if next_question_key is not None:
