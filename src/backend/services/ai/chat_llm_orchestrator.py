@@ -88,7 +88,7 @@ class ChatOrchestrator:
         self._client = client if client is not None else (OpenAIJSONClient(self._api_key) if self._api_key else None)
         self._settings = settings or ModelSettings(
             version=PROMPT_CONFIG_VERSION,
-            model="gpt-4.1-mini",
+            model=cfg.openai_chat_model,
             temperature=0.3,
             max_output_tokens=260,
             confidence_threshold=0.55,
