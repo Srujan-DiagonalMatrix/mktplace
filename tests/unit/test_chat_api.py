@@ -168,3 +168,10 @@ def test_chat_logs_fallback_diagnostics_when_structured_parse_fails(monkeypatch)
     assert details["fallback_reason"] == "model_error"
     assert details["model_name"] == "test-model"
     assert details["decision_source"] == "deterministic"
+def test_chat_response_includes_policy_decision_fields():
+    response = client.post("/chat/message", json={"message": "I am not sure"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["assistant_action"]
+    assert "decision_reason" in body
+    assert "decision_confidence" in body

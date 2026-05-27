@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     )
 
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
+    openai_chat_model: str = Field(default="gpt-5.4-nano", alias="OPENAI_CHAT_MODEL")
     database_url: str = Field(
         default="postgresql+psycopg://postgres:postgres@localhost:5432/mktplace",
         alias="DATABASE_URL",
