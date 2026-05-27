@@ -167,11 +167,18 @@ def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
     if llm_payload.used_llm and llm_payload.response is not None:
         reply = llm_payload.response.reply
 
+    diagnostics = {
+        "used_llm": llm_payload.used_llm,
+        "fallback_reason": llm_payload.fallback_reason.value if llm_payload.fallback_reason else None,
+        "model_name": _orchestrator.model_name,
+        "decision_source": "llm" if llm_payload.used_llm else "deterministic",
+    }
+
     if persistence_enabled:
         if next_question_key is not None:
-            repo.log_event(session_id=session_id, event_type="question_asked", stage=next_question_key, details={"reply": reply})
+            repo.log_event(session_id=session_id, event_type="question_asked", stage=next_question_key, details={"reply": reply, **diagnostics})
         else:
-            repo.log_event(session_id=session_id, event_type="user_exit", stage="completed")
+            repo.log_event(session_id=session_id, event_type="user_exit", stage="completed", details=diagnostics)
         repo.create_turn(session_id=session_id, role="assistant", content=reply)
         repo.update_stage(session_id, next_question_key or "completed")
     return ChatResponse(
