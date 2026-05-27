@@ -2,12 +2,24 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from src.backend.services.ai.chat_llm_orchestrator import (
     ChatOrchestrator,
     ModelSettings,
     PromptTemplate,
     FallbackReason,
 )
+
+
+from src.shared.config.settings import get_settings
+
+
+@pytest.fixture(autouse=True)
+def _clear_settings_cache():
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 class FakeClient:
@@ -94,3 +106,42 @@ def test_orchestrator_missing_key_fallback(monkeypatch):
     orch = ChatOrchestrator(client=None, settings=_settings())
     out = orch.run(session={"messages": [], "preferences": {}}, user_message="hello", template=PromptTemplate.GREETING)
     assert out.fallback_reason == FallbackReason.MISSING_API_KEY
+
+
+class SpyClient:
+    def __init__(self, payload: dict):
+        self.payload = payload
+        self.calls: list[dict] = []
+
+    def generate_json(self, **kwargs):
+        self.calls.append(kwargs)
+        return json.dumps(self.payload)
+
+
+def test_default_model_setting_is_gpt_5_4_nano(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key")
+    monkeypatch.delenv("OPENAI_CHAT_MODEL", raising=False)
+    orch = ChatOrchestrator(client=FakeClient({"reply": "ok", "confidence": 0.9, "follow_up_question": None, "template_used": "greeting"}))
+
+    assert orch._settings.model == "gpt-5.4-nano"
+
+
+def test_explicit_model_override_is_respected(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key")
+    monkeypatch.setenv("OPENAI_CHAT_MODEL", "gpt-5.4")
+    orch = ChatOrchestrator(client=FakeClient({"reply": "ok", "confidence": 0.9, "follow_up_question": None, "template_used": "greeting"}))
+
+    assert orch._settings.model == "gpt-5.4"
+
+
+def test_orchestrator_passes_resolved_model_to_client(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key")
+    monkeypatch.setenv("OPENAI_CHAT_MODEL", "gpt-5.4-mini")
+    spy = SpyClient({"reply": "ok", "confidence": 0.9, "follow_up_question": None, "template_used": "greeting"})
+    orch = ChatOrchestrator(client=spy)
+
+    out = orch.run(session={"messages": [], "preferences": {}}, user_message="hello", template=PromptTemplate.GREETING)
+
+    assert out.used_llm is True
+    assert spy.calls
+    assert spy.calls[0]["model"] == "gpt-5.4-mini"
