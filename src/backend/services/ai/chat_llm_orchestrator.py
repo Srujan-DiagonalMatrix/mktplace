@@ -15,6 +15,7 @@ class FallbackReason(str, Enum):
     MODEL_ERROR = "model_error"
     LOW_CONFIDENCE = "low_confidence"
     GUARDRAIL_BLOCK = "guardrail_block"
+    DEPENDENCY_ERROR = "dependency_error"
 
 
 class PromptTemplate(str, Enum):
@@ -85,7 +86,18 @@ class ChatOrchestrator:
     def __init__(self, client: LLMClient | None = None, settings: ModelSettings | None = None):
         cfg = get_settings()
         self._api_key = cfg.openai_api_key
-        self._client = client if client is not None else (OpenAIJSONClient(self._api_key) if self._api_key else None)
+        self._init_error_reason: FallbackReason | None = None
+        if client is not None:
+            self._client = client
+        elif not self._api_key:
+            self._client = None
+            self._init_error_reason = FallbackReason.MISSING_API_KEY
+        else:
+            try:
+                self._client = OpenAIJSONClient(self._api_key)
+            except Exception:
+                self._client = None
+                self._init_error_reason = FallbackReason.DEPENDENCY_ERROR
         self._settings = settings or ModelSettings(
             version=PROMPT_CONFIG_VERSION,
             model="gpt-4.1-mini",
@@ -123,7 +135,7 @@ class ChatOrchestrator:
 
     def run(self, *, session: dict[str, Any], user_message: str, template: PromptTemplate) -> OrchestrationPayload:
         if self._client is None:
-            return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.MISSING_API_KEY)
+            return OrchestrationPayload(used_llm=False, fallback_reason=self._init_error_reason or FallbackReason.MODEL_ERROR)
         prompt = self.build_prompt(session=session, user_message=user_message, template=template)
         try:
             raw = self._client.generate_json(

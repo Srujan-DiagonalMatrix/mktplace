@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from functools import lru_cache
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from src.backend.schemas.chat import ChatMessage, ChatResponse
@@ -30,7 +31,10 @@ from src.backend.services.ai.question_policy import select_next_question
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-_orchestrator = ChatOrchestrator()
+
+@lru_cache(maxsize=1)
+def get_chat_orchestrator() -> ChatOrchestrator:
+    return ChatOrchestrator()
 
 def _catalog_options(field_name: str) -> list[str]:
     try:
@@ -82,7 +86,11 @@ def _build_next_reply(preferences: dict, asked_keys: list[str], user_message: st
 
 
 @router.post("/message", response_model=ChatResponse)
-def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
+def post_message(
+    payload: ChatMessage,
+    db: Session = Depends(get_db),
+    orchestrator: ChatOrchestrator = Depends(get_chat_orchestrator),
+):
     s = create_or_get_session(payload.session_id)
     if not s:
         raise HTTPException(status_code=500, detail="Failed to create session")
@@ -163,7 +171,7 @@ def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
         set_last_question_asked_at(session_id, now)
         add_asked_question_key(session_id, next_question_key)
     set_last_question_key(session_id, next_question_key)
-    llm_payload = _orchestrator.run(session=s, user_message=payload.message, template=PromptTemplate.FOLLOW_UP)
+    llm_payload = orchestrator.run(session=s, user_message=payload.message, template=PromptTemplate.FOLLOW_UP)
     if llm_payload.used_llm and llm_payload.response is not None:
         reply = llm_payload.response.reply
 
