@@ -90,3 +90,16 @@ def test_summarize_then_recommend_transition_when_sufficiency_reached():
     assert recommend.stage == "recommend"
     assert recommend.action == "present_recommendations"
     assert recommend.question is None
+def test_decide_next_action_returns_summary_when_complete():
+    from src.backend.services.ai.question_policy import decide_next_action
+
+    prefs = {
+        "intent": "purchase",
+        "fuel_type": "Petrol",
+        "monthly_from_gbp": 300,
+        "transmission": "Automatic",
+        "term_months": 36,
+    }
+    decision = decide_next_action(prefs, asked_keys=[], user_message="thanks", hesitation_count=0)
+    assert decision.assistant_action == "summarize_and_recommend"
+    assert decision.question_spec is None
