@@ -97,6 +97,11 @@ class ChatOrchestrator:
             max_reply_chars=380,
         )
 
+
+    @property
+    def model_name(self) -> str:
+        return self._settings.model
+    def build_prompt(self, *, session: dict[str, Any], user_message: str, template: PromptTemplate) -> str:
     def build_prompt(
         self,
         *,
