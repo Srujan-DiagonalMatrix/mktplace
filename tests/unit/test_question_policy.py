@@ -1,4 +1,4 @@
-from src.backend.services.ai.question_policy import select_next_question
+from src.backend.services.ai.question_policy import select_next_question, select_policy_decision
 
 
 def test_missing_critical_preference_selected_first():
@@ -44,3 +44,49 @@ def test_hesitation_prioritizes_missing_critical():
     q = select_next_question(prefs, asked_keys=["fuel_type"], user_message="hmm", hesitation_count=2)
     assert q is not None
     assert q.key == "monthly_from_gbp"
+
+
+def test_ambiguity_loop_recovery():
+    prefs = {"intent": "purchase"}
+    decision = select_policy_decision(prefs, asked_keys=["fuel_type"], user_message="maybe", hesitation_count=3)
+    assert decision.stage == "narrow"
+    assert decision.action == "recover_from_ambiguity"
+    assert decision.question is not None
+    assert decision.question.key == "fuel_type"
+
+
+def test_non_repetition_after_answered_slots():
+    prefs = {"intent": "purchase", "fuel_type": "Petrol"}
+    decision = select_policy_decision(prefs, asked_keys=["fuel_type"], user_message="ok", hesitation_count=0)
+    assert decision.question is not None
+    assert decision.question.key != "fuel_type"
+
+
+def test_contradiction_resolution_before_new_slot_collection():
+    prefs = {"intent": "purchase", "contradiction_markers": ["fuel_type_conflict"]}
+    decision = select_policy_decision(prefs, asked_keys=[], user_message="ok", hesitation_count=0)
+    assert decision.stage == "clarify"
+    assert decision.action == "resolve_contradiction"
+    assert decision.question is not None
+    assert decision.question.key == "clarification"
+
+
+def test_summarize_then_recommend_transition_when_sufficiency_reached():
+    prefs = {
+        "intent": "purchase",
+        "fuel_type": "Hybrid",
+        "monthly_from_gbp": 450,
+        "transmission": "Automatic",
+        "term_months": 36,
+        "extracted_themes": ["efficiency"],
+        "sentiment": "positive",
+    }
+    summarize = select_policy_decision(prefs, asked_keys=["fuel_type", "monthly_from_gbp", "transmission", "term_months"], user_message="ok", hesitation_count=0)
+    assert summarize.stage == "summarize"
+    assert summarize.action == "summarize_preferences"
+    assert summarize.question is None
+
+    recommend = select_policy_decision({**prefs, "summary_presented": True}, asked_keys=["fuel_type", "monthly_from_gbp", "transmission", "term_months"], user_message="ok", hesitation_count=0)
+    assert recommend.stage == "recommend"
+    assert recommend.action == "present_recommendations"
+    assert recommend.question is None
