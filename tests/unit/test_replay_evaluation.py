@@ -1,8 +1,21 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
 from src.backend.services.ai.replay_eval import (
     EvalThresholds,
     ScoringWeights,
     run_replay_evaluation,
 )
+
+
+TURN_FIXTURES = Path("data/interaction/conversation_turns.jsonl")
+POLICY_LABELS = Path("dialogue_policy_labels.jsonl")
+
+
+def _load_jsonl(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
 def test_regression_suite_runs_all_required_scenarios():
@@ -41,3 +54,13 @@ def test_release_gate_thresholds_must_pass():
         )
     )
     assert payload["release_gate_passed"] is True
+
+
+def test_policy_fixture_files_are_well_formed_and_joinable():
+    turns = _load_jsonl(TURN_FIXTURES)
+    labels = _load_jsonl(POLICY_LABELS)
+    turn_ids = {row["turn_id"] for row in turns}
+    label_ids = {row["turn_id"] for row in labels}
+
+    assert turns and labels
+    assert label_ids <= turn_ids
