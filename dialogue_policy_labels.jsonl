@@ -1,0 +1,7 @@
+{"turn_id":"t1","expected_policy":"follow_up","expected_slot":"fuel_type"}
+{"turn_id":"t2","expected_policy":"clarification","expected_slot":"clarification"}
+{"turn_id":"t3","expected_policy":"follow_up","expected_slot":"transmission"}
+{"turn_id":"t4","expected_policy":"clarification","expected_slot":"clarification"}
+{"turn_id":"t5","expected_policy":"clarification","expected_slot":"clarification"}
+{"turn_id":"t6","expected_policy":"follow_up","expected_slot":"seats"}
+{"turn_id":"t7","expected_policy":"summarize_or_recommend","expected_slot":"none"}
