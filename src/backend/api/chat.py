@@ -26,7 +26,7 @@ from src.backend.services.ai.conversation_orchestrator import (
     reset_hesitation,
     extract_pain_points_for_turn,
 )
-from src.backend.services.ai.question_policy import select_next_question
+from src.backend.services.ai.question_policy import decide_next_action
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -72,13 +72,33 @@ def _has_matching_inventory(preferences: dict) -> bool:
     return False
 
 
-def _build_next_reply(preferences: dict, asked_keys: list[str], user_message: str, hesitation_count: int) -> tuple[str, list[str] | None, str | None, dict | None]:
-    next_question = select_next_question(preferences, asked_keys=asked_keys, user_message=user_message, hesitation_count=hesitation_count)
+def _build_next_reply(preferences: dict, asked_keys: list[str], user_message: str, hesitation_count: int) -> tuple[str, list[str] | None, str | None, dict | None, dict]:
+    decision = decide_next_action(preferences, asked_keys=asked_keys, user_message=user_message, hesitation_count=hesitation_count)
+    next_question = decision.question_spec
     if not next_question:
-        return ("It was a great experience talking to you conversation, Thank you!", None, None, None)
+        return (
+            "It was a great experience talking to you conversation, Thank you!",
+            None,
+            None,
+            None,
+            {
+                "assistant_action": decision.assistant_action,
+                "target_slot": decision.target_slot,
+                "decision_confidence": decision.confidence,
+                "decision_reason": decision.reason,
+            },
+        )
     quick_replies = _catalog_options(next_question.key) if next_question.key in {"fuel_type", "transmission"} else None
     metadata = {"slot": next_question.key, "purpose": next_question.purpose, "category": next_question.category, "required": next_question.required}
-    return (next_question.question, quick_replies or None, next_question.key, metadata)
+    metadata.update(
+        {
+            "assistant_action": decision.assistant_action,
+            "target_slot": decision.target_slot,
+            "decision_confidence": decision.confidence,
+            "decision_reason": decision.reason,
+        }
+    )
+    return (next_question.question, quick_replies or None, next_question.key, metadata, metadata)
 
 
 @router.post("/message", response_model=ChatResponse)
@@ -148,12 +168,11 @@ def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
     previous_key = last_question_key
     statement = STATEMENTS_BY_KEY.get(previous_key)
     if statement:
-        current_reply, _, _, question_metadata = _build_next_reply(current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count)
+        current_reply, _, next_question_key, question_metadata, decision_payload = _build_next_reply(current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count)
         reply = f"{statement}\n\n{current_reply}"
-        next_question_key = _build_next_reply(current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count)[2]
         quick_replies = None
     else:
-        reply, quick_replies, next_question_key, question_metadata = _build_next_reply(
+        reply, quick_replies, next_question_key, question_metadata, decision_payload = _build_next_reply(
             current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count
         )
     now = time.time()
@@ -193,4 +212,8 @@ def post_message(payload: ChatMessage, db: Session = Depends(get_db)):
         callback_opt_in=current.get("callback_opt_in"),
         quick_replies=quick_replies,
         question_metadata=question_metadata if next_question_key is not None else None,
+        assistant_action=decision_payload.get("assistant_action"),
+        target_slot=decision_payload.get("target_slot"),
+        decision_confidence=decision_payload.get("decision_confidence"),
+        decision_reason=decision_payload.get("decision_reason"),
     )

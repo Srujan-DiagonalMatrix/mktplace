@@ -44,3 +44,18 @@ def test_hesitation_prioritizes_missing_critical():
     q = select_next_question(prefs, asked_keys=["fuel_type"], user_message="hmm", hesitation_count=2)
     assert q is not None
     assert q.key == "monthly_from_gbp"
+
+
+def test_decide_next_action_returns_summary_when_complete():
+    from src.backend.services.ai.question_policy import decide_next_action
+
+    prefs = {
+        "intent": "purchase",
+        "fuel_type": "Petrol",
+        "monthly_from_gbp": 300,
+        "transmission": "Automatic",
+        "term_months": 36,
+    }
+    decision = decide_next_action(prefs, asked_keys=[], user_message="thanks", hesitation_count=0)
+    assert decision.assistant_action == "summarize_and_recommend"
+    assert decision.question_spec is None

@@ -60,3 +60,12 @@ def test_recommendations_from_session_reads_chat_preferences(monkeypatch):
     assert response.status_code == 200
     assert captured["prefs"]["monthly_budget"] == 500
     assert captured["prefs"]["fuel_type"] == "Petrol"
+
+
+def test_chat_response_includes_policy_decision_fields():
+    response = client.post("/chat/message", json={"message": "I am not sure"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["assistant_action"]
+    assert "decision_reason" in body
+    assert "decision_confidence" in body
