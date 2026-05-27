@@ -15,6 +15,8 @@ class FallbackReason(str, Enum):
     MODEL_ERROR = "model_error"
     LOW_CONFIDENCE = "low_confidence"
     GUARDRAIL_BLOCK = "guardrail_block"
+    DEPENDENCY_ERROR = "dependency_error"
+    POLICY_MISMATCH = "policy_mismatch"
 
 
 class PromptTemplate(str, Enum):
@@ -32,6 +34,7 @@ class GuardrailResult(BaseModel):
 class StructuredLLMResponse(BaseModel):
     reply: str
     confidence: float = Field(ge=0.0, le=1.0)
+    assistant_action: str
     follow_up_question: str | None = None
     template_used: PromptTemplate
 
@@ -85,28 +88,57 @@ class ChatOrchestrator:
     def __init__(self, client: LLMClient | None = None, settings: ModelSettings | None = None):
         cfg = get_settings()
         self._api_key = cfg.openai_api_key
-        self._client = client if client is not None else (OpenAIJSONClient(self._api_key) if self._api_key else None)
+        self._init_error_reason: FallbackReason | None = None
+        if client is not None:
+            self._client = client
+        elif not self._api_key:
+            self._client = None
+            self._init_error_reason = FallbackReason.MISSING_API_KEY
+        else:
+            try:
+                self._client = OpenAIJSONClient(self._api_key)
+            except Exception:
+                self._client = None
+                self._init_error_reason = FallbackReason.DEPENDENCY_ERROR
         self._settings = settings or ModelSettings(
             version=PROMPT_CONFIG_VERSION,
-            model="gpt-4.1-mini",
+            model=cfg.openai_chat_model,
             temperature=0.3,
             max_output_tokens=260,
             confidence_threshold=0.55,
             max_reply_chars=380,
         )
 
+
+    @property
+    def model_name(self) -> str:
+        return self._settings.model
     def build_prompt(self, *, session: dict[str, Any], user_message: str, template: PromptTemplate) -> str:
+    def build_prompt(
+        self,
+        *,
+        session: dict[str, Any],
+        user_message: str,
+        template: PromptTemplate,
+        policy_decision: dict[str, Any] | None = None,
+    ) -> str:
         memory = session.get("messages", [])[-6:]
         preferences = session.get("preferences", {})
+        policy = policy_decision or {}
         return (
             f"Prompt config version: {self._settings.version}\n"
             "You are a car buying assistant. Tone: concise, friendly, factual. "
             "Do not fabricate finance or legal claims.\n"
             f"Template: {template.value} => {PROMPT_TEMPLATES[template]}\n"
             f"Session preferences: {json.dumps(preferences, default=str)}\n"
+            f"Deterministic policy decision: {json.dumps(policy, default=str)}\n"
             f"Recent messages: {json.dumps(memory, default=str)}\n"
             f"User message: {user_message}\n"
-            "Return strict JSON: {\"reply\": str, \"confidence\": float, \"follow_up_question\": str|null, \"template_used\": str}"
+            "Return strict JSON: {\"reply\": str, \"confidence\": float, \"assistant_action\": str, "
+            "\"follow_up_question\": str|null, \"template_used\": str}.\n"
+            "Consistency rules: assistant_action MUST match deterministic policy assistant_action. "
+            "If assistant_action is ask_follow_up, follow_up_question must be a non-empty string and should align "
+            "with policy target_slot."
         )
 
     def _guardrails(self, reply: str) -> GuardrailResult:
@@ -121,10 +153,19 @@ class ChatOrchestrator:
             return reply
         return reply[: self._settings.max_reply_chars - 1].rstrip() + "…"
 
-    def run(self, *, session: dict[str, Any], user_message: str, template: PromptTemplate) -> OrchestrationPayload:
+    def run(
+        self,
+        *,
+        session: dict[str, Any],
+        user_message: str,
+        template: PromptTemplate,
+        policy_decision: dict[str, Any] | None = None,
+    ) -> OrchestrationPayload:
         if self._client is None:
-            return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.MISSING_API_KEY)
+            return OrchestrationPayload(used_llm=False, fallback_reason=self._init_error_reason or FallbackReason.MODEL_ERROR)
         prompt = self.build_prompt(session=session, user_message=user_message, template=template)
+            return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.MISSING_API_KEY)
+        prompt = self.build_prompt(session=session, user_message=user_message, template=template, policy_decision=policy_decision)
         try:
             raw = self._client.generate_json(
                 model=self._settings.model,
@@ -135,6 +176,15 @@ class ChatOrchestrator:
             parsed = StructuredLLMResponse.model_validate_json(raw)
         except (TimeoutError, ValidationError, json.JSONDecodeError, Exception):
             return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.MODEL_ERROR)
+        expected_action = (policy_decision or {}).get("assistant_action")
+        target_slot = (policy_decision or {}).get("target_slot")
+        if expected_action and parsed.assistant_action != expected_action:
+            return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
+        if parsed.assistant_action == "ask_follow_up":
+            if not parsed.follow_up_question or not parsed.follow_up_question.strip():
+                return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
+            if target_slot and target_slot.lower() not in parsed.follow_up_question.lower():
+                return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
         if parsed.confidence < self._settings.confidence_threshold:
             return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.LOW_CONFIDENCE)
         guard = self._guardrails(parsed.reply)

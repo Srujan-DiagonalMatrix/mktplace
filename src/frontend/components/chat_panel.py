@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from html import escape
+import os
 from typing import Any
+
+import os
 
 import streamlit as st
 
@@ -45,6 +48,10 @@ def _create_message(
     text: str,
     *,
     quick_replies: list[str] | None = None,
+    assistant_action: str | None = None,
+    target_slot: str | None = None,
+    question_metadata: dict[str, Any] | None = None,
+    confidence: float | None = None,
     time: str | None = None,
 ) -> dict[str, Any]:
     message: dict[str, Any] = {
@@ -54,6 +61,14 @@ def _create_message(
     }
     if quick_replies:
         message["quick_replies"] = quick_replies
+    if assistant_action:
+        message["assistant_action"] = assistant_action
+    if target_slot:
+        message["target_slot"] = target_slot
+    if question_metadata:
+        message["question_metadata"] = question_metadata
+    if confidence is not None:
+        message["confidence"] = confidence
     return message
 
 
@@ -86,6 +101,60 @@ def _safe_text(value: Any) -> str:
     return escape(str(value), quote=True)
 
 
+def _dev_badge_enabled() -> bool:
+    return os.getenv("CHAT_DEV_BADGE", "").strip().lower() in {"1", "true", "yes", "on"} or bool(
+        st.session_state.get("chat_dev_badge")
+    )
+
+
+def _metadata_badge(message: dict[str, Any]) -> str:
+    if not _dev_badge_enabled() or message.get("role") != "ai":
+        return ""
+
+    action = message.get("assistant_action")
+    confidence = message.get("confidence")
+    target_slot = message.get("target_slot")
+
+    parts: list[str] = []
+    if action:
+        parts.append(f"action={_safe_text(action)}")
+    if target_slot:
+        parts.append(f"slot={_safe_text(target_slot)}")
+    if confidence is not None:
+        parts.append(f"confidence={_safe_text(confidence)}")
+
+    if not parts:
+        return ""
+
+    return (
+        "<div style='margin-top:6px;'>"
+        "<span style='display:inline-block;padding:2px 8px;border-radius:999px;"
+        "background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;font-size:11px;font-weight:700;'>"
+        + " | ".join(parts)
+        + "</span></div>"
+    )
+
+
+def _apply_assistant_action(raw_text: str, response: dict[str, Any]) -> tuple[str, list[str] | None]:
+    assistant_action = response.get("assistant_action")
+    quick_replies = response.get("quick_replies") or None
+
+    if assistant_action == "clarify_with_options":
+        metadata = response.get("question_metadata") if isinstance(response.get("question_metadata"), dict) else {}
+        options = metadata.get("options")
+        if isinstance(options, list):
+            clean_options = [str(opt).strip() for opt in options if str(opt).strip()]
+            if clean_options:
+                quick_replies = clean_options
+
+    if assistant_action == "summarize_and_recommend":
+        if not quick_replies:
+            quick_replies = ["Yes, continue", "Change preferences"]
+        raw_text = f"{raw_text}\n\nWould you like me to continue with recommendations based on this summary?"
+
+    return raw_text, quick_replies
+
+
 def _render_message(message: dict[str, Any]) -> None:
     safe_text = _safe_text(message.get("text", ""))
     safe_time = _safe_text(message.get("time", ""))
@@ -95,7 +164,7 @@ def _render_message(message: dict[str, Any]) -> None:
             (
                 "<div class='msg-ai'>"
                 "<div class='ai-avatar'>🤖</div>"
-                f"<div><div>{safe_text}</div><div class='msg-time'>{safe_time}</div></div>"
+                f"<div><div>{safe_text}</div>{_metadata_badge(message)}<div class='msg-time'>{safe_time}</div></div>"
                 "</div>"
             ),
             unsafe_allow_html=True,
@@ -116,7 +185,7 @@ def _render_messages_frame(messages: list[dict[str, Any]]) -> None:
             parts.append(
                 "<div class='msg-ai'>"
                 "<div class='ai-avatar'>🤖</div>"
-                f"<div><div>{safe_text}</div><div class='msg-time'>{safe_time}</div></div>"
+                f"<div><div>{safe_text}</div>{_metadata_badge(message)}<div class='msg-time'>{safe_time}</div></div>"
                 "</div>"
             )
         else:
@@ -166,6 +235,31 @@ def _latest_quick_replies() -> list[str]:
     return []
 
 
+def _latest_ai_message() -> dict[str, Any] | None:
+    messages = st.session_state.get("chat_messages", [])
+    for message in reversed(messages):
+        if message.get("role") == "ai":
+            return message
+    return None
+
+
+def _is_dev_badge_enabled() -> bool:
+    if os.getenv("FRONTEND_DEV_BADGE", "").lower() in {"1", "true", "yes", "on"}:
+        return True
+    return bool(st.session_state.get("dev_mode"))
+
+
+def _clarification_options(message: dict[str, Any]) -> list[str]:
+    metadata = message.get("question_metadata") or {}
+    options = metadata.get("options")
+    if isinstance(options, list) and options:
+        return [str(option) for option in options]
+    quick_replies = message.get("quick_replies")
+    if isinstance(quick_replies, list):
+        return [str(option) for option in quick_replies]
+    return []
+
+
 def chat_panel() -> None:
     _ensure_messages()
     session_id = get_session_id()
@@ -183,7 +277,28 @@ def chat_panel() -> None:
         _render_messages_frame(st.session_state["chat_messages"])
 
     quick_replies = _latest_quick_replies()
+    latest_ai_message = _latest_ai_message()
+    assistant_action = (latest_ai_message or {}).get("assistant_action")
+
+    if _is_dev_badge_enabled() and latest_ai_message:
+        confidence = latest_ai_message.get("confidence")
+        confidence_text = f"{confidence:.2f}" if isinstance(confidence, (int, float)) else "n/a"
+        st.caption(
+            f"[dev] action={latest_ai_message.get('assistant_action', 'n/a')} "
+            f"target_slot={latest_ai_message.get('target_slot', 'n/a')} "
+            f"confidence={confidence_text}"
+        )
+
+    if assistant_action == "clarify_with_options" and latest_ai_message:
+        quick_replies = _clarification_options(latest_ai_message)
+    elif assistant_action == "summarize_and_recommend":
+        quick_replies = ["Yes, show recommendations", "Adjust preferences"]
+
     if quick_replies:
+        if assistant_action == "clarify_with_options":
+            st.caption("Please choose one option so I can continue:")
+        elif assistant_action == "summarize_and_recommend":
+            st.caption("Does this summary look right before I recommend cars?")
         cols = st.columns(len(quick_replies))
         for index, reply in enumerate(quick_replies):
             with cols[index]:
@@ -239,13 +354,30 @@ def _send_message(
         if returned_preferences:
             set_preferences(returned_preferences)
 
+        reply_text, quick_replies = _apply_assistant_action(
+            response.get("reply", "Thanks! Tell me a little more so I can refine your options."),
+            response,
         st.session_state["chat_messages"].append(
             _create_message(
                 "ai",
                 response.get("reply", "Thanks! Tell me a little more so I can refine your options."),
                 quick_replies=response.get("quick_replies") or None,
+                assistant_action=response.get("assistant_action"),
+                target_slot=response.get("target_slot"),
+                question_metadata=response.get("question_metadata")
+                if isinstance(response.get("question_metadata"), dict)
+                else None,
+                confidence=response.get("confidence")
+                if isinstance(response.get("confidence"), (int, float))
+                else None,
             )
         )
+        ai_message = _create_message("ai", reply_text, quick_replies=quick_replies)
+        ai_message["assistant_action"] = response.get("assistant_action")
+        ai_message["target_slot"] = response.get("target_slot")
+        ai_message["question_metadata"] = response.get("question_metadata")
+        ai_message["confidence"] = response.get("confidence")
+        st.session_state["chat_messages"].append(ai_message)
     except Exception:
         st.session_state["chat_messages"].append(
             _create_message("ai", "Sorry, failed to reach backend.")

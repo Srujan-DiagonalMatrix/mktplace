@@ -34,5 +34,9 @@ class ChatResponse(PreferenceExtractionResponse):
     reply: str
     quick_replies: Optional[list[str]] = None
     question_metadata: Optional[dict] = None
+    assistant_action: Optional[str] = None
+    target_slot: Optional[str] = None
+    decision_confidence: Optional[float] = None
+    decision_reason: Optional[str] = None
     filters_applied: bool = True
     next_question_delay_seconds: int = 2
