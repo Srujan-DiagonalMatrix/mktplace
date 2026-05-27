@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from html import escape
+import os
 from typing import Any
 
 import os
@@ -47,6 +48,10 @@ def _create_message(
     text: str,
     *,
     quick_replies: list[str] | None = None,
+    assistant_action: str | None = None,
+    target_slot: str | None = None,
+    question_metadata: dict[str, Any] | None = None,
+    confidence: float | None = None,
     time: str | None = None,
 ) -> dict[str, Any]:
     message: dict[str, Any] = {
@@ -56,6 +61,14 @@ def _create_message(
     }
     if quick_replies:
         message["quick_replies"] = quick_replies
+    if assistant_action:
+        message["assistant_action"] = assistant_action
+    if target_slot:
+        message["target_slot"] = target_slot
+    if question_metadata:
+        message["question_metadata"] = question_metadata
+    if confidence is not None:
+        message["confidence"] = confidence
     return message
 
 
@@ -222,6 +235,31 @@ def _latest_quick_replies() -> list[str]:
     return []
 
 
+def _latest_ai_message() -> dict[str, Any] | None:
+    messages = st.session_state.get("chat_messages", [])
+    for message in reversed(messages):
+        if message.get("role") == "ai":
+            return message
+    return None
+
+
+def _is_dev_badge_enabled() -> bool:
+    if os.getenv("FRONTEND_DEV_BADGE", "").lower() in {"1", "true", "yes", "on"}:
+        return True
+    return bool(st.session_state.get("dev_mode"))
+
+
+def _clarification_options(message: dict[str, Any]) -> list[str]:
+    metadata = message.get("question_metadata") or {}
+    options = metadata.get("options")
+    if isinstance(options, list) and options:
+        return [str(option) for option in options]
+    quick_replies = message.get("quick_replies")
+    if isinstance(quick_replies, list):
+        return [str(option) for option in quick_replies]
+    return []
+
+
 def chat_panel() -> None:
     _ensure_messages()
     session_id = get_session_id()
@@ -239,7 +277,28 @@ def chat_panel() -> None:
         _render_messages_frame(st.session_state["chat_messages"])
 
     quick_replies = _latest_quick_replies()
+    latest_ai_message = _latest_ai_message()
+    assistant_action = (latest_ai_message or {}).get("assistant_action")
+
+    if _is_dev_badge_enabled() and latest_ai_message:
+        confidence = latest_ai_message.get("confidence")
+        confidence_text = f"{confidence:.2f}" if isinstance(confidence, (int, float)) else "n/a"
+        st.caption(
+            f"[dev] action={latest_ai_message.get('assistant_action', 'n/a')} "
+            f"target_slot={latest_ai_message.get('target_slot', 'n/a')} "
+            f"confidence={confidence_text}"
+        )
+
+    if assistant_action == "clarify_with_options" and latest_ai_message:
+        quick_replies = _clarification_options(latest_ai_message)
+    elif assistant_action == "summarize_and_recommend":
+        quick_replies = ["Yes, show recommendations", "Adjust preferences"]
+
     if quick_replies:
+        if assistant_action == "clarify_with_options":
+            st.caption("Please choose one option so I can continue:")
+        elif assistant_action == "summarize_and_recommend":
+            st.caption("Does this summary look right before I recommend cars?")
         cols = st.columns(len(quick_replies))
         for index, reply in enumerate(quick_replies):
             with cols[index]:
@@ -298,6 +357,20 @@ def _send_message(
         reply_text, quick_replies = _apply_assistant_action(
             response.get("reply", "Thanks! Tell me a little more so I can refine your options."),
             response,
+        st.session_state["chat_messages"].append(
+            _create_message(
+                "ai",
+                response.get("reply", "Thanks! Tell me a little more so I can refine your options."),
+                quick_replies=response.get("quick_replies") or None,
+                assistant_action=response.get("assistant_action"),
+                target_slot=response.get("target_slot"),
+                question_metadata=response.get("question_metadata")
+                if isinstance(response.get("question_metadata"), dict)
+                else None,
+                confidence=response.get("confidence")
+                if isinstance(response.get("confidence"), (int, float))
+                else None,
+            )
         )
         ai_message = _create_message("ai", reply_text, quick_replies=quick_replies)
         ai_message["assistant_action"] = response.get("assistant_action")
