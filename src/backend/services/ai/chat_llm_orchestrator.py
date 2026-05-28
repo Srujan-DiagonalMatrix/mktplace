@@ -126,7 +126,13 @@ class ChatOrchestrator:
         )
         self._policy_mode = cfg.llm_policy_mode
         self._policy_confidence_threshold = cfg.llm_policy_confidence_threshold
-        self._allowed_actions = {"respond", "ask_follow_up", "handoff"}
+        self._allowed_actions = {
+            "respond",
+            "ask_follow_up",
+            "handoff",
+            "summarize_and_recommend",
+            "present_recommendations",
+        }
         self._curated_adapter = curated_adapter or CuratedInteractionAdapter()
 
 
@@ -161,7 +167,9 @@ class ChatOrchestrator:
             "\"follow_up_question\": str|null, \"follow_up_slot_tag\": str|null, \"template_used\": str}.\n"
             "Consistency rules: assistant_action SHOULD align with deterministic policy assistant_action. "
             "If assistant_action is ask_follow_up, follow_up_question must be a non-empty string and follow_up_slot_tag "
-            "should be the canonical slot name (for example: budget, fuel_type, body_type)."
+            "should be the canonical slot name (for example: budget, fuel_type, transmission, body_type). "
+            "If assistant_action is summarize_and_recommend or present_recommendations, follow_up_question "
+            "and follow_up_slot_tag should be null."
         )
 
     def _accept_llm_action(self, parsed: StructuredLLMResponse, expected_action: str | None) -> bool:
@@ -256,8 +264,8 @@ class ChatOrchestrator:
             f"User message: {user_message}\n"
             "Return strict JSON with fields only: "
             '{"assistant_action": str, "target_slot": str|null, "question_text": str|null, "confidence": float, "reason": str}.\n'
-            "assistant_action must be one of: ask_follow_up, clarify_with_options, summarize_and_recommend.\n"
-            "If assistant_action is summarize_and_recommend, target_slot and question_text should be null."
+            "assistant_action must be one of: ask_follow_up, clarify_with_options, summarize_and_recommend, present_recommendations.\n"
+            "If assistant_action is summarize_and_recommend or present_recommendations, target_slot and question_text should be null."
         )
         try:
             raw = self._client.generate_json(
@@ -272,11 +280,12 @@ class ChatOrchestrator:
 
         if parsed.confidence < self._settings.confidence_threshold:
             return PolicyOrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.LOW_CONFIDENCE)
-        if parsed.assistant_action not in {"ask_follow_up", "clarify_with_options", "summarize_and_recommend"}:
+        terminal_actions = {"summarize_and_recommend", "present_recommendations"}
+        if parsed.assistant_action not in {"ask_follow_up", "clarify_with_options", *terminal_actions}:
             return PolicyOrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
-        if parsed.assistant_action == "summarize_and_recommend" and (parsed.target_slot or parsed.question_text):
+        if parsed.assistant_action in terminal_actions and (parsed.target_slot or parsed.question_text):
             return PolicyOrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
-        if parsed.assistant_action != "summarize_and_recommend" and (not parsed.target_slot or not parsed.question_text):
+        if parsed.assistant_action not in terminal_actions and (not parsed.target_slot or not parsed.question_text):
             return PolicyOrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
 
         return PolicyOrchestrationPayload(used_llm=True, response=parsed)
