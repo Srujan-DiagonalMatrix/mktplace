@@ -36,6 +36,7 @@ class StructuredLLMResponse(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     assistant_action: str = "respond"
     follow_up_question: str | None = None
+    follow_up_slot_tag: str | None = None
     template_used: PromptTemplate
 
 
@@ -108,6 +109,9 @@ class ChatOrchestrator:
             confidence_threshold=0.55,
             max_reply_chars=380,
         )
+        self._policy_mode = cfg.llm_policy_mode
+        self._policy_confidence_threshold = cfg.llm_policy_confidence_threshold
+        self._allowed_actions = {"respond", "ask_follow_up", "handoff"}
 
 
     @property
@@ -135,11 +139,24 @@ class ChatOrchestrator:
             f"Recent messages: {json.dumps(memory, default=str)}\n"
             f"User message: {user_message}\n"
             "Return strict JSON: {\"reply\": str, \"confidence\": float, \"assistant_action\": str, "
-            "\"follow_up_question\": str|null, \"template_used\": str}.\n"
-            "Consistency rules: assistant_action MUST match deterministic policy assistant_action. "
-            "If assistant_action is ask_follow_up, follow_up_question must be a non-empty string and should align "
-            "with policy target_slot."
+            "\"follow_up_question\": str|null, \"follow_up_slot_tag\": str|null, \"template_used\": str}.\n"
+            "Consistency rules: assistant_action SHOULD align with deterministic policy assistant_action. "
+            "If assistant_action is ask_follow_up, follow_up_question must be a non-empty string and follow_up_slot_tag "
+            "should be the canonical slot name (for example: budget, fuel_type, body_type)."
         )
+
+    def _accept_llm_action(self, parsed: StructuredLLMResponse, expected_action: str | None) -> bool:
+        if parsed.assistant_action not in self._allowed_actions:
+            return False
+        if self._policy_mode == "strict":
+            return expected_action is None or parsed.assistant_action == expected_action
+        if parsed.confidence < self._policy_confidence_threshold:
+            return False
+        if expected_action is None:
+            return True
+        if self._policy_mode == "hybrid":
+            return parsed.assistant_action == expected_action
+        return True
 
     def _guardrails(self, reply: str) -> GuardrailResult:
         lower = reply.lower()
@@ -179,12 +196,12 @@ class ChatOrchestrator:
             return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.MODEL_ERROR)
         expected_action = (policy_decision or {}).get("assistant_action")
         target_slot = (policy_decision or {}).get("target_slot")
-        if expected_action and parsed.assistant_action != expected_action:
+        if not self._accept_llm_action(parsed, expected_action):
             return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
         if parsed.assistant_action == "ask_follow_up":
             if not parsed.follow_up_question or not parsed.follow_up_question.strip():
                 return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
-            if target_slot and target_slot.lower() not in parsed.follow_up_question.lower():
+            if target_slot and (parsed.follow_up_slot_tag or "").lower() != target_slot.lower():
                 return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
         if parsed.confidence < self._settings.confidence_threshold:
             return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.LOW_CONFIDENCE)

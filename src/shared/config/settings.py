@@ -6,6 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from pydantic import Field, model_validator
+from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.shared.config.constants import (
@@ -58,6 +59,8 @@ class Settings(BaseSettings):
 
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_chat_model: str = Field(default="gpt-5.4-nano", alias="OPENAI_CHAT_MODEL")
+    llm_policy_mode: Literal["strict", "hybrid", "llm_first"] = Field(default="strict", alias="LLM_POLICY_MODE")
+    llm_policy_confidence_threshold: float = Field(default=0.75, alias="LLM_POLICY_CONFIDENCE_THRESHOLD")
     database_url: str = Field(
         default="postgresql+psycopg://postgres:postgres@localhost:5432/mktplace",
         alias="DATABASE_URL",
@@ -78,6 +81,12 @@ class Settings(BaseSettings):
     streamlit_port: int = Field(default=8501, alias="STREAMLIT_PORT")
     admin_token: str = Field(default="", alias="ADMIN_TOKEN")
     pain_point_scoring: PainPointScoringWeights = PainPointScoringWeights()
+
+    @model_validator(mode="after")
+    def validate_policy_threshold(self) -> "Settings":
+        if not 0 <= self.llm_policy_confidence_threshold <= 1:
+            raise ValueError("LLM policy confidence threshold must be between 0 and 1")
+        return self
 
 
 @lru_cache(maxsize=1)
