@@ -108,6 +108,32 @@ def _build_next_reply(preferences: dict, asked_keys: list[str], user_message: st
     return (next_question.question, quick_replies or None, next_question.key, metadata, metadata)
 
 
+def _build_next_reply_from_policy(preferences: dict, policy: dict) -> tuple[str, list[str] | None, str | None, dict | None, dict]:
+    action = policy.get("assistant_action")
+    target_slot = policy.get("target_slot")
+    question_text = policy.get("question_text")
+    if action == "summarize_and_recommend" or not target_slot:
+        decision = {
+            "assistant_action": action or "summarize_and_recommend",
+            "target_slot": None,
+            "decision_confidence": policy.get("confidence"),
+            "decision_reason": policy.get("reason"),
+        }
+        return ("It was a great experience talking to you conversation, Thank you!", None, None, None, decision)
+    quick_replies = _catalog_options(target_slot) if target_slot in {"fuel_type", "transmission"} else None
+    metadata = {
+        "slot": target_slot,
+        "purpose": "llm_selected_policy",
+        "category": "llm_policy",
+        "required": True,
+        "assistant_action": action,
+        "target_slot": target_slot,
+        "decision_confidence": policy.get("confidence"),
+        "decision_reason": policy.get("reason"),
+    }
+    return (question_text, quick_replies or None, target_slot, metadata, metadata)
+
+
 def _build_policy_decision_payload(next_question_key: str | None, question_metadata: dict | None, preferences: dict) -> dict:
     unresolved_required_slots = []
     if next_question_key and question_metadata and question_metadata.get("required"):
@@ -190,14 +216,20 @@ def post_message(
         hesitation_count = get_hesitation_count(session_id)
     previous_key = last_question_key
     statement = STATEMENTS_BY_KEY.get(previous_key)
+    deterministic_reply = _build_next_reply(current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count)
+    policy_outcome = orchestrator.run_policy_orchestrator(session=s, user_message=payload.message)
+    policy_source = "deterministic"
+    if policy_outcome.used_llm and policy_outcome.response is not None:
+        selected_reply = _build_next_reply_from_policy(current, policy_outcome.response.model_dump())
+        policy_source = "llm"
+    else:
+        selected_reply = deterministic_reply
     if statement:
-        current_reply, _, next_question_key, question_metadata, decision_payload = _build_next_reply(current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count)
+        current_reply, _, next_question_key, question_metadata, decision_payload = selected_reply
         reply = f"{statement}\n\n{current_reply}"
         quick_replies = None
     else:
-        reply, quick_replies, next_question_key, question_metadata, decision_payload = _build_next_reply(
-            current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count
-        )
+        reply, quick_replies, next_question_key, question_metadata, decision_payload = selected_reply
     now = time.time()
     if now - get_last_question_asked_at(session_id) < 4 and next_question_key is not None:
         reply = f"Give me a moment while I filter the latest results for you. {reply}"
@@ -227,6 +259,7 @@ def post_message(
         "fallback_reason": llm_payload.fallback_reason.value if llm_payload.fallback_reason else None,
         "model_name": orchestrator.model_name,
         "decision_source": "llm" if llm_payload.used_llm else "deterministic",
+        "policy_source": policy_source,
     }
 
     if persistence_enabled:

@@ -220,3 +220,117 @@ def test_chat_response_includes_policy_decision_fields():
     assert body["assistant_action"]
     assert "decision_reason" in body
     assert "decision_confidence" in body
+
+
+def test_chat_uses_llm_policy_when_policy_orchestrator_valid(monkeypatch):
+    from src.backend.api import chat as chat_api
+
+    class FakeRepo:
+        def __init__(self, db):
+            pass
+        def get_session(self, session_id):
+            return {"session_id": session_id}
+        def create_session(self, **kwargs):
+            return None
+        def create_turn(self, **kwargs):
+            class _Turn:
+                turn_id = "turn-1"
+            return _Turn()
+        def create_preference_snapshot(self, **kwargs):
+            return None
+        def log_event(self, **kwargs):
+            return None
+        def update_stage(self, *args, **kwargs):
+            return None
+
+    class PolicyClient:
+        def __init__(self):
+            self.calls = 0
+        def generate_json(self, **kwargs):
+            self.calls += 1
+            if self.calls == 1:
+                return json.dumps({
+                    "assistant_action": "ask_follow_up",
+                    "target_slot": "transmission",
+                    "question_text": "Do you prefer manual or automatic transmission?",
+                    "confidence": 0.95,
+                    "reason": "missing required slot"
+                })
+            return json.dumps({
+                "reply": "Do you prefer manual or automatic transmission?",
+                "confidence": 0.9,
+                "assistant_action": "ask_follow_up",
+                "follow_up_question": "Do you prefer manual or automatic transmission?",
+                "template_used": "follow_up"
+            })
+
+    monkeypatch.setattr(chat_api, "SessionsRepository", FakeRepo)
+    original = chat_api._orchestrator
+    chat_api._orchestrator = ChatOrchestrator(client=PolicyClient(), settings=_test_settings())
+    try:
+        response = client.post("/chat/message", json={"message": "I need a car"})
+    finally:
+        chat_api._orchestrator = original
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["target_slot"] == "transmission"
+    assert body["assistant_action"] == "ask_follow_up"
+
+
+def test_chat_falls_back_to_deterministic_policy_when_llm_policy_invalid(monkeypatch):
+    from src.backend.api import chat as chat_api
+
+    events = []
+
+    class FakeRepo:
+        def __init__(self, db):
+            pass
+        def get_session(self, session_id):
+            return {"session_id": session_id}
+        def create_session(self, **kwargs):
+            return None
+        def create_turn(self, **kwargs):
+            class _Turn:
+                turn_id = "turn-1"
+            return _Turn()
+        def create_preference_snapshot(self, **kwargs):
+            return None
+        def log_event(self, **kwargs):
+            events.append(kwargs)
+            return None
+        def update_stage(self, *args, **kwargs):
+            return None
+
+    class BadPolicyClient:
+        def __init__(self):
+            self.calls = 0
+        def generate_json(self, **kwargs):
+            self.calls += 1
+            if self.calls == 1:
+                return json.dumps({
+                    "assistant_action": "ask_follow_up",
+                    "target_slot": None,
+                    "question_text": None,
+                    "confidence": 0.95,
+                    "reason": "bad schema"
+                })
+            return json.dumps({
+                "reply": "What type of fuel would you prefer for your next vehicle?",
+                "confidence": 0.9,
+                "assistant_action": "ask_follow_up",
+                "follow_up_question": "What type of fuel would you prefer for your next vehicle?",
+                "template_used": "follow_up"
+            })
+
+    monkeypatch.setattr(chat_api, "SessionsRepository", FakeRepo)
+    original = chat_api._orchestrator
+    chat_api._orchestrator = ChatOrchestrator(client=BadPolicyClient(), settings=_test_settings())
+    try:
+        response = client.post("/chat/message", json={"message": "I need a car"})
+    finally:
+        chat_api._orchestrator = original
+
+    assert response.status_code == 200
+    details = events[-1]["details"]
+    assert details["policy_source"] == "deterministic"
