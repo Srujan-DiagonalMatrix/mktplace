@@ -3,9 +3,11 @@ from __future__ import annotations
 from src.backend.services.ai.conversation_orchestrator import (
     create_or_get_session,
     get_context_preferences,
+    get_next_question_variant_index,
     get_memory,
     get_memory_snapshots,
     get_preferences,
+    set_last_question_delay_seconds,
     update_preferences,
 )
 
@@ -62,3 +64,23 @@ def test_retrieval_latest_and_relevant_history_only():
 
     filtered = get_context_preferences(sid, relevant_keys=["fuel_type", "monthly_from_gbp"])
     assert filtered == {"fuel_type": "Petrol", "budget_monthly_gbp": 500}
+
+
+def test_question_variant_indices_cycle_in_session_state():
+    sid = "mem-question-variants-1"
+    session = create_or_get_session(sid, resume=False)
+
+    assert get_next_question_variant_index(sid, "fuel_type", 3) == 0
+    assert get_next_question_variant_index(sid, "fuel_type", 3) == 1
+    assert get_next_question_variant_index(sid, "fuel_type", 3) == 2
+    assert get_next_question_variant_index(sid, "fuel_type", 3) == 0
+    assert session["question_variant_index_by_key"] == {"fuel_type": 1}
+
+
+def test_last_question_delay_seconds_is_recorded_on_session():
+    sid = "mem-question-delay-1"
+    session = create_or_get_session(sid, resume=False)
+
+    set_last_question_delay_seconds(sid, 2.75)
+
+    assert session["last_question_delay_seconds"] == 2.75

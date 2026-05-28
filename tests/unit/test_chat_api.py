@@ -28,12 +28,14 @@ def test_next_question_delay_ms_returns_none_for_terminal_reply(monkeypatch):
 
     monkeypatch.setattr(chat_api.random, "uniform", fail_uniform)
 
-    assert chat_api._next_question_delay_ms(None) is None
+    assert chat_api._next_question_delay_ms("delay-terminal-session", None) is None
 
 
 def test_next_question_delay_ms_randomizes_follow_up_delay(monkeypatch):
     from src.backend.api import chat as chat_api
+    from src.backend.services.ai.conversation_orchestrator import create_or_get_session
 
+    session = create_or_get_session("delay-follow-up-session", resume=False)
     calls = []
 
     def fake_uniform(lower, upper):
@@ -42,8 +44,9 @@ def test_next_question_delay_ms_randomizes_follow_up_delay(monkeypatch):
 
     monkeypatch.setattr(chat_api.random, "uniform", fake_uniform)
 
-    assert chat_api._next_question_delay_ms("fuel_type") == 3750
+    assert chat_api._next_question_delay_ms("delay-follow-up-session", "fuel_type") == 3750
     assert calls == [(2.0, 4.0)]
+    assert session["last_question_delay_seconds"] == 3.75
 
 
 def test_chat_response_question_delay_defaults_to_none():
@@ -384,8 +387,10 @@ def test_chat_falls_back_to_deterministic_policy_when_llm_policy_invalid(monkeyp
 
 def test_build_next_reply_cycles_repeated_slot_wording_with_session_state():
     from src.backend.api import chat as chat_api
+    from src.backend.services.ai.conversation_orchestrator import create_or_get_session
 
-    session = {}
+    session_id = "variant-cycle-session"
+    session = create_or_get_session(session_id, resume=False)
     preferences = {"intent": "purchase", "fuel_type": ""}
     asked_keys = [
         "fuel_type",
@@ -395,22 +400,19 @@ def test_build_next_reply_cycles_repeated_slot_wording_with_session_state():
         "seats",
         "term_months",
     ]
-    variant_preferences = chat_api._question_variant_preferences(session)
-
     first_reply = chat_api._build_next_reply(
         preferences,
         asked_keys=asked_keys,
         user_message="ok",
         hesitation_count=0,
-        variant_preferences=variant_preferences,
+        session_id=session_id,
     )
-    chat_api._advance_question_variant(session, first_reply[2])
     second_reply = chat_api._build_next_reply(
         preferences,
         asked_keys=asked_keys,
         user_message="ok",
         hesitation_count=0,
-        variant_preferences=variant_preferences,
+        session_id=session_id,
     )
 
     assert first_reply[2] == "fuel_type"
@@ -420,4 +422,4 @@ def test_build_next_reply_cycles_repeated_slot_wording_with_session_state():
         second_reply[0]
         == "Which fuel type would you like me to focus on for your next vehicle?"
     )
-    assert session["question_variant_indices"] == {"fuel_type": 1}
+    assert session["question_variant_index_by_key"] == {"fuel_type": 2}
