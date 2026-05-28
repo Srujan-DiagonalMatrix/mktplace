@@ -39,4 +39,4 @@ class ChatResponse(PreferenceExtractionResponse):
     decision_confidence: Optional[float] = None
     decision_reason: Optional[str] = None
     filters_applied: bool = True
-    next_question_delay_seconds: int = 2
+    question_delay_ms: Optional[int] = None

@@ -20,6 +20,52 @@ def _load_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+def test_next_question_delay_ms_returns_none_for_terminal_reply(monkeypatch):
+    from src.backend.api import chat as chat_api
+
+    def fail_uniform(lower, upper):
+        raise AssertionError("terminal replies should not randomize delay")
+
+    monkeypatch.setattr(chat_api.random, "uniform", fail_uniform)
+
+    assert chat_api._next_question_delay_ms(None) is None
+
+
+def test_next_question_delay_ms_randomizes_follow_up_delay(monkeypatch):
+    from src.backend.api import chat as chat_api
+
+    calls = []
+
+    def fake_uniform(lower, upper):
+        calls.append((lower, upper))
+        return 3.75
+
+    monkeypatch.setattr(chat_api.random, "uniform", fake_uniform)
+
+    assert chat_api._next_question_delay_ms("fuel_type") == 3750
+    assert calls == [(2.0, 4.0)]
+
+
+def test_chat_response_question_delay_defaults_to_none():
+    from src.backend.schemas.chat import ChatResponse
+
+    response = ChatResponse(session_id="sess-1", reply="Done")
+
+    assert response.question_delay_ms is None
+
+
+def test_chat_response_accepts_question_delay_ms():
+    from src.backend.schemas.chat import ChatResponse
+
+    response = ChatResponse(
+        session_id="sess-1",
+        reply="What fuel type do you prefer?",
+        question_delay_ms=2250,
+    )
+
+    assert response.question_delay_ms == 2250
+
+
 def test_chat_budget_response_includes_budget_session_and_reply():
     response = client.post("/chat/message", json={"message": "budget £500 per month"})
 

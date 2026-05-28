@@ -35,6 +35,54 @@ def test_post_chat_message_extracts_budget_and_returns_response_contract():
     assert "family_size" in body
 
 
+def test_follow_up_question_returns_randomized_delay_metadata(monkeypatch):
+    from src.backend.api import chat as chat_api
+
+    monkeypatch.setattr(chat_api.random, "uniform", lambda lower, upper: 3.25)
+
+    response = client.post(
+        "/chat/message",
+        json={"message": "I'm looking to buy with a budget of £450 per month"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["target_slot"] is not None
+    assert body["question_delay_ms"] == 3250
+    assert "Give me a moment" not in body["reply"]
+
+
+def test_terminal_recommendation_response_has_no_question_delay(monkeypatch):
+    from src.backend.api import chat as chat_api
+
+    monkeypatch.setattr(chat_api.random, "uniform", lambda lower, upper: 3.25)
+
+    first = client.post(
+        "/chat/message",
+        json={"message": "I want to buy with a budget of £500 per month"},
+    )
+    session_id = first.json()["session_id"]
+    client.post(
+        "/chat/message",
+        json={"session_id": session_id, "message": "Petrol please"},
+    )
+    client.post(
+        "/chat/message",
+        json={"session_id": session_id, "message": "Automatic"},
+    )
+
+    response = client.post(
+        "/chat/message",
+        json={"session_id": session_id, "message": "Yes, show recommendations"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["assistant_action"] == "present_recommendations"
+    assert body["target_slot"] is None
+    assert body["question_delay_ms"] is None
+
+
 def test_post_chat_message_extracts_fuel_type_on_existing_session():
     first = client.post("/chat/message", json={"message": "budget £500 per month"})
     session_id = first.json()["session_id"]
@@ -111,7 +159,9 @@ def test_post_chat_message_succeeds_with_missing_openai_api_key(monkeypatch):
     get_settings.cache_clear()
     get_chat_orchestrator.cache_clear()
 
-    response = client.post("/chat/message", json={"message": "Need a practical family car"})
+    response = client.post(
+        "/chat/message", json={"message": "Need a practical family car"}
+    )
 
     assert response.status_code == 200
     body = response.json()
