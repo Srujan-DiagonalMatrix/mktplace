@@ -10,7 +10,10 @@ from src.backend.core.database import get_db
 from src.backend.repositories.sessions import SessionsRepository
 from src.backend.services.ai.preference_extractor import extract_preferences_from_text
 from src.backend.services.inventory.catalog import get_default_catalog
-from src.backend.services.ai.chat_llm_orchestrator import ChatOrchestrator, PromptTemplate
+from src.backend.services.ai.chat_llm_orchestrator import (
+    ChatOrchestrator,
+    PromptTemplate,
+)
 
 from src.backend.services.ai.conversation_orchestrator import (
     create_or_get_session,
@@ -28,7 +31,11 @@ from src.backend.services.ai.conversation_orchestrator import (
     reset_hesitation,
     extract_pain_points_for_turn,
 )
-from src.backend.services.ai.question_policy import decide_next_action
+from src.backend.services.ai.question_policy import (
+    decide_next_action,
+    get_question_spec_for_slot,
+    render_question,
+)
 from src.backend.services.ai.curated_runtime_adapter import CuratedInteractionAdapter
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -41,6 +48,20 @@ def get_chat_orchestrator() -> ChatOrchestrator:
 
 _orchestrator = get_chat_orchestrator()
 _curated_adapter = CuratedInteractionAdapter()
+
+
+def _question_variant_preferences(session: dict) -> dict:
+    return {
+        "_question_variant_indices": session.setdefault("question_variant_indices", {})
+    }
+
+
+def _advance_question_variant(session: dict, key: str | None) -> None:
+    if not key:
+        return
+    indices = session.setdefault("question_variant_indices", {})
+    indices[key] = int(indices.get(key, 0) or 0) + 1
+
 
 def _catalog_options(field_name: str) -> list[str]:
     try:
@@ -96,13 +117,25 @@ def _has_matching_inventory(preferences: dict) -> bool:
     try:
         catalog = get_default_catalog()
         for vehicle in catalog.vehicles.values():
-            if preferences.get("fuel_type") and str(getattr(vehicle, "fuel_type", "")).lower() != str(preferences["fuel_type"]).lower():
+            if (
+                preferences.get("fuel_type")
+                and str(getattr(vehicle, "fuel_type", "")).lower()
+                != str(preferences["fuel_type"]).lower()
+            ):
                 continue
-            if preferences.get("transmission") and str(getattr(vehicle, "transmission", "")).lower() != str(preferences["transmission"]).lower():
+            if (
+                preferences.get("transmission")
+                and str(getattr(vehicle, "transmission", "")).lower()
+                != str(preferences["transmission"]).lower()
+            ):
                 continue
-            if preferences.get("doors") and int(getattr(vehicle, "doors", 0) or 0) != int(preferences["doors"]):
+            if preferences.get("doors") and int(
+                getattr(vehicle, "doors", 0) or 0
+            ) != int(preferences["doors"]):
                 continue
-            if preferences.get("seats") and int(getattr(vehicle, "seats", 0) or 0) != int(preferences["seats"]):
+            if preferences.get("seats") and int(
+                getattr(vehicle, "seats", 0) or 0
+            ) != int(preferences["seats"]):
                 continue
             return True
     except Exception:
@@ -110,8 +143,19 @@ def _has_matching_inventory(preferences: dict) -> bool:
     return False
 
 
-def _build_next_reply(preferences: dict, asked_keys: list[str], user_message: str, hesitation_count: int) -> tuple[str, list[str] | None, str | None, dict | None, dict]:
-    decision = decide_next_action(preferences, asked_keys=asked_keys, user_message=user_message, hesitation_count=hesitation_count)
+def _build_next_reply(
+    preferences: dict,
+    asked_keys: list[str],
+    user_message: str,
+    hesitation_count: int,
+    variant_preferences: dict | None = None,
+) -> tuple[str, list[str] | None, str | None, dict | None, dict]:
+    decision = decide_next_action(
+        preferences,
+        asked_keys=asked_keys,
+        user_message=user_message,
+        hesitation_count=hesitation_count,
+    )
     next_question = decision.question_spec
     if not next_question:
         reply = (
@@ -131,8 +175,21 @@ def _build_next_reply(preferences: dict, asked_keys: list[str], user_message: st
                 "decision_reason": decision.reason,
             },
         )
-    quick_replies = _catalog_options(next_question.key) if next_question.key in {"fuel_type", "transmission"} else None
-    metadata = {"slot": next_question.key, "purpose": next_question.purpose, "category": next_question.category, "required": next_question.required}
+    quick_replies = (
+        _catalog_options(next_question.key)
+        if next_question.key in {"fuel_type", "transmission"}
+        else None
+    )
+    rendered_question = render_question(
+        next_question, variant_preferences or preferences, asked_keys
+    )
+    metadata = {
+        "slot": next_question.key,
+        "purpose": next_question.purpose,
+        "category": next_question.category,
+        "required": next_question.required,
+        "rendered_question": rendered_question,
+    }
     metadata.update(
         {
             "assistant_action": decision.assistant_action,
@@ -141,15 +198,30 @@ def _build_next_reply(preferences: dict, asked_keys: list[str], user_message: st
             "decision_reason": decision.reason,
         }
     )
-    return (next_question.question, quick_replies or None, next_question.key, metadata, metadata)
+    return (
+        rendered_question,
+        quick_replies or None,
+        next_question.key,
+        metadata,
+        metadata,
+    )
 
 
-def _build_next_reply_from_policy(preferences: dict, policy: dict) -> tuple[str, list[str] | None, str | None, dict | None, dict]:
+def _build_next_reply_from_policy(
+    preferences: dict,
+    policy: dict,
+    asked_keys: list[str] | None = None,
+    variant_preferences: dict | None = None,
+) -> tuple[str, list[str] | None, str | None, dict | None, dict]:
     action = policy.get("assistant_action")
     target_slot = policy.get("target_slot")
     question_text = policy.get("question_text")
     if action == "summarize_and_recommend" or not target_slot:
-        assistant_action = "present_recommendations" if preferences.get("summary_presented") else (action or "summarize_and_recommend")
+        assistant_action = (
+            "present_recommendations"
+            if preferences.get("summary_presented")
+            else (action or "summarize_and_recommend")
+        )
         reply = (
             "Great — I’ll show your recommendations now."
             if assistant_action == "present_recommendations"
@@ -162,21 +234,34 @@ def _build_next_reply_from_policy(preferences: dict, policy: dict) -> tuple[str,
             "decision_reason": policy.get("reason"),
         }
         return (reply, None, None, None, decision)
-    quick_replies = _catalog_options(target_slot) if target_slot in {"fuel_type", "transmission"} else None
+    quick_replies = (
+        _catalog_options(target_slot)
+        if target_slot in {"fuel_type", "transmission"}
+        else None
+    )
+    spec = get_question_spec_for_slot(target_slot, preferences)
+    rendered_question = (
+        render_question(spec, variant_preferences or preferences, asked_keys or [])
+        if spec is not None
+        else question_text
+    )
     metadata = {
         "slot": target_slot,
-        "purpose": "llm_selected_policy",
-        "category": "llm_policy",
-        "required": True,
+        "purpose": spec.purpose if spec is not None else "llm_selected_policy",
+        "category": spec.category if spec is not None else "llm_policy",
+        "required": spec.required if spec is not None else True,
+        "rendered_question": rendered_question,
         "assistant_action": action,
         "target_slot": target_slot,
         "decision_confidence": policy.get("confidence"),
         "decision_reason": policy.get("reason"),
     }
-    return (question_text, quick_replies or None, target_slot, metadata, metadata)
+    return (rendered_question, quick_replies or None, target_slot, metadata, metadata)
 
 
-def _build_policy_decision_payload(next_question_key: str | None, question_metadata: dict | None, preferences: dict) -> dict:
+def _build_policy_decision_payload(
+    next_question_key: str | None, question_metadata: dict | None, preferences: dict
+) -> dict:
     unresolved_required_slots = []
     if next_question_key and question_metadata and question_metadata.get("required"):
         unresolved_required_slots.append(next_question_key)
@@ -185,6 +270,9 @@ def _build_policy_decision_payload(next_question_key: str | None, question_metad
         "target_slot": next_question_key,
         "unresolved_required_slots": unresolved_required_slots,
         "preferences_snapshot": preferences,
+        "question_text": (
+            question_metadata.get("rendered_question") if question_metadata else None
+        ),
     }
 
 
@@ -208,16 +296,40 @@ def post_message(
     add_message(session_id, payload.message)
     turn_id = f"turn-{s['turn_counter']}"
     if persistence_enabled:
-        created_turn = repo.create_turn(session_id=session_id, role="user", content=payload.message)
+        created_turn = repo.create_turn(
+            session_id=session_id, role="user", content=payload.message
+        )
         turn_id = created_turn.turn_id
     extract_pain_points_for_turn(session_id, turn_id=turn_id, text=payload.message)
-    from src.backend.services.ai.conversation_orchestrator import record_turn_intelligence
+    from src.backend.services.ai.conversation_orchestrator import (
+        record_turn_intelligence,
+    )
+
     record_turn_intelligence(session_id, turn_id=turn_id, text=payload.message)
     prefs = extract_preferences_from_text(payload.message)
     existing = get_preferences(session_id)
     last_question_key = get_last_question_key(session_id)
     if last_question_key:
         if persistence_enabled:
+            repo.log_event(
+                session_id=session_id,
+                event_type="question_answered",
+                stage=last_question_key,
+                details={"answer": payload.message},
+            )
+        prefs[last_question_key] = (
+            prefs.get(last_question_key) or payload.message.strip()
+        )
+        if (
+            last_question_key
+            in {"doors", "seats", "term_months", "annual_mileage_limit"}
+            and str(payload.message).strip().isdigit()
+        ):
+            prefs[last_question_key] = int(str(payload.message).strip())
+        if last_question_key in {"monthly_from_gbp", "deposit_gbp"}:
+            digits = "".join(ch for ch in payload.message if ch.isdigit())
+            if digits:
+                prefs[last_question_key] = float(digits)
             repo.log_event(session_id=session_id, event_type="question_answered", stage=last_question_key, details={"answer": payload.message})
         prefs[last_question_key] = _coerce_slot_answer(
             last_question_key,
@@ -232,20 +344,37 @@ def post_message(
     update_preferences(session_id, prefs)
     current = get_preferences(session_id)
     if persistence_enabled:
-        repo.create_preference_snapshot(session_id=session_id, stage="chat", payload=current)
+        repo.create_preference_snapshot(
+            session_id=session_id, stage="chat", payload=current
+        )
     if not _has_matching_inventory(current):
         current.clear()
         set_last_question_key(session_id, "fuel_type")
         add_asked_question_key(session_id, "fuel_type")
         set_last_question_asked_at(session_id, time.time())
+        fallback_spec = get_question_spec_for_slot("fuel_type", current)
+        fallback_question = (
+            render_question(
+                fallback_spec,
+                _question_variant_preferences(s),
+                get_asked_question_keys(session_id),
+            )
+            if fallback_spec is not None
+            else "What type of fuel would you prefer for your next vehicle?"
+        )
+        _advance_question_variant(s, "fuel_type")
         if persistence_enabled:
-            repo.log_event(session_id=session_id, event_type="unanswered_timeout_drop", stage="fuel_type")
+            repo.log_event(
+                session_id=session_id,
+                event_type="unanswered_timeout_drop",
+                stage="fuel_type",
+            )
         return ChatResponse(
             session_id=session_id,
             reply=(
                 "Unfortunately, we don’t currently have any vehicles that match these criteria. "
                 "Let’s review your preferences and see if we can find a suitable alternative.\n\n"
-                "What type of fuel would you prefer for your next vehicle?"
+                f"{fallback_question}"
             ),
             quick_replies=_catalog_options("fuel_type") or None,
         )
@@ -257,9 +386,23 @@ def post_message(
         hesitation_count = get_hesitation_count(session_id)
     previous_key = last_question_key
     statement = STATEMENTS_BY_KEY.get(previous_key)
-    deterministic_reply = _build_next_reply(current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count)
-    curated_priors = _curated_adapter.get_policy_priors(preferences=current, hesitation_count=hesitation_count, last_question_key=previous_key)
-    policy_outcome = orchestrator.run_policy_orchestrator(session=s, user_message=payload.message)
+    asked_question_keys = get_asked_question_keys(session_id)
+    variant_preferences = _question_variant_preferences(s)
+    deterministic_reply = _build_next_reply(
+        current,
+        asked_keys=asked_question_keys,
+        user_message=payload.message,
+        hesitation_count=hesitation_count,
+        variant_preferences=variant_preferences,
+    )
+    curated_priors = _curated_adapter.get_policy_priors(
+        preferences=current,
+        hesitation_count=hesitation_count,
+        last_question_key=previous_key,
+    )
+    policy_outcome = orchestrator.run_policy_orchestrator(
+        session=s, user_message=payload.message
+    )
     policy_source = "deterministic"
     deterministic_action = deterministic_reply[4].get("assistant_action")
     if (
@@ -267,28 +410,47 @@ def post_message(
         and policy_outcome.used_llm
         and policy_outcome.response is not None
     ):
-        selected_reply = _build_next_reply_from_policy(current, policy_outcome.response.model_dump())
+        selected_reply = _build_next_reply_from_policy(
+            current,
+            policy_outcome.response.model_dump(),
+            asked_keys=asked_question_keys,
+            variant_preferences=variant_preferences,
+        )
         policy_source = "llm"
     else:
         selected_reply = deterministic_reply
     if statement:
-        current_reply, _, next_question_key, question_metadata, decision_payload = selected_reply
+        current_reply, _, next_question_key, question_metadata, decision_payload = (
+            selected_reply
+        )
         reply = f"{statement}\n\n{current_reply}"
         quick_replies = None
     else:
-        reply, quick_replies, next_question_key, question_metadata, decision_payload = selected_reply
+        reply, quick_replies, next_question_key, question_metadata, decision_payload = (
+            selected_reply
+        )
     now = time.time()
-    if now - get_last_question_asked_at(session_id) < 4 and next_question_key is not None:
+    if (
+        now - get_last_question_asked_at(session_id) < 4
+        and next_question_key is not None
+    ):
         reply = f"Give me a moment while I filter the latest results for you. {reply}"
     elif next_question_key is not None:
         set_last_question_asked_at(session_id, now)
         add_asked_question_key(session_id, next_question_key)
     set_last_question_key(session_id, next_question_key)
+    _advance_question_variant(s, next_question_key)
     if decision_payload.get("assistant_action") == "summarize_and_recommend":
         update_preferences(session_id, {"summary_presented": True})
         current = get_preferences(session_id)
-    policy_decision = _build_policy_decision_payload(next_question_key=next_question_key, question_metadata=question_metadata, preferences=current)
-    policy_decision["assistant_action"] = decision_payload.get("assistant_action") or policy_decision["assistant_action"]
+    policy_decision = _build_policy_decision_payload(
+        next_question_key=next_question_key,
+        question_metadata=question_metadata,
+        preferences=current,
+    )
+    policy_decision["assistant_action"] = (
+        decision_payload.get("assistant_action") or policy_decision["assistant_action"]
+    )
     if curated_priors:
         policy_decision["curated_priors"] = [p.__dict__ for p in curated_priors]
     llm_session = dict(s)
@@ -311,7 +473,9 @@ def post_message(
 
     diagnostics = {
         "used_llm": llm_payload.used_llm,
-        "fallback_reason": llm_payload.fallback_reason.value if llm_payload.fallback_reason else None,
+        "fallback_reason": (
+            llm_payload.fallback_reason.value if llm_payload.fallback_reason else None
+        ),
         "model_name": orchestrator.model_name,
         "decision_source": "llm" if llm_payload.used_llm else "deterministic",
         "policy_source": policy_source,
@@ -319,9 +483,19 @@ def post_message(
 
     if persistence_enabled:
         if next_question_key is not None:
-            repo.log_event(session_id=session_id, event_type="question_asked", stage=next_question_key, details={"reply": reply, **diagnostics})
+            repo.log_event(
+                session_id=session_id,
+                event_type="question_asked",
+                stage=next_question_key,
+                details={"reply": reply, **diagnostics},
+            )
         else:
-            repo.log_event(session_id=session_id, event_type="user_exit", stage="completed", details=diagnostics)
+            repo.log_event(
+                session_id=session_id,
+                event_type="user_exit",
+                stage="completed",
+                details=diagnostics,
+            )
         repo.create_turn(session_id=session_id, role="assistant", content=reply)
         repo.update_stage(session_id, next_question_key or "completed")
     return ChatResponse(
