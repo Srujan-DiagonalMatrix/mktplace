@@ -1,0 +1,4 @@
+conversation_id,start_time_utc,end_time_utc,total_turns,completed,recommendations_viewed,shortlisted,enquiry_submitted,dropoff_stage,csat,notes
+conv_000001,2026-05-27T09:00:00Z,2026-05-27T09:08:10Z,10,true,5,2,1,,5,"Smooth progression"
+conv_000002,2026-05-27T10:10:00Z,2026-05-27T10:14:25Z,6,false,1,0,0,fuel_type,2,"User uncertain and dropped"
+conv_000003,2026-05-27T11:00:00Z,2026-05-27T11:12:02Z,14,true,8,1,0,,4,"Completed without enquiry"
