@@ -193,6 +193,21 @@ QUESTION_BANK_BY_INTENT: dict[str, list[QuestionSpec]] = {
     ],
 }
 
+
+PURCHASE_DISCOVERY_QUESTIONS: tuple[QuestionSpec, ...] = (
+    QuestionSpec("body_type", "What body type are you most interested in, such as SUV, hatchback, saloon, or estate?", "collect_vehicle_shape_preference", "vehicle_discovery", False),
+    QuestionSpec("make_preference", "Do you have a preferred make or brand?", "collect_brand_preference", "vehicle_discovery", False),
+    QuestionSpec("model_preference", "Is there a specific model you already have in mind?", "collect_model_preference", "vehicle_discovery", False),
+    QuestionSpec("annual_mileage_limit", "Roughly how many miles do you expect to drive each year?", "collect_annual_mileage_for_finance", "finance", False),
+    QuestionSpec("deposit_gbp", "How much deposit would you like to put down, if any?", "collect_deposit_amount", "finance", False),
+    QuestionSpec("usage_type", "How will you mainly use the vehicle — commuting, family trips, business, or something else?", "collect_primary_usage", "lifestyle", False),
+    QuestionSpec("must_have_features", "Are there any must-have features you want included?", "collect_feature_requirements", "vehicle_discovery", False),
+    QuestionSpec("colour_preference", "Do you have a preferred colour or colours to avoid?", "collect_colour_preference", "vehicle_discovery", False),
+    QuestionSpec("age_limit_years", "What is the oldest vehicle age you would consider?", "collect_vehicle_age_limit", "vehicle_discovery", False),
+    QuestionSpec("delivery_timeline", "When would you ideally like to have the vehicle delivered?", "collect_delivery_timeline", "timeline", False),
+)
+QUESTION_BANK_BY_INTENT["purchase"].extend(PURCHASE_DISCOVERY_QUESTIONS)
+
 CLARIFICATION_QUESTION = QuestionSpec(
     key="clarification",
     question="I want to make sure I understood correctly — could you clarify your preference?",
@@ -304,16 +319,13 @@ def select_policy_decision(
         )
 
     if _is_answer_ambiguous(user_message, hesitation_count):
-        if hesitation_count >= 2 and missing:
+        if hesitation_count >= 3 and missing:
             return PolicyDecision(
                 stage="narrow", action="recover_from_ambiguity", question=missing[0]
             )
         return PolicyDecision(
             stage="clarify", action="resolve_ambiguity", question=CLARIFICATION_QUESTION
         )
-        if hesitation_count >= 3 and missing:
-            return PolicyDecision(stage="narrow", action="recover_from_ambiguity", question=missing[0])
-        return PolicyDecision(stage="clarify", action="resolve_ambiguity", question=CLARIFICATION_QUESTION)
 
     if hesitation_count >= 2:
         monthly_q = next(
@@ -339,7 +351,6 @@ def select_policy_decision(
     missing_required = [
         q for q in _required_slots(bank) if preferences.get(q.key) in (None, "")
     ]
-    missing_required = [q for q in _required_slots(bank) if preferences.get(q.key) in (None, "")]
     if not missing_required and _is_completion_signal(user_message):
         return PolicyDecision(stage="summarize", action="summarize_preferences")
     for q in missing_required:

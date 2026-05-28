@@ -24,8 +24,10 @@ from src.backend.services.ai.conversation_orchestrator import (
     set_last_question_key,
     get_last_question_key,
     set_last_question_asked_at,
+    set_last_question_delay_seconds,
     add_asked_question_key,
     get_asked_question_keys,
+    get_next_question_variant_index,
     get_hesitation_count,
     increment_hesitation,
     reset_hesitation,
@@ -50,17 +52,14 @@ _orchestrator = get_chat_orchestrator()
 _curated_adapter = CuratedInteractionAdapter()
 
 
-def _question_variant_preferences(session: dict) -> dict:
-    return {
-        "_question_variant_indices": session.setdefault("question_variant_indices", {})
-    }
-
-
-def _advance_question_variant(session: dict, key: str | None) -> None:
+def _question_variant_preferences(session_id: str, key: str | None, variant_count: int) -> dict:
     if not key:
-        return
-    indices = session.setdefault("question_variant_indices", {})
-    indices[key] = int(indices.get(key, 0) or 0) + 1
+        return {}
+    return {
+        "_question_variant_indices": {
+            key: get_next_question_variant_index(session_id, key, variant_count)
+        }
+    }
 
 
 def _catalog_options(field_name: str) -> list[str]:
@@ -162,6 +161,7 @@ def _build_next_reply(
     user_message: str,
     hesitation_count: int,
     variant_preferences: dict | None = None,
+    session_id: str | None = None,
 ) -> tuple[str, list[str] | None, str | None, dict | None, dict]:
     decision = decide_next_action(
         preferences,
@@ -193,6 +193,10 @@ def _build_next_reply(
         if next_question.key in {"fuel_type", "transmission"}
         else None
     )
+    if variant_preferences is None and session_id is not None:
+        variant_preferences = _question_variant_preferences(
+            session_id, next_question.key, 1 + len(next_question.variants)
+        )
     rendered_question = render_question(
         next_question, variant_preferences or preferences, asked_keys
     )
@@ -225,6 +229,7 @@ def _build_next_reply_from_policy(
     policy: dict,
     asked_keys: list[str] | None = None,
     variant_preferences: dict | None = None,
+    session_id: str | None = None,
 ) -> tuple[str, list[str] | None, str | None, dict | None, dict]:
     action = policy.get("assistant_action")
     target_slot = policy.get("target_slot")
@@ -253,6 +258,10 @@ def _build_next_reply_from_policy(
         else None
     )
     spec = get_question_spec_for_slot(target_slot, preferences)
+    if spec is not None and variant_preferences is None and session_id is not None:
+        variant_preferences = _question_variant_preferences(
+            session_id, spec.key, 1 + len(spec.variants)
+        )
     rendered_question = (
         render_question(spec, variant_preferences or preferences, asked_keys or [])
         if spec is not None
@@ -272,10 +281,12 @@ def _build_next_reply_from_policy(
     return (rendered_question, quick_replies or None, target_slot, metadata, metadata)
 
 
-def _next_question_delay_ms(next_question_key: str | None) -> int | None:
+def _next_question_delay_ms(session_id: str, next_question_key: str | None) -> int | None:
     if next_question_key is None:
         return None
-    return int(random.uniform(2.0, 4.0) * 1000)
+    delay_seconds = random.uniform(2.0, 4.0)
+    set_last_question_delay_seconds(session_id, delay_seconds)
+    return int(delay_seconds * 1000)
 
 
 def _build_policy_decision_payload(
@@ -384,13 +395,14 @@ def post_message(
         fallback_question = (
             render_question(
                 fallback_spec,
-                _question_variant_preferences(s),
+                _question_variant_preferences(
+                    session_id, "fuel_type", 1 + len(fallback_spec.variants)
+                ),
                 get_asked_question_keys(session_id),
             )
             if fallback_spec is not None
             else "What type of fuel would you prefer for your next vehicle?"
         )
-        _advance_question_variant(s, "fuel_type")
         if persistence_enabled:
             repo.log_event(
                 session_id=session_id,
@@ -405,7 +417,7 @@ def post_message(
                 f"{fallback_question}"
             ),
             quick_replies=_catalog_options("fuel_type") or None,
-            question_delay_ms=_next_question_delay_ms("fuel_type"),
+            question_delay_ms=_next_question_delay_ms(session_id, "fuel_type"),
         )
     normalized = payload.message.strip().lower()
     if normalized in {"maybe", "not sure", "idk", "unsure", "depends"}:
@@ -416,13 +428,11 @@ def post_message(
     previous_key = last_question_key
     statement = STATEMENTS_BY_KEY.get(previous_key)
     asked_question_keys = get_asked_question_keys(session_id)
-    variant_preferences = _question_variant_preferences(s)
     deterministic_reply = _build_next_reply(
         current,
         asked_keys=asked_question_keys,
         user_message=payload.message,
         hesitation_count=hesitation_count,
-        variant_preferences=variant_preferences,
     )
     curated_priors = _curated_adapter.get_policy_priors(
         preferences=current,
@@ -443,11 +453,17 @@ def post_message(
             current,
             policy_outcome.response.model_dump(),
             asked_keys=asked_question_keys,
-            variant_preferences=variant_preferences,
+            session_id=session_id,
         )
         policy_source = "llm"
     else:
-        selected_reply = deterministic_reply
+        selected_reply = _build_next_reply(
+            current,
+            asked_keys=asked_question_keys,
+            user_message=payload.message,
+            hesitation_count=hesitation_count,
+            session_id=session_id,
+        )
     if statement:
         current_reply, _, next_question_key, question_metadata, decision_payload = (
             selected_reply
@@ -458,12 +474,11 @@ def post_message(
         reply, quick_replies, next_question_key, question_metadata, decision_payload = (
             selected_reply
         )
-    question_delay_ms = _next_question_delay_ms(next_question_key)
+    question_delay_ms = _next_question_delay_ms(session_id, next_question_key)
     if next_question_key is not None:
         set_last_question_asked_at(session_id, time.time())
         add_asked_question_key(session_id, next_question_key)
     set_last_question_key(session_id, next_question_key)
-    _advance_question_variant(s, next_question_key)
     if decision_payload.get("assistant_action") == "summarize_and_recommend":
         update_preferences(session_id, {"summary_presented": True})
         current = get_preferences(session_id)

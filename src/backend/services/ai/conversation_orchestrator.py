@@ -225,7 +225,9 @@ def _new_session(session_id: str) -> Dict[str, Any]:
         "memory_snapshots": [],
         "last_question_key": None,
         "last_question_asked_at": 0.0,
+        "last_question_delay_seconds": None,
         "asked_question_keys": [],
+        "question_variant_index_by_key": {},
         "hesitation_count": 0,
         "pain_points": {},
         "pain_points_by_turn": {},
@@ -489,6 +491,23 @@ def add_asked_question_key(session_id: str, key: str) -> None:
 def get_asked_question_keys(session_id: str) -> list[str]:
     s = create_or_get_session(session_id)
     return list(s.get("asked_question_keys", []))
+
+
+def get_next_question_variant_index(session_id: str, key: str, variant_count: int) -> int:
+    if not key or variant_count <= 1:
+        return 0
+
+    s = create_or_get_session(session_id)
+    indices = s.setdefault("question_variant_index_by_key", {})
+    current_index = int(indices.get(key, 0) or 0)
+    next_index = current_index % variant_count
+    indices[key] = (next_index + 1) % variant_count
+    return next_index
+
+
+def set_last_question_delay_seconds(session_id: str, delay: float) -> None:
+    s = create_or_get_session(session_id)
+    s["last_question_delay_seconds"] = float(delay)
 
 
 def increment_hesitation(session_id: str) -> int:
