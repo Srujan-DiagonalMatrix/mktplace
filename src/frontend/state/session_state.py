@@ -11,6 +11,7 @@ RESET_SESSION_STATE_KEYS = (
     "selected_vehicle_obj",
     "finance_term",
     "finance_deposit",
+    "chat_bootstrap_loaded",
 )
 
 

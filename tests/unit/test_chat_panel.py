@@ -38,6 +38,9 @@ class _FakeStreamlit(types.SimpleNamespace):
 
 
 class _FakeBackendClient:
+    def start_chat(self, payload):
+        return {"reply": "Backend hello"}
+
     def post_chat(self, payload):
         return {}
 
@@ -62,13 +65,35 @@ def test_initial_messages_exist(chat_panel_module):
     chat_panel_module._ensure_messages()
 
     messages = chat_panel_module.st.session_state["chat_messages"]
-    assert [message["role"] for message in messages] == ["ai", "ai", "ai"]
-    assert [message["text"] for message in messages] == [
-        "👋 Hi there! I'm your AI car buying assistant.",
-        "I’ll ask a few quick questions to find your best-fit car.",
-        "To begin, what monthly budget feels right for you?",
-    ]
+    assert [message["role"] for message in messages] == ["ai"]
+    assert [message["text"] for message in messages] == ["Backend hello"]
     assert all("time" in message for message in messages)
+
+
+def test_initial_message_stores_bootstrap_metadata(chat_panel_module):
+    class Backend:
+        def start_chat(self, payload):
+            return {
+                "reply": "What fuel type do you prefer?",
+                "assistant_action": "ask_preference",
+                "target_slot": "fuel_type",
+                "question_metadata": {"options": ["Petrol", "Hybrid"]},
+            }
+
+    chat_panel_module._ensure_messages(session_id="sess-1", backend_client=Backend())
+    message = chat_panel_module.st.session_state["chat_messages"][0]
+    assert message["assistant_action"] == "ask_preference"
+    assert message["target_slot"] == "fuel_type"
+    assert message["question_metadata"] == {"options": ["Petrol", "Hybrid"]}
+
+
+def test_initial_message_uses_local_fallback_when_backend_unavailable(chat_panel_module):
+    class Backend:
+        def start_chat(self, payload):
+            raise RuntimeError("down")
+
+    message = chat_panel_module._bootstrap_message("sess-1", backend_client=Backend())
+    assert message["text"] == chat_panel_module.FALLBACK_GREETING
 
 
 def test_send_budget_appends_user_message(chat_panel_module):
