@@ -46,6 +46,7 @@ def _settings() -> ModelSettings:
 
 def test_orchestrator_success(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "key")
+    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
     payload = {
         "reply": "Great, I can help narrow this down for you.",
         "confidence": 0.9,
@@ -61,6 +62,7 @@ def test_orchestrator_success(monkeypatch):
 
 def test_orchestrator_timeout_fallback(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "key")
+    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
     orch = ChatOrchestrator(client=FakeClient(error=TimeoutError("timeout")), settings=_settings())
     out = orch.run(session={"messages": [], "preferences": {}}, user_message="hello", template=PromptTemplate.GREETING)
     assert out.used_llm is False
@@ -69,6 +71,7 @@ def test_orchestrator_timeout_fallback(monkeypatch):
 
 def test_orchestrator_low_confidence_fallback(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "key")
+    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
     payload = {"reply": "maybe", "confidence": 0.2, "follow_up_question": None, "template_used": "clarification"}
     orch = ChatOrchestrator(client=FakeClient(payload), settings=_settings())
     out = orch.run(session={"messages": [], "preferences": {}}, user_message="idk", template=PromptTemplate.CLARIFICATION)
@@ -77,6 +80,7 @@ def test_orchestrator_low_confidence_fallback(monkeypatch):
 
 def test_orchestrator_guardrail_blocks_fabricated_claims(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "key")
+    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
     payload = {
         "reply": "I can give legal advice and guaranteed approval.",
         "confidence": 0.95,
@@ -90,6 +94,7 @@ def test_orchestrator_guardrail_blocks_fabricated_claims(monkeypatch):
 
 def test_prompt_assembly_uses_session_memory(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "key")
+    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
     orch = ChatOrchestrator(client=FakeClient({"reply": "ok", "confidence": 0.9, "follow_up_question": None, "template_used": "greeting"}), settings=_settings())
     prompt = orch.build_prompt(
         session={"messages": ["m1", "m2"], "preferences": {"fuel_type": "Petrol"}},
@@ -103,6 +108,7 @@ def test_prompt_assembly_uses_session_memory(monkeypatch):
 
 def test_orchestrator_missing_key_fallback(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
     orch = ChatOrchestrator(client=None, settings=_settings())
     out = orch.run(session={"messages": [], "preferences": {}}, user_message="hello", template=PromptTemplate.GREETING)
     assert out.fallback_reason == FallbackReason.MISSING_API_KEY
@@ -121,6 +127,7 @@ class SpyClient:
 def test_default_model_setting_is_gpt_5_4_nano(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "key")
     monkeypatch.delenv("OPENAI_CHAT_MODEL", raising=False)
+    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
     orch = ChatOrchestrator(client=FakeClient({"reply": "ok", "confidence": 0.9, "follow_up_question": None, "template_used": "greeting"}))
 
     assert orch._settings.model == "gpt-5.4-nano"
@@ -129,6 +136,7 @@ def test_default_model_setting_is_gpt_5_4_nano(monkeypatch):
 def test_explicit_model_override_is_respected(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "key")
     monkeypatch.setenv("OPENAI_CHAT_MODEL", "gpt-5.4")
+    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
     orch = ChatOrchestrator(client=FakeClient({"reply": "ok", "confidence": 0.9, "follow_up_question": None, "template_used": "greeting"}))
 
     assert orch._settings.model == "gpt-5.4"
@@ -137,6 +145,7 @@ def test_explicit_model_override_is_respected(monkeypatch):
 def test_orchestrator_passes_resolved_model_to_client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "key")
     monkeypatch.setenv("OPENAI_CHAT_MODEL", "gpt-5.4-mini")
+    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
     spy = SpyClient({"reply": "ok", "confidence": 0.9, "follow_up_question": None, "template_used": "greeting"})
     orch = ChatOrchestrator(client=spy)
 
