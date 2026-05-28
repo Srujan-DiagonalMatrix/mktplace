@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 import re
 import time
 from functools import lru_cache
@@ -23,7 +24,6 @@ from src.backend.services.ai.conversation_orchestrator import (
     set_last_question_key,
     get_last_question_key,
     set_last_question_asked_at,
-    get_last_question_asked_at,
     add_asked_question_key,
     get_asked_question_keys,
     get_hesitation_count,
@@ -95,10 +95,23 @@ def _parse_numeric_answer(message: str) -> float | None:
     return value * multiplier
 
 
-def _coerce_slot_answer(slot: str, message: str, extracted_value: object | None) -> object:
+def _coerce_slot_answer(
+    slot: str, message: str, extracted_value: object | None
+) -> object:
     numeric_value = _parse_numeric_answer(message)
-    integer_slots = {"doors", "seats", "term_months", "annual_mileage_limit", "age_limit_years"}
-    finance_slots = {"monthly_from_gbp", "deposit_gbp", "monthly_budget", "budget_monthly_gbp"}
+    integer_slots = {
+        "doors",
+        "seats",
+        "term_months",
+        "annual_mileage_limit",
+        "age_limit_years",
+    }
+    finance_slots = {
+        "monthly_from_gbp",
+        "deposit_gbp",
+        "monthly_budget",
+        "budget_monthly_gbp",
+    }
     numeric_slots = integer_slots | finance_slots
     normalized = message.strip().lower()
 
@@ -259,6 +272,12 @@ def _build_next_reply_from_policy(
     return (rendered_question, quick_replies or None, target_slot, metadata, metadata)
 
 
+def _next_question_delay_ms(next_question_key: str | None) -> int | None:
+    if next_question_key is None:
+        return None
+    return int(random.uniform(2.0, 4.0) * 1000)
+
+
 def _build_policy_decision_payload(
     next_question_key: str | None, question_metadata: dict | None, preferences: dict
 ) -> dict:
@@ -330,13 +349,22 @@ def post_message(
             digits = "".join(ch for ch in payload.message if ch.isdigit())
             if digits:
                 prefs[last_question_key] = float(digits)
-            repo.log_event(session_id=session_id, event_type="question_answered", stage=last_question_key, details={"answer": payload.message})
+            repo.log_event(
+                session_id=session_id,
+                event_type="question_answered",
+                stage=last_question_key,
+                details={"answer": payload.message},
+            )
         prefs[last_question_key] = _coerce_slot_answer(
             last_question_key,
             payload.message,
             prefs.get(last_question_key),
         )
-        if last_question_key in {"monthly_from_gbp", "deposit_gbp", "budget_monthly_gbp"}:
+        if last_question_key in {
+            "monthly_from_gbp",
+            "deposit_gbp",
+            "budget_monthly_gbp",
+        }:
             # Ignore generic monthly budget extraction when answering explicit pricing questions.
             prefs.pop("monthly_budget", None)
         if last_question_key != "monthly_budget":
@@ -377,6 +405,7 @@ def post_message(
                 f"{fallback_question}"
             ),
             quick_replies=_catalog_options("fuel_type") or None,
+            question_delay_ms=_next_question_delay_ms("fuel_type"),
         )
     normalized = payload.message.strip().lower()
     if normalized in {"maybe", "not sure", "idk", "unsure", "depends"}:
@@ -429,14 +458,9 @@ def post_message(
         reply, quick_replies, next_question_key, question_metadata, decision_payload = (
             selected_reply
         )
-    now = time.time()
-    if (
-        now - get_last_question_asked_at(session_id) < 4
-        and next_question_key is not None
-    ):
-        reply = f"Give me a moment while I filter the latest results for you. {reply}"
-    elif next_question_key is not None:
-        set_last_question_asked_at(session_id, now)
+    question_delay_ms = _next_question_delay_ms(next_question_key)
+    if next_question_key is not None:
+        set_last_question_asked_at(session_id, time.time())
         add_asked_question_key(session_id, next_question_key)
     set_last_question_key(session_id, next_question_key)
     _advance_question_variant(s, next_question_key)
@@ -521,4 +545,5 @@ def post_message(
         target_slot=decision_payload.get("target_slot"),
         decision_confidence=decision_payload.get("decision_confidence"),
         decision_reason=decision_payload.get("decision_reason"),
+        question_delay_ms=question_delay_ms,
     )

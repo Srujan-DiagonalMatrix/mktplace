@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from html import escape
 import os
+import time
 from typing import Any
 
 import streamlit as st
@@ -66,7 +67,9 @@ def _create_message(
     return message
 
 
-def _bootstrap_message(session_id: str | None = None, backend_client: BackendClient | None = None) -> dict[str, Any]:
+def _bootstrap_message(
+    session_id: str | None = None, backend_client: BackendClient | None = None
+) -> dict[str, Any]:
     active_client = backend_client or client
     try:
         response = active_client.start_chat({"session_id": session_id})
@@ -85,9 +88,13 @@ def _bootstrap_message(session_id: str | None = None, backend_client: BackendCli
         return _create_message("ai", FALLBACK_GREETING)
 
 
-def _ensure_messages(session_id: str | None = None, backend_client: BackendClient | None = None) -> None:
+def _ensure_messages(
+    session_id: str | None = None, backend_client: BackendClient | None = None
+) -> None:
     if "chat_messages" not in st.session_state:
-        st.session_state["chat_messages"] = [_bootstrap_message(session_id, backend_client)]
+        st.session_state["chat_messages"] = [
+            _bootstrap_message(session_id, backend_client)
+        ]
         st.session_state["chat_bootstrap_loaded"] = True
 
 
@@ -101,9 +108,7 @@ def _extract_preferences(response: Any) -> dict[str, Any]:
         source = response
 
     return {
-        key: source.get(key)
-        for key in PREFERENCE_KEYS
-        if source.get(key) is not None
+        key: source.get(key) for key in PREFERENCE_KEYS if source.get(key) is not None
     }
 
 
@@ -112,9 +117,12 @@ def _safe_text(value: Any) -> str:
 
 
 def _dev_badge_enabled() -> bool:
-    return os.getenv("CHAT_DEV_BADGE", "").strip().lower() in {"1", "true", "yes", "on"} or bool(
-        st.session_state.get("chat_dev_badge")
-    )
+    return os.getenv("CHAT_DEV_BADGE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    } or bool(st.session_state.get("chat_dev_badge"))
 
 
 def _metadata_badge(message: dict[str, Any]) -> str:
@@ -145,12 +153,25 @@ def _metadata_badge(message: dict[str, Any]) -> str:
     )
 
 
-def _apply_assistant_action(raw_text: str, response: dict[str, Any]) -> tuple[str, list[str] | None]:
+def _response_question_delay_seconds(response: dict[str, Any]) -> float:
+    delay_ms = response.get("question_delay_ms")
+    if not isinstance(delay_ms, (int, float)) or delay_ms <= 0:
+        return 0.0
+    return float(delay_ms) / 1000.0
+
+
+def _apply_assistant_action(
+    raw_text: str, response: dict[str, Any]
+) -> tuple[str, list[str] | None]:
     assistant_action = response.get("assistant_action")
     quick_replies = response.get("quick_replies") or None
 
     if assistant_action == "clarify_with_options":
-        metadata = response.get("question_metadata") if isinstance(response.get("question_metadata"), dict) else {}
+        metadata = (
+            response.get("question_metadata")
+            if isinstance(response.get("question_metadata"), dict)
+            else {}
+        )
         options = metadata.get("options")
         if isinstance(options, list):
             clean_options = [str(opt).strip() for opt in options if str(opt).strip()]
@@ -187,7 +208,9 @@ def _render_message(message: dict[str, Any]) -> None:
 
 
 def _render_messages_frame(messages: list[dict[str, Any]]) -> None:
-    parts: list[str] = [f"<div class='chat-scroll-frame' data-message-count='{len(messages)}'>"]
+    parts: list[str] = [
+        f"<div class='chat-scroll-frame' data-message-count='{len(messages)}'>"
+    ]
     for message in messages:
         safe_text = _safe_text(message.get("text", ""))
         safe_time = _safe_text(message.get("time", ""))
@@ -276,7 +299,7 @@ def chat_panel() -> None:
 
     st.markdown(
         "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;'>"
-        "<div style=\"font-size:18px;font-weight:700;\">Conversation</div>"
+        '<div style="font-size:18px;font-weight:700;">Conversation</div>'
         "<div style='display:none;'>Hi! I&#x27;m your AI car buying assistant.</div>"
         "</div>",
         unsafe_allow_html=True,
@@ -292,7 +315,9 @@ def chat_panel() -> None:
 
     if _is_dev_badge_enabled() and latest_ai_message:
         confidence = latest_ai_message.get("confidence")
-        confidence_text = f"{confidence:.2f}" if isinstance(confidence, (int, float)) else "n/a"
+        confidence_text = (
+            f"{confidence:.2f}" if isinstance(confidence, (int, float)) else "n/a"
+        )
         st.caption(
             f"[dev] action={latest_ai_message.get('assistant_action', 'n/a')} "
             f"target_slot={latest_ai_message.get('target_slot', 'n/a')} "
@@ -365,7 +390,9 @@ def _send_message(
             set_preferences(returned_preferences)
 
         reply_text, quick_replies = _apply_assistant_action(
-            response.get("reply", "Thanks! Tell me a little more so I can refine your options."),
+            response.get(
+                "reply", "Thanks! Tell me a little more so I can refine your options."
+            ),
             response,
         )
         ai_message = _create_message("ai", reply_text, quick_replies=quick_replies)
@@ -373,6 +400,9 @@ def _send_message(
         ai_message["target_slot"] = response.get("target_slot")
         ai_message["question_metadata"] = response.get("question_metadata")
         ai_message["confidence"] = response.get("confidence")
+        delay_seconds = _response_question_delay_seconds(response)
+        if delay_seconds > 0:
+            time.sleep(delay_seconds)
         st.session_state["chat_messages"].append(ai_message)
     except Exception:
         st.session_state["chat_messages"].append(
