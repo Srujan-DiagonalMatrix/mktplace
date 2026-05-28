@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import time
 from functools import lru_cache
 from fastapi import APIRouter, Depends, HTTPException
@@ -82,6 +83,34 @@ STATEMENTS_BY_KEY = {
     "term_months": "I like that choice. It gives us a good balance between budget, comfort, and everyday usability.",
     "employment_status": "Perfect, that’s helpful. I’ll keep your budget in mind and avoid showing options that feel unrealistic.",
 }
+
+
+def _parse_numeric_answer(message: str) -> float | None:
+    normalized = message.strip().lower().replace(",", "")
+    match = re.search(r"(?:£|gbp)?\s*(\d+(?:\.\d+)?)\s*(k|thousand)?", normalized)
+    if not match:
+        return None
+    value = float(match.group(1))
+    multiplier = 1000 if match.group(2) in {"k", "thousand"} else 1
+    return value * multiplier
+
+
+def _coerce_slot_answer(slot: str, message: str, extracted_value: object | None) -> object:
+    numeric_value = _parse_numeric_answer(message)
+    integer_slots = {"doors", "seats", "term_months", "annual_mileage_limit", "age_limit_years"}
+    finance_slots = {"monthly_from_gbp", "deposit_gbp", "monthly_budget", "budget_monthly_gbp"}
+    numeric_slots = integer_slots | finance_slots
+    normalized = message.strip().lower()
+
+    if slot in integer_slots and numeric_value is not None:
+        return int(round(numeric_value))
+    if slot in finance_slots and numeric_value is not None:
+        return float(numeric_value)
+    if slot == "deposit_gbp" and re.search(r"\b(no|none|zero|nothing)\b", normalized):
+        return 0.0
+    if slot in numeric_slots:
+        return extracted_value if isinstance(extracted_value, (int, float)) else None
+    return extracted_value if extracted_value not in (None, "") else message.strip()
 
 
 def _has_matching_inventory(preferences: dict) -> bool:
@@ -301,6 +330,13 @@ def post_message(
             digits = "".join(ch for ch in payload.message if ch.isdigit())
             if digits:
                 prefs[last_question_key] = float(digits)
+            repo.log_event(session_id=session_id, event_type="question_answered", stage=last_question_key, details={"answer": payload.message})
+        prefs[last_question_key] = _coerce_slot_answer(
+            last_question_key,
+            payload.message,
+            prefs.get(last_question_key),
+        )
+        if last_question_key in {"monthly_from_gbp", "deposit_gbp", "budget_monthly_gbp"}:
             # Ignore generic monthly budget extraction when answering explicit pricing questions.
             prefs.pop("monthly_budget", None)
         if last_question_key != "monthly_budget":
