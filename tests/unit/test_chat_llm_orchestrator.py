@@ -145,3 +145,34 @@ def test_orchestrator_passes_resolved_model_to_client(monkeypatch):
     assert out.used_llm is True
     assert spy.calls
     assert spy.calls[0]["model"] == "gpt-5.4-mini"
+
+
+def test_policy_orchestrator_success(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key")
+    payload = {
+        "assistant_action": "ask_follow_up",
+        "target_slot": "fuel_type",
+        "question_text": "What fuel type do you prefer?",
+        "confidence": 0.95,
+        "reason": "required slot missing",
+    }
+    orch = ChatOrchestrator(client=FakeClient(payload), settings=_settings())
+    out = orch.run_policy_orchestrator(session={"messages": ["hi"], "preferences": {}}, user_message="need a car")
+    assert out.used_llm is True
+    assert out.response is not None
+    assert out.response.target_slot == "fuel_type"
+
+
+def test_policy_orchestrator_falls_back_on_low_confidence(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key")
+    payload = {
+        "assistant_action": "ask_follow_up",
+        "target_slot": "fuel_type",
+        "question_text": "What fuel type do you prefer?",
+        "confidence": 0.2,
+        "reason": "unsure",
+    }
+    orch = ChatOrchestrator(client=FakeClient(payload), settings=_settings())
+    out = orch.run_policy_orchestrator(session={"messages": [], "preferences": {}}, user_message="idk")
+    assert out.used_llm is False
+    assert out.fallback_reason == FallbackReason.LOW_CONFIDENCE
