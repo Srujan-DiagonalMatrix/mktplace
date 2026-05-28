@@ -8,6 +8,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel, Field, ValidationError
 
 from src.shared.config.settings import get_settings
+from src.backend.services.ai.curated_runtime_adapter import CuratedInteractionAdapter
 
 
 class FallbackReason(str, Enum):
@@ -100,7 +101,7 @@ class OpenAIJSONClient:
 
 
 class ChatOrchestrator:
-    def __init__(self, client: LLMClient | None = None, settings: ModelSettings | None = None):
+    def __init__(self, client: LLMClient | None = None, settings: ModelSettings | None = None, curated_adapter: CuratedInteractionAdapter | None = None):
         cfg = get_settings()
         self._api_key = cfg.openai_api_key
         self._init_error_reason: FallbackReason | None = None
@@ -126,6 +127,7 @@ class ChatOrchestrator:
         self._policy_mode = cfg.llm_policy_mode
         self._policy_confidence_threshold = cfg.llm_policy_confidence_threshold
         self._allowed_actions = {"respond", "ask_follow_up", "handoff"}
+        self._curated_adapter = curated_adapter or CuratedInteractionAdapter()
 
 
     @property
@@ -139,10 +141,12 @@ class ChatOrchestrator:
         user_message: str,
         template: PromptTemplate,
         policy_decision: dict[str, Any] | None = None,
+        few_shot_exemplars: list[dict[str, Any]] | None = None,
     ) -> str:
         memory = session.get("messages", [])[-6:]
         preferences = session.get("preferences", {})
         policy = policy_decision or {}
+        exemplar_text = json.dumps(few_shot_exemplars or [], default=str)
         return (
             f"Prompt config version: {self._settings.version}\n"
             "You are a car buying assistant. Tone: concise, friendly, factual. "
@@ -150,6 +154,7 @@ class ChatOrchestrator:
             f"Template: {template.value} => {PROMPT_TEMPLATES[template]}\n"
             f"Session preferences: {json.dumps(preferences, default=str)}\n"
             f"Deterministic policy decision: {json.dumps(policy, default=str)}\n"
+            f"Curated few-shot exemplars: {exemplar_text}\n"
             f"Recent messages: {json.dumps(memory, default=str)}\n"
             f"User message: {user_message}\n"
             "Return strict JSON: {\"reply\": str, \"confidence\": float, \"assistant_action\": str, "
@@ -197,7 +202,12 @@ class ChatOrchestrator:
                 used_llm=False,
                 fallback_reason=self._init_error_reason or FallbackReason.MODEL_ERROR,
             )
-        prompt = self.build_prompt(session=session, user_message=user_message, template=template, policy_decision=policy_decision)
+        preferences = session.get("preferences", {})
+        few_shot_exemplars = self._curated_adapter.get_few_shot_exemplars(
+            preferences=preferences,
+            hesitation_count=int(preferences.get("hesitation_count") or 0),
+        )
+        prompt = self.build_prompt(session=session, user_message=user_message, template=template, policy_decision=policy_decision, few_shot_exemplars=few_shot_exemplars)
         try:
             raw = self._client.generate_json(
                 model=self._settings.model,

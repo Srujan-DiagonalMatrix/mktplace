@@ -103,3 +103,21 @@ def test_decide_next_action_returns_summary_when_complete():
     decision = decide_next_action(prefs, asked_keys=[], user_message="thanks", hesitation_count=0)
     assert decision.assistant_action == "summarize_and_recommend"
     assert decision.question_spec is None
+
+
+def test_curated_policy_priors_match_slot_state(tmp_path):
+    from src.backend.services.ai.curated_runtime_adapter import CuratedInteractionAdapter
+
+    (tmp_path / "dialogue_policy_labels.jsonl").write_text(
+        "\n".join([
+            '{"state":{"missing_required_slots":["fuel_type","transmission","monthly_from_gbp"],"hesitation_count":0},"gold_action":"ask_follow_up","gold_target_slot":"fuel_type"}',
+            '{"state":{"missing_required_slots":["fuel_type","transmission","monthly_from_gbp"],"hesitation_count":0},"gold_action":"ask_follow_up","gold_target_slot":"fuel_type"}',
+            '{"state":{"missing_required_slots":["fuel_type","transmission","monthly_from_gbp"],"hesitation_count":0},"gold_action":"clarify_with_options","gold_target_slot":"fuel_type"}',
+        ]) + "\n",
+        encoding="utf-8",
+    )
+    adapter = CuratedInteractionAdapter(base_dir=tmp_path)
+    priors = adapter.get_policy_priors(preferences={}, hesitation_count=0)
+    assert priors
+    assert priors[0].target_slot == "fuel_type"
+    assert abs(sum(p.weight for p in priors) - 1.0) < 1e-9

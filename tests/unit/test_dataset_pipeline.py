@@ -77,3 +77,27 @@ def test_build_data_quality_report_counts_rows_dupes_and_missing(tmp_path):
     assert report.duplicates["conversation_turns"] == 1
     assert report.missing_required_fields["conversation_turns"] == 2
     assert report.rows_by_dataset["preference_ground_truth"] == 2
+
+
+def test_curated_adapter_loads_artifacts_and_fallbacks(tmp_path):
+    from src.backend.services.ai.curated_runtime_adapter import CuratedInteractionAdapter
+
+    adapter = CuratedInteractionAdapter(base_dir=tmp_path)
+    assert adapter.is_available is False
+    assert adapter.get_policy_priors(preferences={}, hesitation_count=0) == []
+    assert adapter.get_few_shot_exemplars(preferences={}, hesitation_count=0) == []
+
+    (tmp_path / "dialogue_policy_labels.jsonl").write_text(
+        '{"state":{"missing_required_slots":["fuel_type","transmission","monthly_from_gbp"],"hesitation_count":0},"gold_action":"ask_follow_up","gold_target_slot":"fuel_type"}\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "conversation_turns.jsonl").write_text(
+        '{"message":"hello","preferences":{},"hesitation_count":0,"expected_action":"ask_follow_up","expected_next_slot":"fuel_type"}\n',
+        encoding="utf-8",
+    )
+    adapter2 = CuratedInteractionAdapter(base_dir=tmp_path)
+    assert adapter2.is_available is True
+    priors = adapter2.get_policy_priors(preferences={}, hesitation_count=0)
+    assert priors and priors[0].assistant_action == "ask_follow_up"
+    shots = adapter2.get_few_shot_exemplars(preferences={}, hesitation_count=0)
+    assert shots and shots[0]["expected_next_slot"] == "fuel_type"

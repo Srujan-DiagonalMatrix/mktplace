@@ -28,6 +28,7 @@ from src.backend.services.ai.conversation_orchestrator import (
     extract_pain_points_for_turn,
 )
 from src.backend.services.ai.question_policy import decide_next_action
+from src.backend.services.ai.curated_runtime_adapter import CuratedInteractionAdapter
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -38,6 +39,7 @@ def get_chat_orchestrator() -> ChatOrchestrator:
 
 
 _orchestrator = get_chat_orchestrator()
+_curated_adapter = CuratedInteractionAdapter()
 
 def _catalog_options(field_name: str) -> list[str]:
     try:
@@ -217,6 +219,7 @@ def post_message(
     previous_key = last_question_key
     statement = STATEMENTS_BY_KEY.get(previous_key)
     deterministic_reply = _build_next_reply(current, asked_keys=get_asked_question_keys(session_id), user_message=payload.message, hesitation_count=hesitation_count)
+    curated_priors = _curated_adapter.get_policy_priors(preferences=current, hesitation_count=hesitation_count, last_question_key=previous_key)
     policy_outcome = orchestrator.run_policy_orchestrator(session=s, user_message=payload.message)
     policy_source = "deterministic"
     if policy_outcome.used_llm and policy_outcome.response is not None:
@@ -238,8 +241,12 @@ def post_message(
         add_asked_question_key(session_id, next_question_key)
     set_last_question_key(session_id, next_question_key)
     policy_decision = _build_policy_decision_payload(next_question_key=next_question_key, question_metadata=question_metadata, preferences=current)
+    if curated_priors:
+        policy_decision["curated_priors"] = [p.__dict__ for p in curated_priors]
+    llm_session = dict(s)
+    llm_session["preferences"] = {**current, "hesitation_count": hesitation_count}
     llm_payload = orchestrator.run(
-        session=s,
+        session=llm_session,
         user_message=payload.message,
         template=PromptTemplate.FOLLOW_UP,
         policy_decision=policy_decision,
