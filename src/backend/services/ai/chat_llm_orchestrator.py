@@ -113,7 +113,7 @@ class ChatOrchestrator:
     @property
     def model_name(self) -> str:
         return self._settings.model
-    def build_prompt(self, *, session: dict[str, Any], user_message: str, template: PromptTemplate) -> str:
+
     def build_prompt(
         self,
         *,
@@ -162,9 +162,10 @@ class ChatOrchestrator:
         policy_decision: dict[str, Any] | None = None,
     ) -> OrchestrationPayload:
         if self._client is None:
-            return OrchestrationPayload(used_llm=False, fallback_reason=self._init_error_reason or FallbackReason.MODEL_ERROR)
-        prompt = self.build_prompt(session=session, user_message=user_message, template=template)
-            return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.MISSING_API_KEY)
+            return OrchestrationPayload(
+                used_llm=False,
+                fallback_reason=self._init_error_reason or FallbackReason.MODEL_ERROR,
+            )
         prompt = self.build_prompt(session=session, user_message=user_message, template=template, policy_decision=policy_decision)
         try:
             raw = self._client.generate_json(
