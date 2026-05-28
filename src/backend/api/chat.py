@@ -85,8 +85,13 @@ def _build_next_reply(preferences: dict, asked_keys: list[str], user_message: st
     decision = decide_next_action(preferences, asked_keys=asked_keys, user_message=user_message, hesitation_count=hesitation_count)
     next_question = decision.question_spec
     if not next_question:
+        reply = (
+            "Great — I’ll show your recommendations now."
+            if decision.assistant_action == "present_recommendations"
+            else "Thanks, I’ve got enough detail to summarize your preferences and recommend suitable vehicles."
+        )
         return (
-            "It was a great experience talking to you conversation, Thank you!",
+            reply,
             None,
             None,
             None,
@@ -115,13 +120,19 @@ def _build_next_reply_from_policy(preferences: dict, policy: dict) -> tuple[str,
     target_slot = policy.get("target_slot")
     question_text = policy.get("question_text")
     if action == "summarize_and_recommend" or not target_slot:
+        assistant_action = "present_recommendations" if preferences.get("summary_presented") else (action or "summarize_and_recommend")
+        reply = (
+            "Great — I’ll show your recommendations now."
+            if assistant_action == "present_recommendations"
+            else "Thanks, I’ve got enough detail to summarize your preferences and recommend suitable vehicles."
+        )
         decision = {
-            "assistant_action": action or "summarize_and_recommend",
+            "assistant_action": assistant_action,
             "target_slot": None,
             "decision_confidence": policy.get("confidence"),
             "decision_reason": policy.get("reason"),
         }
-        return ("It was a great experience talking to you conversation, Thank you!", None, None, None, decision)
+        return (reply, None, None, None, decision)
     quick_replies = _catalog_options(target_slot) if target_slot in {"fuel_type", "transmission"} else None
     metadata = {
         "slot": target_slot,
@@ -222,7 +233,12 @@ def post_message(
     curated_priors = _curated_adapter.get_policy_priors(preferences=current, hesitation_count=hesitation_count, last_question_key=previous_key)
     policy_outcome = orchestrator.run_policy_orchestrator(session=s, user_message=payload.message)
     policy_source = "deterministic"
-    if policy_outcome.used_llm and policy_outcome.response is not None:
+    deterministic_action = deterministic_reply[4].get("assistant_action")
+    if (
+        deterministic_action != "present_recommendations"
+        and policy_outcome.used_llm
+        and policy_outcome.response is not None
+    ):
         selected_reply = _build_next_reply_from_policy(current, policy_outcome.response.model_dump())
         policy_source = "llm"
     else:
@@ -240,7 +256,11 @@ def post_message(
         set_last_question_asked_at(session_id, now)
         add_asked_question_key(session_id, next_question_key)
     set_last_question_key(session_id, next_question_key)
+    if decision_payload.get("assistant_action") == "summarize_and_recommend":
+        update_preferences(session_id, {"summary_presented": True})
+        current = get_preferences(session_id)
     policy_decision = _build_policy_decision_payload(next_question_key=next_question_key, question_metadata=question_metadata, preferences=current)
+    policy_decision["assistant_action"] = decision_payload.get("assistant_action") or policy_decision["assistant_action"]
     if curated_priors:
         policy_decision["curated_priors"] = [p.__dict__ for p in curated_priors]
     llm_session = dict(s)

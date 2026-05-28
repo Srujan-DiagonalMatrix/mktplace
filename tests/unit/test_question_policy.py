@@ -121,3 +121,19 @@ def test_curated_policy_priors_match_slot_state(tmp_path):
     assert priors
     assert priors[0].target_slot == "fuel_type"
     assert abs(sum(p.weight for p in priors) - 1.0) < 1e-9
+
+
+def test_decide_next_action_returns_present_recommendations_after_summary():
+    from src.backend.services.ai.question_policy import decide_next_action
+
+    prefs = {
+        "intent": "purchase",
+        "fuel_type": "Petrol",
+        "monthly_from_gbp": 300,
+        "transmission": "Automatic",
+        "summary_presented": True,
+    }
+    decision = decide_next_action(prefs, asked_keys=[], user_message="Yes, show recommendations", hesitation_count=0)
+
+    assert decision.assistant_action == "present_recommendations"
+    assert decision.question_spec is None

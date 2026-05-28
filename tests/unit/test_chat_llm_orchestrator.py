@@ -208,3 +208,71 @@ def test_prompt_assembly_includes_curated_exemplars(monkeypatch, tmp_path):
     )
     assert "Curated few-shot exemplars" in prompt
     assert "expected_next_slot" in prompt
+
+
+def test_orchestrator_accepts_terminal_summary_actions_in_strict_mode(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key")
+    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
+    payload = {
+        "reply": "Great — I’ll show your recommendations now.",
+        "confidence": 0.95,
+        "assistant_action": "present_recommendations",
+        "follow_up_question": None,
+        "follow_up_slot_tag": None,
+        "template_used": "follow_up",
+    }
+    orch = ChatOrchestrator(client=FakeClient(payload), settings=_settings())
+
+    out = orch.run(
+        session={"messages": ["Yes, show recommendations"], "preferences": {"summary_presented": True}},
+        user_message="Yes, show recommendations",
+        template=PromptTemplate.FOLLOW_UP,
+        policy_decision={"assistant_action": "present_recommendations", "target_slot": None},
+    )
+
+    assert out.used_llm is True
+    assert out.response is not None
+    assert out.response.assistant_action == "present_recommendations"
+    assert out.response.follow_up_question is None
+
+
+def test_policy_orchestrator_accepts_present_recommendations_terminal_action(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key")
+    payload = {
+        "assistant_action": "present_recommendations",
+        "target_slot": None,
+        "question_text": None,
+        "confidence": 0.95,
+        "reason": "summary confirmed",
+    }
+    orch = ChatOrchestrator(client=FakeClient(payload), settings=_settings())
+
+    out = orch.run_policy_orchestrator(
+        session={"messages": ["Yes, show recommendations"], "preferences": {"summary_presented": True}},
+        user_message="Yes, show recommendations",
+    )
+
+    assert out.used_llm is True
+    assert out.response is not None
+    assert out.response.assistant_action == "present_recommendations"
+    assert out.response.target_slot is None
+
+
+def test_policy_orchestrator_rejects_terminal_action_with_question(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "key")
+    payload = {
+        "assistant_action": "present_recommendations",
+        "target_slot": "transmission",
+        "question_text": "Do you prefer automatic?",
+        "confidence": 0.95,
+        "reason": "invalid terminal payload",
+    }
+    orch = ChatOrchestrator(client=FakeClient(payload), settings=_settings())
+
+    out = orch.run_policy_orchestrator(
+        session={"messages": [], "preferences": {"summary_presented": True}},
+        user_message="Yes",
+    )
+
+    assert out.used_llm is False
+    assert out.fallback_reason == FallbackReason.POLICY_MISMATCH

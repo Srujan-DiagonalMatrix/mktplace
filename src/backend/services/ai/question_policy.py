@@ -134,7 +134,9 @@ def decide_next_action(preferences: dict, asked_keys: list[str], user_message: s
     bank = QUESTION_BANK_BY_INTENT.get(intent, QUESTION_BANK_BY_INTENT["default"])
     required_complete = all(preferences.get(q.key) not in (None, "") for q in _required_slots(bank))
 
-    if required_complete and decision.stage in {"narrow", "discover"}:
+    if required_complete and preferences.get("summary_presented"):
+        decision = PolicyDecision(stage="recommend", action="present_recommendations")
+    elif required_complete and decision.stage in {"narrow", "discover"}:
         decision = PolicyDecision(stage="summarize", action="summarize_preferences")
 
     if decision.question is not None:
@@ -151,11 +153,12 @@ def decide_next_action(preferences: dict, asked_keys: list[str], user_message: s
             question_spec=decision.question,
         )
 
+    assistant_action = "present_recommendations" if decision.stage == "recommend" else "summarize_and_recommend"
     return PolicyDecision(
         stage=decision.stage,
         action=decision.action,
         question=None,
-        assistant_action="summarize_and_recommend",
+        assistant_action=assistant_action,
         target_slot=None,
         reason=(decision.action or "required fields captured"),
         confidence=0.9,

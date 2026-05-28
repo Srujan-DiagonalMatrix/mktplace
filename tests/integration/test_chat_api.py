@@ -74,6 +74,38 @@ def test_post_chat_message_extracts_transmission_on_existing_session():
     assert body["transmission"] == "Automatic"
 
 
+def test_summary_confirmation_advances_to_recommendations_without_loop():
+    first = client.post(
+        "/chat/message",
+        json={"message": "I want to buy with a budget of £500 per month"},
+    )
+    session_id = first.json()["session_id"]
+    client.post(
+        "/chat/message",
+        json={"session_id": session_id, "message": "Petrol please"},
+    )
+
+    summary_response = client.post(
+        "/chat/message",
+        json={"session_id": session_id, "message": "Automatic"},
+    )
+    summary_body = summary_response.json()
+
+    assert summary_response.status_code == 200
+    assert summary_body["assistant_action"] == "summarize_and_recommend"
+
+    recommendation_response = client.post(
+        "/chat/message",
+        json={"session_id": session_id, "message": "Yes, show recommendations"},
+    )
+    recommendation_body = recommendation_response.json()
+
+    assert recommendation_response.status_code == 200
+    assert recommendation_body["assistant_action"] == "present_recommendations"
+    assert recommendation_body["target_slot"] is None
+    assert "Would you like me to continue" not in recommendation_body["reply"]
+
+
 def test_post_chat_message_succeeds_with_missing_openai_api_key(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     get_settings.cache_clear()

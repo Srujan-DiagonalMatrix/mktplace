@@ -146,3 +146,14 @@ def test_quick_reply_uses_send_message_logic(chat_panel_module, monkeypatch):
     chat_panel_module._send_quick_reply("Hybrid / Electric", "sess-quick")
 
     assert calls == [("Hybrid / Electric", "sess-quick")]
+
+
+def test_present_recommendations_action_does_not_append_summary_prompt(chat_panel_module):
+    reply_text, quick_replies = chat_panel_module._apply_assistant_action(
+        "Great — I’ll show your recommendations now.",
+        {"assistant_action": "present_recommendations"},
+    )
+
+    assert reply_text == "Great — I’ll show your recommendations now."
+    assert "Would you like me to continue" not in reply_text
+    assert quick_replies is None
