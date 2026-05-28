@@ -27,6 +27,13 @@ CANONICAL_PREFERENCE_SCHEMA: dict[str, type] = {
     "monthly_budget": (int, float),
     "monthly_from_gbp": (int, float),
     "body_type": str,
+    "make_preference": str,
+    "model_preference": str,
+    "usage_type": str,
+    "must_have_features": str,
+    "colour_preference": str,
+    "age_limit_years": int,
+    "delivery_timeline": str,
     "family_size": int,
     "summary_presented": bool,
 }
