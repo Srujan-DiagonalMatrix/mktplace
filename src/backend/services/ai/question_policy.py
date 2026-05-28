@@ -13,24 +13,32 @@ class QuestionSpec:
     required: bool = False
 
 
+Stage = Literal["discover", "narrow", "clarify", "summarize", "recommend"]
+
+
 @dataclass(frozen=True)
 class PolicyDecision:
-    assistant_action: str
-    target_slot: str | None
-    reason: str
-    confidence: float
-    fallback_action: str
-    question_spec: QuestionSpec | None
+    # New-style policy fields
+    stage: Stage | None = None
+    action: str | None = None
+    question: QuestionSpec | None = None
+    # Legacy/API fields retained for compatibility
+    assistant_action: str | None = None
+    target_slot: str | None = None
+    reason: str | None = None
+    confidence: float | None = None
+    fallback_action: str | None = None
+    question_spec: QuestionSpec | None = None
 
 
 QUESTION_BANK_BY_INTENT: dict[str, list[QuestionSpec]] = {
     "purchase": [
         QuestionSpec("fuel_type", "What type of fuel would you prefer for your next vehicle?", "collect_powertrain_preference", "critical", True),
-        QuestionSpec("monthly_from_gbp", "What monthly budget would you like to stay within?", "collect_budget_limit", "critical", True),
         QuestionSpec("transmission", "Do you have a preferred transmission type?", "collect_driving_preference", "required", True),
+        QuestionSpec("monthly_from_gbp", "What monthly budget would you like to stay within?", "collect_budget_limit", "critical", True),
         QuestionSpec("doors", "How many doors would you prefer?", "collect_practical_layout", "optional", False),
         QuestionSpec("seats", "How many seats do you need?", "collect_capacity_needs", "optional", False),
-        QuestionSpec("term_months", "What finance term would suit you best?", "collect_finance_term", "required", True),
+        QuestionSpec("term_months", "What finance term would suit you best?", "collect_finance_term", "optional", False),
     ],
     "default": [
         QuestionSpec("fuel_type", "What type of fuel would you prefer for your next vehicle?", "collect_powertrain_preference", "critical", True),
@@ -48,16 +56,6 @@ CLARIFICATION_QUESTION = QuestionSpec(
     category="clarification",
     required=True,
 )
-
-
-Stage = Literal["discover", "narrow", "clarify", "summarize", "recommend"]
-
-
-@dataclass(frozen=True)
-class PolicyDecision:
-    stage: Stage
-    action: str
-    question: QuestionSpec | None = None
 
 
 def _missing_slots(bank: list[QuestionSpec], preferences: dict) -> list[QuestionSpec]:
@@ -98,11 +96,16 @@ def select_policy_decision(preferences: dict, asked_keys: list[str], user_messag
     if _has_contradiction(preferences, user_message):
         return PolicyDecision(stage="clarify", action="resolve_contradiction", question=CLARIFICATION_QUESTION)
 
+
     if _is_answer_ambiguous(user_message, hesitation_count):
         if hesitation_count >= 2 and missing:
-            # Ambiguity loop recovery: move from endless clarification back to concrete collection.
             return PolicyDecision(stage="narrow", action="recover_from_ambiguity", question=missing[0])
         return PolicyDecision(stage="clarify", action="resolve_ambiguity", question=CLARIFICATION_QUESTION)
+
+    if hesitation_count >= 2:
+        monthly_q = next((q for q in bank if q.key == "monthly_from_gbp" and preferences.get(q.key) in (None, "")), None)
+        if monthly_q is not None:
+            return PolicyDecision(stage="narrow", action="prioritize_budget_after_hesitation", question=monthly_q)
 
     if _sufficiency_reached(bank, preferences):
         if preferences.get("summary_presented"):
@@ -116,74 +119,50 @@ def select_policy_decision(preferences: dict, asked_keys: list[str], user_messag
     if missing_required:
         return PolicyDecision(stage="discover", action="revisit_required_slot", question=missing_required[0])
 
-def select_next_question(preferences: dict, asked_keys: list[str], user_message: str, hesitation_count: int) -> QuestionSpec | None:
-    decision = decide_next_action(preferences, asked_keys, user_message, hesitation_count)
-    return decision.question_spec
+    if missing:
+        for q in missing:
+            if q.key not in asked_keys:
+                return PolicyDecision(stage="narrow", action="collect_optional_slot", question=q)
+        return PolicyDecision(stage="narrow", action="revisit_optional_slot", question=missing[0])
 
-
-def decide_next_action(preferences: dict, asked_keys: list[str], user_message: str, hesitation_count: int) -> PolicyDecision:
-    intent = str(preferences.get("intent") or "default").lower()
-    bank = QUESTION_BANK_BY_INTENT.get(intent, QUESTION_BANK_BY_INTENT["default"])
-    normalized = (user_message or "").strip().lower()
-    ambiguous = normalized in {"maybe", "not sure", "idk", "unsure", "depends"}
-    conflict = " but " in normalized and ("petrol" in normalized and "diesel" in normalized)
-    if ambiguous or conflict:
-        return PolicyDecision(
-            assistant_action="clarify_with_options",
-            target_slot="clarification",
-            reason="user response was ambiguous or conflicting",
-            confidence=0.95,
-            fallback_action="ask_follow_up",
-            question_spec=CLARIFICATION_QUESTION,
-        )
-    if hesitation_count >= 2:
-        missing_critical = [q for q in bank if q.required and preferences.get(q.key) in (None, "")]
-        if missing_critical:
-            q = missing_critical[0]
-            return PolicyDecision(
-                assistant_action="ask_follow_up",
-                target_slot=q.key,
-                reason="repeat hesitation, prioritize critical missing field",
-                confidence=0.85,
-                fallback_action="clarify_with_options",
-                question_spec=q,
-            )
-    for q in bank:
-        if not q.required:
-            continue
-        if preferences.get(q.key) in (None, "") and q.key not in asked_keys:
-            return PolicyDecision(stage="narrow", action="collect_optional_slot", question=q)
-            return PolicyDecision(
-                assistant_action="ask_follow_up",
-                target_slot=q.key,
-                reason="next unresolved field not yet asked",
-                confidence=0.9,
-                fallback_action="clarify_with_options",
-                question_spec=q,
-            )
-    for q in bank:
-        if not q.required:
-            continue
-        if preferences.get(q.key) in (None, ""):
-            return PolicyDecision(stage="narrow", action="revisit_optional_slot", question=q)
     return PolicyDecision(stage="recommend", action="present_recommendations")
 
 
-def select_next_question(preferences: dict, asked_keys: list[str], user_message: str, hesitation_count: int) -> QuestionSpec | None:
-    return select_policy_decision(preferences, asked_keys, user_message, hesitation_count).question
-            return PolicyDecision(
-                assistant_action="ask_follow_up",
-                target_slot=q.key,
-                reason="remaining unresolved field",
-                confidence=0.75,
-                fallback_action="clarify_with_options",
-                question_spec=q,
-            )
+def decide_next_action(preferences: dict, asked_keys: list[str], user_message: str, hesitation_count: int) -> PolicyDecision:
+    decision = select_policy_decision(preferences, asked_keys, user_message, hesitation_count)
+    intent = str(preferences.get("intent") or "default").lower()
+    bank = QUESTION_BANK_BY_INTENT.get(intent, QUESTION_BANK_BY_INTENT["default"])
+    required_complete = all(preferences.get(q.key) not in (None, "") for q in _required_slots(bank))
+
+    if required_complete and decision.stage in {"narrow", "discover"}:
+        decision = PolicyDecision(stage="summarize", action="summarize_preferences")
+
+    if decision.question is not None:
+        assistant_action = "clarify_with_options" if decision.stage == "clarify" else "ask_follow_up"
+        return PolicyDecision(
+            stage=decision.stage,
+            action=decision.action,
+            question=decision.question,
+            assistant_action=assistant_action,
+            target_slot=decision.question.key,
+            reason=(decision.action or "policy_selected"),
+            confidence=0.9,
+            fallback_action="ask_follow_up" if assistant_action == "clarify_with_options" else "clarify_with_options",
+            question_spec=decision.question,
+        )
+
     return PolicyDecision(
+        stage=decision.stage,
+        action=decision.action,
+        question=None,
         assistant_action="summarize_and_recommend",
         target_slot=None,
-        reason="required fields captured",
+        reason=(decision.action or "required fields captured"),
         confidence=0.9,
         fallback_action="ask_follow_up",
         question_spec=None,
     )
+
+
+def select_next_question(preferences: dict, asked_keys: list[str], user_message: str, hesitation_count: int) -> QuestionSpec | None:
+    return select_policy_decision(preferences, asked_keys, user_message, hesitation_count).question

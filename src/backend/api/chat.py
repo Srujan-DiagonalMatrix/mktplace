@@ -36,6 +36,9 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 def get_chat_orchestrator() -> ChatOrchestrator:
     return ChatOrchestrator()
 
+
+_orchestrator = get_chat_orchestrator()
+
 def _catalog_options(field_name: str) -> list[str]:
     try:
         catalog = get_default_catalog()
@@ -121,7 +124,7 @@ def _build_policy_decision_payload(next_question_key: str | None, question_metad
 def post_message(
     payload: ChatMessage,
     db: Session = Depends(get_db),
-    orchestrator: ChatOrchestrator = Depends(get_chat_orchestrator),
+    orchestrator: ChatOrchestrator = Depends(lambda: _orchestrator),
 ):
     s = create_or_get_session(payload.session_id)
     if not s:
@@ -202,9 +205,8 @@ def post_message(
         set_last_question_asked_at(session_id, now)
         add_asked_question_key(session_id, next_question_key)
     set_last_question_key(session_id, next_question_key)
-    llm_payload = orchestrator.run(session=s, user_message=payload.message, template=PromptTemplate.FOLLOW_UP)
     policy_decision = _build_policy_decision_payload(next_question_key=next_question_key, question_metadata=question_metadata, preferences=current)
-    llm_payload = _orchestrator.run(
+    llm_payload = orchestrator.run(
         session=s,
         user_message=payload.message,
         template=PromptTemplate.FOLLOW_UP,
@@ -223,7 +225,7 @@ def post_message(
     diagnostics = {
         "used_llm": llm_payload.used_llm,
         "fallback_reason": llm_payload.fallback_reason.value if llm_payload.fallback_reason else None,
-        "model_name": _orchestrator.model_name,
+        "model_name": orchestrator.model_name,
         "decision_source": "llm" if llm_payload.used_llm else "deterministic",
     }
 
