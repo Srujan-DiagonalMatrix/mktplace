@@ -1,0 +1,6 @@
+sample_id,utterance,intent,monthly_from_gbp,deposit_gbp,term_months,fuel_type,transmission,doors,seats,body_type,family_size,annual_mileage_limit,employment_status,part_exchange,confidence_gold,needs_clarification
+p_0001,"Looking to buy, around £450 pcm, automatic hatchback",purchase,450,,,,"Automatic",,,Hatchback,,,,,0.93,false
+p_0002,"Budget 350 per month, petrol manual, 5 doors",purchase,350,,,Petrol,Manual,5,,,,,,,0.97,false
+p_0003,"Family of 4, maybe SUV, not sure on fuel",purchase,,,,,,, ,SUV,4,,,,0.62,true
+p_0004,"I can put down 2000 deposit and do 48 months",purchase,,2000,48,,,,,,,,,,0.95,false
+p_0005,"Need something cheap, unsure everything",purchase,,,,,,,,,,,,,,0.30,true
