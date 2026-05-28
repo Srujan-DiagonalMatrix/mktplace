@@ -39,6 +39,16 @@ QUESTION_BANK_BY_INTENT: dict[str, list[QuestionSpec]] = {
         QuestionSpec("doors", "How many doors would you prefer?", "collect_practical_layout", "optional", False),
         QuestionSpec("seats", "How many seats do you need?", "collect_capacity_needs", "optional", False),
         QuestionSpec("term_months", "What finance term would suit you best?", "collect_finance_term", "optional", False),
+        QuestionSpec("body_type", "What body type are you most interested in, such as SUV, hatchback, saloon, or estate?", "collect_vehicle_shape_preference", "vehicle_discovery", False),
+        QuestionSpec("make_preference", "Do you have a preferred make or brand?", "collect_brand_preference", "vehicle_discovery", False),
+        QuestionSpec("model_preference", "Is there a specific model you already have in mind?", "collect_model_preference", "vehicle_discovery", False),
+        QuestionSpec("annual_mileage_limit", "Roughly how many miles do you expect to drive each year?", "collect_annual_mileage_for_finance", "finance", False),
+        QuestionSpec("deposit_gbp", "How much deposit would you like to put down, if any?", "collect_deposit_amount", "finance", False),
+        QuestionSpec("usage_type", "How will you mainly use the vehicle — commuting, family trips, business, or something else?", "collect_primary_usage", "lifestyle", False),
+        QuestionSpec("must_have_features", "Are there any must-have features you want included?", "collect_feature_requirements", "vehicle_discovery", False),
+        QuestionSpec("colour_preference", "Do you have a preferred colour or colours to avoid?", "collect_colour_preference", "vehicle_discovery", False),
+        QuestionSpec("age_limit_years", "What is the oldest vehicle age you would consider?", "collect_vehicle_age_limit", "vehicle_discovery", False),
+        QuestionSpec("delivery_timeline", "When would you ideally like to have the vehicle delivered?", "collect_delivery_timeline", "timeline", False),
     ],
     "default": [
         QuestionSpec("fuel_type", "What type of fuel would you prefer for your next vehicle?", "collect_powertrain_preference", "critical", True),
@@ -46,6 +56,16 @@ QUESTION_BANK_BY_INTENT: dict[str, list[QuestionSpec]] = {
         QuestionSpec("monthly_from_gbp", "What monthly budget would you like to stay within?", "collect_budget_limit", "required", True),
         QuestionSpec("doors", "How many doors would you prefer?", "collect_practical_layout", "optional", False),
         QuestionSpec("seats", "How many seats do you need?", "collect_capacity_needs", "optional", False),
+        QuestionSpec("body_type", "What body type are you most interested in, such as SUV, hatchback, saloon, or estate?", "collect_vehicle_shape_preference", "vehicle_discovery", False),
+        QuestionSpec("make_preference", "Do you have a preferred make or brand?", "collect_brand_preference", "vehicle_discovery", False),
+        QuestionSpec("model_preference", "Is there a specific model you already have in mind?", "collect_model_preference", "vehicle_discovery", False),
+        QuestionSpec("annual_mileage_limit", "Roughly how many miles do you expect to drive each year?", "collect_annual_mileage_for_finance", "finance", False),
+        QuestionSpec("deposit_gbp", "How much deposit would you like to put down, if any?", "collect_deposit_amount", "finance", False),
+        QuestionSpec("usage_type", "How will you mainly use the vehicle — commuting, family trips, business, or something else?", "collect_primary_usage", "lifestyle", False),
+        QuestionSpec("must_have_features", "Are there any must-have features you want included?", "collect_feature_requirements", "vehicle_discovery", False),
+        QuestionSpec("colour_preference", "Do you have a preferred colour or colours to avoid?", "collect_colour_preference", "vehicle_discovery", False),
+        QuestionSpec("age_limit_years", "What is the oldest vehicle age you would consider?", "collect_vehicle_age_limit", "vehicle_discovery", False),
+        QuestionSpec("delivery_timeline", "When would you ideally like to have the vehicle delivered?", "collect_delivery_timeline", "timeline", False),
     ],
 }
 
@@ -80,6 +100,20 @@ def _has_contradiction(preferences: dict, user_message: str) -> bool:
     return has_marker_conflict or message_conflict
 
 
+def _is_completion_signal(user_message: str) -> bool:
+    normalized = (user_message or "").strip().lower()
+    completion_markers = {
+        "that's everything",
+        "thats everything",
+        "that's all",
+        "thats all",
+        "nothing else",
+        "no more",
+        "show recommendations",
+    }
+    return any(marker in normalized for marker in completion_markers)
+
+
 def _sufficiency_reached(bank: list[QuestionSpec], preferences: dict) -> bool:
     required_ready = all(preferences.get(q.key) not in (None, "") for q in _required_slots(bank))
     themes = preferences.get("extracted_themes") or []
@@ -98,7 +132,7 @@ def select_policy_decision(preferences: dict, asked_keys: list[str], user_messag
 
 
     if _is_answer_ambiguous(user_message, hesitation_count):
-        if hesitation_count >= 2 and missing:
+        if hesitation_count >= 3 and missing:
             return PolicyDecision(stage="narrow", action="recover_from_ambiguity", question=missing[0])
         return PolicyDecision(stage="clarify", action="resolve_ambiguity", question=CLARIFICATION_QUESTION)
 
@@ -113,6 +147,8 @@ def select_policy_decision(preferences: dict, asked_keys: list[str], user_messag
         return PolicyDecision(stage="summarize", action="summarize_preferences")
 
     missing_required = [q for q in _required_slots(bank) if preferences.get(q.key) in (None, "")]
+    if not missing_required and _is_completion_signal(user_message):
+        return PolicyDecision(stage="summarize", action="summarize_preferences")
     for q in missing_required:
         if q.key not in asked_keys:
             return PolicyDecision(stage="discover", action="collect_required_slot", question=q)

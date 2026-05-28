@@ -137,3 +137,78 @@ def test_decide_next_action_returns_present_recommendations_after_summary():
 
     assert decision.assistant_action == "present_recommendations"
     assert decision.question_spec is None
+
+
+def test_question_banks_include_vehicle_discovery_depth():
+    from src.backend.services.ai.question_policy import QUESTION_BANK_BY_INTENT
+
+    for intent in ("purchase", "default"):
+        bank = QUESTION_BANK_BY_INTENT[intent]
+        keys = {question.key for question in bank}
+        assert len(bank) >= 10
+        assert len(keys) == len(bank)
+        assert {
+            "body_type",
+            "make_preference",
+            "model_preference",
+            "annual_mileage_limit",
+            "deposit_gbp",
+            "usage_type",
+            "must_have_features",
+            "colour_preference",
+            "age_limit_years",
+            "delivery_timeline",
+        }.issubset(keys)
+        assert all(question.question for question in bank)
+        assert all(question.purpose for question in bank)
+        assert all(question.category for question in bank)
+
+
+def test_coerce_slot_answer_parses_common_numeric_formats():
+    from src.backend.api.chat import _coerce_slot_answer
+
+    assert _coerce_slot_answer("annual_mileage_limit", "12,000 miles", None) == 12000
+    assert _coerce_slot_answer("deposit_gbp", "£2.5k deposit", None) == 2500.0
+    assert _coerce_slot_answer("term_months", "36 months please", None) == 36
+    assert _coerce_slot_answer("age_limit_years", "up to 5 years old", None) == 5
+
+
+def test_completion_signal_summarizes_instead_of_optional_followup():
+    prefs = {
+        "intent": "purchase",
+        "fuel_type": "Diesel",
+        "transmission": "Automatic",
+        "monthly_from_gbp": 450,
+        "doors": 5,
+        "seats": 5,
+    }
+    decision = select_policy_decision(
+        prefs,
+        asked_keys=["fuel_type", "transmission", "monthly_from_gbp", "doors", "seats"],
+        user_message="Thanks that's everything.",
+        hesitation_count=0,
+    )
+
+    assert decision.stage == "summarize"
+    assert decision.question is None
+
+
+def test_second_ambiguous_answer_still_clarifies_before_recovery():
+    decision = select_policy_decision(
+        {"intent": "purchase", "fuel_type": "Petrol", "transmission": "Automatic"},
+        asked_keys=["fuel_type", "transmission"],
+        user_message="idk",
+        hesitation_count=2,
+    )
+
+    assert decision.stage == "clarify"
+    assert decision.question is not None
+    assert decision.question.key == "clarification"
+
+
+def test_coerce_slot_answer_handles_zero_or_invalid_numeric_answers():
+    from src.backend.api.chat import _coerce_slot_answer
+
+    assert _coerce_slot_answer("deposit_gbp", "no deposit", None) == 0.0
+    assert _coerce_slot_answer("annual_mileage_limit", "not sure yet", None) is None
+    assert _coerce_slot_answer("deposit_gbp", "not sure yet", 500.0) == 500.0
