@@ -46,6 +46,20 @@ class OrchestrationPayload(BaseModel):
     fallback_reason: FallbackReason | None = None
 
 
+class PolicyLLMResponse(BaseModel):
+    assistant_action: str
+    target_slot: str | None = None
+    question_text: str | None = None
+    confidence: float = Field(ge=0.0, le=1.0)
+    reason: str
+
+
+class PolicyOrchestrationPayload(BaseModel):
+    used_llm: bool
+    response: PolicyLLMResponse | None = None
+    fallback_reason: FallbackReason | None = None
+
+
 @dataclass(frozen=True)
 class ModelSettings:
     version: str
@@ -210,3 +224,49 @@ class ChatOrchestrator:
             return OrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.GUARDRAIL_BLOCK)
         parsed.reply = self._bound_reply(parsed.reply)
         return OrchestrationPayload(used_llm=True, response=parsed)
+
+    def run_policy_orchestrator(
+        self,
+        *,
+        session: dict[str, Any],
+        user_message: str,
+    ) -> PolicyOrchestrationPayload:
+        if self._client is None:
+            return PolicyOrchestrationPayload(
+                used_llm=False,
+                fallback_reason=self._init_error_reason or FallbackReason.MODEL_ERROR,
+            )
+        memory = session.get("messages", [])[-6:]
+        preferences = session.get("preferences", {})
+        prompt = (
+            f"Prompt config version: {self._settings.version}\n"
+            "You are a dialogue policy orchestrator for a car buying assistant.\n"
+            f"Session preferences: {json.dumps(preferences, default=str)}\n"
+            f"Recent messages: {json.dumps(memory, default=str)}\n"
+            f"User message: {user_message}\n"
+            "Return strict JSON with fields only: "
+            '{"assistant_action": str, "target_slot": str|null, "question_text": str|null, "confidence": float, "reason": str}.\n'
+            "assistant_action must be one of: ask_follow_up, clarify_with_options, summarize_and_recommend.\n"
+            "If assistant_action is summarize_and_recommend, target_slot and question_text should be null."
+        )
+        try:
+            raw = self._client.generate_json(
+                model=self._settings.model,
+                prompt=prompt,
+                temperature=self._settings.temperature,
+                max_output_tokens=self._settings.max_output_tokens,
+            )
+            parsed = PolicyLLMResponse.model_validate_json(raw)
+        except (TimeoutError, ValidationError, json.JSONDecodeError, Exception):
+            return PolicyOrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.MODEL_ERROR)
+
+        if parsed.confidence < self._settings.confidence_threshold:
+            return PolicyOrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.LOW_CONFIDENCE)
+        if parsed.assistant_action not in {"ask_follow_up", "clarify_with_options", "summarize_and_recommend"}:
+            return PolicyOrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
+        if parsed.assistant_action == "summarize_and_recommend" and (parsed.target_slot or parsed.question_text):
+            return PolicyOrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
+        if parsed.assistant_action != "summarize_and_recommend" and (not parsed.target_slot or not parsed.question_text):
+            return PolicyOrchestrationPayload(used_llm=False, fallback_reason=FallbackReason.POLICY_MISMATCH)
+
+        return PolicyOrchestrationPayload(used_llm=True, response=parsed)

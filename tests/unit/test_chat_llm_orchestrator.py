@@ -156,68 +156,32 @@ def test_orchestrator_passes_resolved_model_to_client(monkeypatch):
     assert spy.calls[0]["model"] == "gpt-5.4-mini"
 
 
-def test_strict_mode_rejects_policy_action_mismatch(monkeypatch):
+def test_policy_orchestrator_success(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "key")
-    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
     payload = {
-        "reply": "Could you share your budget range?",
-        "confidence": 0.98,
         "assistant_action": "ask_follow_up",
-        "follow_up_question": "Could you share your budget range?",
-        "follow_up_slot_tag": "budget",
-        "template_used": "follow_up",
+        "target_slot": "fuel_type",
+        "question_text": "What fuel type do you prefer?",
+        "confidence": 0.95,
+        "reason": "required slot missing",
     }
     orch = ChatOrchestrator(client=FakeClient(payload), settings=_settings())
-    out = orch.run(
-        session={"messages": [], "preferences": {}},
-        user_message="help me choose",
-        template=PromptTemplate.FOLLOW_UP,
-        policy_decision={"assistant_action": "respond", "target_slot": "budget"},
-    )
-    assert out.used_llm is False
-    assert out.fallback_reason == FallbackReason.POLICY_MISMATCH
-
-
-def test_hybrid_mode_accepts_matching_action_with_slot_tag(monkeypatch):
-    monkeypatch.setenv("OPENAI_API_KEY", "key")
-    monkeypatch.setenv("LLM_POLICY_MODE", "hybrid")
-    monkeypatch.setenv("LLM_POLICY_CONFIDENCE_THRESHOLD", "0.8")
-    payload = {
-        "reply": "Got it — what monthly payment range are you targeting?",
-        "confidence": 0.91,
-        "assistant_action": "ask_follow_up",
-        "follow_up_question": "Got it — what monthly payment range are you targeting?",
-        "follow_up_slot_tag": "budget",
-        "template_used": "follow_up",
-    }
-    orch = ChatOrchestrator(client=FakeClient(payload), settings=_settings())
-    out = orch.run(
-        session={"messages": [], "preferences": {}},
-        user_message="i need financing",
-        template=PromptTemplate.FOLLOW_UP,
-        policy_decision={"assistant_action": "ask_follow_up", "target_slot": "budget"},
-    )
+    out = orch.run_policy_orchestrator(session={"messages": ["hi"], "preferences": {}}, user_message="need a car")
     assert out.used_llm is True
+    assert out.response is not None
+    assert out.response.target_slot == "fuel_type"
 
 
-def test_hybrid_mode_falls_back_on_low_policy_confidence(monkeypatch):
+def test_policy_orchestrator_falls_back_on_low_confidence(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "key")
-    monkeypatch.setenv("LLM_POLICY_MODE", "hybrid")
-    monkeypatch.setenv("LLM_POLICY_CONFIDENCE_THRESHOLD", "0.8")
     payload = {
-        "reply": "What do you think?",
-        "confidence": 0.7,
         "assistant_action": "ask_follow_up",
-        "follow_up_question": "What do you think?",
-        "follow_up_slot_tag": "budget",
-        "template_used": "follow_up",
+        "target_slot": "fuel_type",
+        "question_text": "What fuel type do you prefer?",
+        "confidence": 0.2,
+        "reason": "unsure",
     }
     orch = ChatOrchestrator(client=FakeClient(payload), settings=_settings())
-    out = orch.run(
-        session={"messages": [], "preferences": {}},
-        user_message="idk",
-        template=PromptTemplate.FOLLOW_UP,
-        policy_decision={"assistant_action": "ask_follow_up", "target_slot": "budget"},
-    )
+    out = orch.run_policy_orchestrator(session={"messages": [], "preferences": {}}, user_message="idk")
     assert out.used_llm is False
-    assert out.fallback_reason == FallbackReason.POLICY_MISMATCH
+    assert out.fallback_reason == FallbackReason.LOW_CONFIDENCE
