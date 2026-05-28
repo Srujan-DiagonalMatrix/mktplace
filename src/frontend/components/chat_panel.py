@@ -357,20 +357,6 @@ def _send_message(
         reply_text, quick_replies = _apply_assistant_action(
             response.get("reply", "Thanks! Tell me a little more so I can refine your options."),
             response,
-        st.session_state["chat_messages"].append(
-            _create_message(
-                "ai",
-                response.get("reply", "Thanks! Tell me a little more so I can refine your options."),
-                quick_replies=response.get("quick_replies") or None,
-                assistant_action=response.get("assistant_action"),
-                target_slot=response.get("target_slot"),
-                question_metadata=response.get("question_metadata")
-                if isinstance(response.get("question_metadata"), dict)
-                else None,
-                confidence=response.get("confidence")
-                if isinstance(response.get("confidence"), (int, float))
-                else None,
-            )
         )
         ai_message = _create_message("ai", reply_text, quick_replies=quick_replies)
         ai_message["assistant_action"] = response.get("assistant_action")

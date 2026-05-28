@@ -34,7 +34,7 @@ class GuardrailResult(BaseModel):
 class StructuredLLMResponse(BaseModel):
     reply: str
     confidence: float = Field(ge=0.0, le=1.0)
-    assistant_action: str
+    assistant_action: str = "respond"
     follow_up_question: str | None = None
     template_used: PromptTemplate
 
