@@ -137,3 +137,28 @@ def test_decide_next_action_returns_present_recommendations_after_summary():
 
     assert decision.assistant_action == "present_recommendations"
     assert decision.question_spec is None
+
+
+def test_render_question_uses_variant_index_without_mutating_state():
+    from src.backend.services.ai.question_policy import QuestionSpec, render_question
+
+    spec = QuestionSpec(
+        key="fuel_type",
+        question="What type of fuel would you prefer for your next vehicle?",
+        purpose="collect_powertrain_preference",
+        category="critical",
+        required=True,
+        variants=("Which fuel type should I focus on?",),
+    )
+    state = {"_question_variant_indices": {"fuel_type": 0}}
+
+    first = render_question(spec, state, asked_keys=[])
+    state["_question_variant_indices"]["fuel_type"] = 1
+    second = render_question(spec, state, asked_keys=[])
+    state["_question_variant_indices"]["fuel_type"] = 2
+    third = render_question(spec, state, asked_keys=[])
+
+    assert first == "What type of fuel would you prefer for your next vehicle?"
+    assert second == "Which fuel type should I focus on?"
+    assert third == "What type of fuel would you prefer for your next vehicle?"
+    assert state["_question_variant_indices"]["fuel_type"] == 2

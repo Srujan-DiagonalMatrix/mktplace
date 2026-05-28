@@ -334,3 +334,44 @@ def test_chat_falls_back_to_deterministic_policy_when_llm_policy_invalid(monkeyp
     assert response.status_code == 200
     details = events[-1]["details"]
     assert details["policy_source"] == "deterministic"
+
+
+def test_build_next_reply_cycles_repeated_slot_wording_with_session_state():
+    from src.backend.api import chat as chat_api
+
+    session = {}
+    preferences = {"intent": "purchase", "fuel_type": ""}
+    asked_keys = [
+        "fuel_type",
+        "transmission",
+        "monthly_from_gbp",
+        "doors",
+        "seats",
+        "term_months",
+    ]
+    variant_preferences = chat_api._question_variant_preferences(session)
+
+    first_reply = chat_api._build_next_reply(
+        preferences,
+        asked_keys=asked_keys,
+        user_message="ok",
+        hesitation_count=0,
+        variant_preferences=variant_preferences,
+    )
+    chat_api._advance_question_variant(session, first_reply[2])
+    second_reply = chat_api._build_next_reply(
+        preferences,
+        asked_keys=asked_keys,
+        user_message="ok",
+        hesitation_count=0,
+        variant_preferences=variant_preferences,
+    )
+
+    assert first_reply[2] == "fuel_type"
+    assert second_reply[2] == "fuel_type"
+    assert first_reply[0] == "What type of fuel would you prefer for your next vehicle?"
+    assert (
+        second_reply[0]
+        == "Which fuel type would you like me to focus on for your next vehicle?"
+    )
+    assert session["question_variant_indices"] == {"fuel_type": 1}
