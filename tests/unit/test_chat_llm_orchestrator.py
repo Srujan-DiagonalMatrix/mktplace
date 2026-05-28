@@ -185,3 +185,26 @@ def test_policy_orchestrator_falls_back_on_low_confidence(monkeypatch):
     out = orch.run_policy_orchestrator(session={"messages": [], "preferences": {}}, user_message="idk")
     assert out.used_llm is False
     assert out.fallback_reason == FallbackReason.LOW_CONFIDENCE
+
+
+def test_prompt_assembly_includes_curated_exemplars(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "key")
+    monkeypatch.setenv("LLM_POLICY_MODE", "strict")
+    (tmp_path / "conversation_turns.jsonl").write_text(
+        '{"message":"hello","preferences":{},"hesitation_count":0,"expected_action":"ask_follow_up","expected_next_slot":"fuel_type"}\n',
+        encoding="utf-8",
+    )
+    from src.backend.services.ai.curated_runtime_adapter import CuratedInteractionAdapter
+    orch = ChatOrchestrator(
+        client=FakeClient({"reply": "ok", "confidence": 0.9, "follow_up_question": None, "template_used": "greeting"}),
+        settings=_settings(),
+        curated_adapter=CuratedInteractionAdapter(base_dir=tmp_path),
+    )
+    prompt = orch.build_prompt(
+        session={"messages": ["m1"], "preferences": {"hesitation_count": 0}},
+        user_message="hello",
+        template=PromptTemplate.GREETING,
+        few_shot_exemplars=orch._curated_adapter.get_few_shot_exemplars(preferences={}, hesitation_count=0),
+    )
+    assert "Curated few-shot exemplars" in prompt
+    assert "expected_next_slot" in prompt
