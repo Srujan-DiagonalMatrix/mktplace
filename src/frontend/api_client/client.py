@@ -20,6 +20,9 @@ class BackendClient:
     def post_chat(self, payload: dict) -> Any:
         return requests.post(f"{self.base}/chat/message", json=payload).json()
 
+    def start_chat(self, payload: dict | None = None) -> Any:
+        return requests.post(f"{self.base}/chat/start", json=payload or {}).json()
+
     def create_enquiry(self, payload: dict) -> Any:
         return requests.post(f"{self.base}/enquiries/", json=payload)
 

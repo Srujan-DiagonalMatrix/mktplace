@@ -5,8 +5,6 @@ from html import escape
 import os
 from typing import Any
 
-import os
-
 import streamlit as st
 
 from src.frontend.api_client.client import BackendClient
@@ -32,11 +30,7 @@ PREFERENCE_KEYS = {
     "part_exchange",
     "callback_opt_in",
 }
-INITIAL_MESSAGE_TEXTS = [
-    "👋 Hi there! I'm your AI car buying assistant.",
-    "I’ll ask a few quick questions to find your best-fit car.",
-    "To begin, what monthly budget feels right for you?",
-]
+FALLBACK_GREETING = "👋 Hi there! I'm your AI car buying assistant. To begin, what monthly budget feels right for you?"
 
 
 def _message_time() -> str:
@@ -72,13 +66,29 @@ def _create_message(
     return message
 
 
-def _initial_messages() -> list[dict[str, Any]]:
-    return [_create_message("ai", text) for text in INITIAL_MESSAGE_TEXTS]
+def _bootstrap_message(session_id: str | None = None, backend_client: BackendClient | None = None) -> dict[str, Any]:
+    active_client = backend_client or client
+    try:
+        response = active_client.start_chat({"session_id": session_id})
+        reply_text = response.get("reply") or FALLBACK_GREETING
+        reply_text, quick_replies = _apply_assistant_action(reply_text, response)
+        return _create_message(
+            "ai",
+            reply_text,
+            quick_replies=quick_replies,
+            assistant_action=response.get("assistant_action"),
+            target_slot=response.get("target_slot"),
+            question_metadata=response.get("question_metadata"),
+            confidence=response.get("confidence"),
+        )
+    except Exception:
+        return _create_message("ai", FALLBACK_GREETING)
 
 
-def _ensure_messages() -> None:
+def _ensure_messages(session_id: str | None = None, backend_client: BackendClient | None = None) -> None:
     if "chat_messages" not in st.session_state:
-        st.session_state["chat_messages"] = _initial_messages()
+        st.session_state["chat_messages"] = [_bootstrap_message(session_id, backend_client)]
+        st.session_state["chat_bootstrap_loaded"] = True
 
 
 def _extract_preferences(response: Any) -> dict[str, Any]:
@@ -261,8 +271,8 @@ def _clarification_options(message: dict[str, Any]) -> list[str]:
 
 
 def chat_panel() -> None:
-    _ensure_messages()
     session_id = get_session_id()
+    _ensure_messages(session_id=session_id)
 
     st.markdown(
         "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;'>"
@@ -343,7 +353,7 @@ def _send_message(
     session_id: str | None = None,
     backend_client: BackendClient | None = None,
 ) -> None:
-    _ensure_messages()
+    _ensure_messages(session_id=session_id, backend_client=backend_client)
     active_client = backend_client or client
 
     st.session_state["chat_messages"].append(_create_message("user", txt))

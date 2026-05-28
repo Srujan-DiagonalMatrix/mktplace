@@ -141,16 +141,20 @@ def test_chat_panel_renders_without_calling_backend_when_no_input(monkeypatch):
     sys.modules.pop("src.frontend.state.session_state", None)
     module = _reload_module("src.frontend.components.chat_panel")
 
-    def fail_post_chat(_payload):
-        raise AssertionError("chat_panel should not call backend unless the user sends")
+    def fake_start_chat(_payload):
+        return {"reply": "Backend greeting"}
 
+    def fail_post_chat(_payload):
+        raise AssertionError("chat_panel should not call /chat/message unless the user sends input")
+
+    monkeypatch.setattr(module.client, "start_chat", fake_start_chat)
     monkeypatch.setattr(module.client, "post_chat", fail_post_chat)
 
     module.chat_panel()
 
     rendered = "\n".join(fake_st.markdown_calls)
     assert "Conversation" in rendered
-    assert "Hi! I&#x27;m your AI car buying assistant." in rendered
+    assert "Backend greeting" in rendered
     assert fake_st.button_calls[-1][0] == "➤"
 
 
@@ -268,6 +272,28 @@ def test_backend_client_post_chat_calls_chat_endpoint(monkeypatch):
 
     assert response == {"ok": True}
     assert calls == [("http://backend.test/chat/message", {"message": "hello"})]
+
+
+def test_backend_client_start_chat_calls_start_endpoint(monkeypatch):
+    calls: list[tuple[str, dict[str, Any]]] = []
+    fake_requests = types.SimpleNamespace()
+
+    def fake_post(url, json):
+        calls.append((url, json))
+        return _Response({"reply": "Welcome"})
+
+    fake_requests.post = fake_post
+    fake_requests.get = lambda *args, **kwargs: _Response({})
+    _install_fake_settings(monkeypatch)
+    monkeypatch.setitem(sys.modules, "requests", fake_requests)
+    module = _reload_module("src.frontend.api_client.client")
+
+    response = module.BackendClient(base_url="http://backend.test").start_chat(
+        {"session_id": "sess-1"}
+    )
+
+    assert response == {"reply": "Welcome"}
+    assert calls == [("http://backend.test/chat/start", {"session_id": "sess-1"})]
 
 
 def test_backend_client_get_recommendations_includes_session_id(monkeypatch):
