@@ -7,6 +7,88 @@ import pandas as pd
 import streamlit as st
 
 
+
+def _normalize_top_pain_points(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for idx, item in enumerate((payload.get('top_pain_points') or [])[:5], start=1):
+        if not isinstance(item, dict):
+            continue
+        rows.append(
+            {
+                'rank': idx,
+                'label': item.get('label', f'Pain Point {idx}'),
+                'frequency': int(item.get('frequency', 0) or 0),
+                'max_confidence': float(item.get('max_confidence', 0) or 0),
+            }
+        )
+    return rows
+
+
+def _infer_icp_mix(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    drilldown = payload.get('session_drilldown') or []
+    family = 0
+    student = 0
+    for session in drilldown:
+        if not isinstance(session, dict):
+            continue
+        turns = int(session.get('turns', 0) or 0)
+        pain_points = set(session.get('pain_points') or [])
+        if turns >= 8 or {'family_size', 'safety', 'space'} & pain_points:
+            family += 1
+        else:
+            student += 1
+    return [
+        {'profile': 'Family', 'count': family},
+        {'profile': 'Student', 'count': student},
+    ]
+
+
+def _build_interaction_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for session in payload.get('session_drilldown') or []:
+        if not isinstance(session, dict):
+            continue
+        turns = int(session.get('turns', 0) or 0)
+        rows.append(
+            {
+                'interaction_id': session.get('session_id', 'unknown'),
+                'duration_min': max(turns * 2, 0),
+                'pain_points': ', '.join(session.get('pain_points') or []),
+                'sentiment': float(session.get('sentiment', 0) or 0),
+            }
+        )
+    return rows
+
+
+def _build_conversation_history_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for session in payload.get('session_drilldown') or []:
+        if not isinstance(session, dict):
+            continue
+        turns = int(session.get('turns', 0) or 0)
+        pain_points = list(session.get('pain_points') or [])[:5]
+        seriousness = 'High' if turns >= 6 else 'Medium' if turns >= 3 else 'Low'
+        rows.append(
+            {
+                'interaction_id': session.get('session_id', 'unknown'),
+                'date_of_interaction': date.today().isoformat(),
+                'time_of_interaction': '10:00',
+                'customer_name': 'Anonymous',
+                'contact_details': 'N/A',
+                'channel': 'Chat',
+                'summary_of_interaction': session.get('summary', ''),
+                'top_5_pain_points': ', '.join(pain_points),
+                'weights': ', '.join(['1.0'] * len(pain_points)) if pain_points else 'N/A',
+                'seriousness_to_proceed': seriousness,
+                'icp_primary': 'Family' if turns >= 6 else 'Student',
+                'conversation_duration_min': turns * 2,
+                'assigned_manager': 'Unassigned',
+                'status': 'Open',
+                'view': 'View',
+            }
+        )
+    return rows
+
 def transform_sentiment_trends(payload: dict[str, Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for day, sentiments in payload.get('sentiment_trends', {}).items():
