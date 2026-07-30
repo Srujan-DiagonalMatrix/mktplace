@@ -11,6 +11,7 @@ from src.frontend.components.finance_summary import finance_summary
 from src.frontend.components.header import render_header
 from src.frontend.components.analytics_dashboard import render_analytics_dashboard
 from src.frontend.components.summary_cards import summary_cards
+from src.frontend.components.our_work import render_our_work
 from src.frontend.state.session_state import get_preferences, get_session_id
 
 client = BackendClient()
@@ -555,6 +556,19 @@ input, textarea {
   padding: 0.75rem 1rem 0;
 }
 
+.our-work {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.our-work h2 {
+  margin: 0.2rem 0 0.85rem;
+  color: var(--ink);
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
 @media (max-width: 1180px) {
   .car-grid { grid-template-columns: repeat(2, minmax(190px, 1fr)); }
   .summary-cards { grid-template-columns: 1fr; }
@@ -661,6 +675,7 @@ def _render_recommendations_panel(session_id: str) -> None:
         )
     render_recommendation_cards(recs[:3], variant="top3", session_id=session_id, client=client)
     finance_summary(budget, term, deposit)
+    render_our_work()
 
 
 def _render_safety_footer() -> None:
