@@ -47,5 +47,5 @@ sleep 57
 done
 
 # mouse_test.sh
-# chmod +x mouse_test.sh
+# git add .chmod +x mouse_test.sh
 # ./mouse_test.sh
