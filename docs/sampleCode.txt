@@ -1,0 +1,51 @@
+#!/bin/zsh
+
+echo "Mouse activity test running. Ctrl+C to stop."
+
+while true; do
+
+/usr/bin/osascript -l JavaScript <<'JXA'
+ObjC.import('CoreGraphics')
+ObjC.import('Foundation')
+
+var current = $.CGEventCreate(null)
+var pos = $.CGEventGetLocation(current)
+var x = pos.x
+var y = pos.y
+
+// Move cursor for ~3 seconds
+for (var i = 0; i < 30; i++) {
+
+    var nx = x + (i % 2 == 0 ? 3 : -3)
+
+    var event = $.CGEventCreateMouseEvent(
+        null,
+        $.kCGEventMouseMoved,
+        $.CGPointMake(nx, y),
+        $.kCGMouseButtonLeft
+    )
+
+    $.CGEventPost($.kCGHIDEventTap, event)
+
+    $.NSThread.sleepForTimeInterval(0.1)
+}
+
+// Return cursor to original position
+var event = $.CGEventCreateMouseEvent(
+    null,
+    $.kCGEventMouseMoved,
+    $.CGPointMake(x, y),
+    $.kCGMouseButtonLeft
+)
+
+$.CGEventPost($.kCGHIDEventTap, event)
+JXA
+
+# 3 seconds movement + 57 seconds wait = 60 seconds
+sleep 57
+
+done
+
+# mouse_test.sh
+# git add .chmod +x mouse_test.sh
+# ./mouse_test.sh
