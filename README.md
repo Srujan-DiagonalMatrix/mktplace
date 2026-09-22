@@ -1,4 +1,5 @@
 # mktplace
+<<<<<<< HEAD
 
 Lloyds Market Place — an AI-assisted car buying MVP with a FastAPI backend and Streamlit frontend.
 
@@ -172,3 +173,6 @@ git pull
 docker compose -f "docker-compose-ubuntu.yml" down
 docker compose -f "docker-compose-ubuntu.yml" up -d
 clear
+=======
+Lloyds Market Place
+>>>>>>> 3908d74 (Initial commit)
