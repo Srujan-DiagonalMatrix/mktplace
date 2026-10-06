@@ -1,1 +1,92 @@
-The terminal process "/bin/zsh '-l'" terminated with exit code: 127.
+set -e
+
+echo "======================================================"
+echo " ROVE - FIX BANK SSL FOR PYTHON / PIP"
+echo "======================================================"
+
+# Find the corporate CA that is already working for npm
+CERT="$(find . -type f \( -name 'company-ca.pem' -o -name '*company*ca*.pem' -o -name '*corporate*ca*.pem' \) | head -1)"
+
+if [ -z "$CERT" ]; then
+  echo "ERROR: Could not find company-ca.pem in this repository."
+  echo "Run: find . -type f -name '*.pem'"
+  exit 1
+fi
+
+echo "Found corporate certificate: $CERT"
+
+# Find API Dockerfile - the one containing requirements.txt
+API_DOCKERFILE="$(grep -rl --include='Dockerfile*' 'requirements.txt' . | head -1)"
+
+if [ -z "$API_DOCKERFILE" ]; then
+  echo "ERROR: Could not find API Dockerfile."
+  exit 1
+fi
+
+echo "Found API Dockerfile: $API_DOCKERFILE"
+
+API_DIR="$(dirname "$API_DOCKERFILE")"
+
+echo "API build directory: $API_DIR"
+
+# Put the already-working corporate CA beside the API Dockerfile
+cp "$CERT" "$API_DIR/company-ca.pem"
+
+# Backup Dockerfile once
+cp "$API_DOCKERFILE" "${API_DOCKERFILE}.before-bank-ssl-fix"
+
+echo
+echo "Patching API Dockerfile..."
+
+# Replace the failing pip command with corporate CA installation
+sed -i.bak \
+'s|RUN pip install --no-cache-dir -r requirements.txt|COPY company-ca.pem /usr/local/share/ca-certificates/company-ca.crt\
+RUN apt-get update \&\& apt-get install -y --no-install-recommends ca-certificates \&\& rm -rf /var/lib/apt/lists/* \&\& update-ca-certificates\
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt\
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt\
+ENV PIP_CERT=/etc/ssl/certs/ca-certificates.crt\
+RUN python -m pip install --no-cache-dir -r requirements.txt|' \
+"$API_DOCKERFILE"
+
+# Ensure Docker does not ignore the CA file
+if [ -f "$API_DIR/.dockerignore" ]; then
+  sed -i.bak '/company-ca\.pem/d' "$API_DIR/.dockerignore"
+fi
+
+echo
+echo "Dockerfile SSL section:"
+grep -n -A8 -B2 'company-ca.pem' "$API_DOCKERFILE" || true
+
+echo
+echo "======================================================"
+echo " CLEARING OLD DOCKER CACHE"
+echo "======================================================"
+
+docker compose down --remove-orphans || true
+docker builder prune -af
+
+echo
+echo "======================================================"
+echo " BUILDING API AGAIN"
+echo "======================================================"
+
+docker compose build --no-cache --progress=plain api
+
+echo
+echo "======================================================"
+echo " STARTING APPLICATION"
+echo "======================================================"
+
+docker compose up -d
+
+echo
+echo "======================================================"
+echo " STATUS"
+echo "======================================================"
+
+docker compose ps
+
+echo
+echo "======================================================"
+echo " DONE"
+echo "======================================================"
