@@ -1,53 +1,47 @@
-echo "=== Fixing Python/PIP SSL issue inside Docker ===" && \
-cp Dockerfile Dockerfile.backup && \
-sed -i 's|RUN pip install --no-cache-dir -r requirements.txt|RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.python.org -r requirements.txt|' Dockerfile && \
-echo "=== Dockerfile changed to ===" && \
-grep -n "pip install" Dockerfile && \
-echo "=== Clearing API build cache ===" && \
-docker compose down --remove-orphans 2>/dev/null || true; \
-docker builder prune -f && \
-echo "=== Rebuilding ===" && \
-docker compose build --no-cache --progress=plain && \
-echo "=== Starting ROVE ===" && \
-docker compose up -d && \
-echo "=== Containers ===" && \
-docker compose ps
+9.034 ERROR: Could not find a version that satisfies the requirement fastapi==0.116.1 (from versions: none)
+9.089 Could not fetch URL https://pypi.org/simple/pip/: There was a problem confirming the ssl certificate: HTTPSConnectionPool(host='pypi.org', port=443): Maxretries exceeded with url: /simple/pip/ (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))) - skipping
+9.091 ERROR: No matching distribution found for fastapi==0.116.1
+------
+Dockerfile:27
+
+--------------------
+
+  25 |     
+
+  26 |     COPY requirements.txt .
+
+  27 | >>> RUN pip install --no-cache-dir -r requirements.txt
+
+  28 |     
+
+  29 |     COPY app ./app
+
+--------------------
+
+target api: failed to solve: process "/bin/sh -c pip install --no-cache-dir -r requirements.txt" did not complete successfully: exit code: 1
 
 
-#####
+
+View build details: docker-desktop://dashboard/build/default/default/9k60utanbycfd1d1n1a71dx7z
 
 
-COPY company-ca.pem /tmp/company-ca.pem
-npm config set cafile /tmp/company-ca.pem
-npm config set strict-ssl true
-npm ci
+What's next:
+    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
+[+] up 3/3
+ ✔ Container rove-db  Healthy                                                                                                                               5.7s
+ ✔ Container rove-api Started                                                                                                                               5.8s
+ ✔ Container rove-web Started                                                                                                                               5.8s
 
-####
+What's next:
+    Filter, search, and stream logs from all your Compose services
+    in one place with Docker Desktop's Logs view. docker-desktop://dashboard/logs?appId=rove
+NAME       IMAGE                COMMAND                  SERVICE   CREATED         STATUS                   PORTS
+rove-api   rove-api             "sh -c 'alembic upgr…"   api       6 seconds ago   Up Less than a second    0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+rove-db    postgres:16-alpine   "docker-entrypoint.s…"   db        6 seconds ago   Up 5 seconds (healthy)   0.0.0.0:5434->5432/tcp, [::]:5434->5432/tcp
+rove-web   rove-web             "/docker-entrypoint.…"   web       6 seconds ago   Up Less than a second    0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+srujan.kumar@DEV-H59N27LXKY rove % 
 
-cp Dockerfile Dockerfile.before-ca-fix && \
-python3 - <<'PY'
-from pathlib import Path
 
-p = Path("Dockerfile")
-s = p.read_text()
+######
 
-old = "RUN pip install --no-cache-dir -r requirements.txt"
 
-new = """COPY company-ca.pem /usr/local/share/ca-certificates/company-ca.crt
-RUN update-ca-certificates && \\
-    PIP_CERT=/etc/ssl/certs/ca-certificates.crt \\
-    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \\
-    pip install --no-cache-dir -r requirements.txt"""
-
-if old not in s:
-    print("pip line not found - Dockerfile may already have been modified.")
-else:
-    p.write_text(s.replace(old, new))
-    print("Dockerfile updated successfully.")
-PY
-
-docker compose down --remove-orphans
-docker builder prune -f
-docker compose build --no-cache --progress=plain
-docker compose up -d
-docker compose ps
