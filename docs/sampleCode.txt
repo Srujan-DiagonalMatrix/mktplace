@@ -1,11 +1,8 @@
-echo "=== ZSH TEST ==="
-echo $SHELL
-echo "terminal works"
+=== GITHUB COMPANY SSH TEST ===
+Hi srujan-lbg-dev! You've successfully authenticated, but GitHub does not provide shell access.
 
-echo
-echo "=== GITHUB COMPANY SSH TEST ==="
-ssh -T github-company
-
-echo
-echo "=== REMOTES ==="
-git remote -v
+=== REMOTES ===
+company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git (fetch)
+company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git (push)
+origin  git@github.com:Srujan-DiagonalMatrix/rove.git (fetch)
+origin  git@github.com:Srujan-DiagonalMatrix/rove.git (push)
