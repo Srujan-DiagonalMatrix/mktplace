@@ -1,51 +1,24 @@
-#!/bin/zsh
+cp Dockerfile Dockerfile.backup 2>/dev/null || true
 
-echo "Mouse activity test running. Ctrl+C to stop."
+find . -name "Dockerfile*" -type f -print0 | while IFS= read -r -d '' f; do
+  echo "Updating: $f"
+  cp "$f" "$f.bak"
+  sed -i 's|RUN pip install --no-cache-dir -r requirements.txt|RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.python.org -r requirements.txt|g' "$f"
+done
 
-while true; do
+docker compose down --remove-orphans
+docker builder prune -f
+docker compose build --no-cache
+docker compose up
+###
+find . -name "Dockerfile*" -type f -print0 | while IFS= read -r -d '' f; do
+  echo "Updating: $f"
 
-/usr/bin/osascript -l JavaScript <<'JXA'
-ObjC.import('CoreGraphics')
-ObjC.import('Foundation')
-
-var current = $.CGEventCreate(null)
-var pos = $.CGEventGetLocation(current)
-var x = pos.x
-var y = pos.y
-
-// Move cursor for ~3 seconds
-for (var i = 0; i < 30; i++) {
-
-    var nx = x + (i % 2 == 0 ? 3 : -3)
-
-    var event = $.CGEventCreateMouseEvent(
-        null,
-        $.kCGEventMouseMoved,
-        $.CGPointMake(nx, y),
-        $.kCGMouseButtonLeft
-    )
-
-    $.CGEventPost($.kCGHIDEventTap, event)
-
-    $.NSThread.sleepForTimeInterval(0.1)
-}
-
-// Return cursor to original position
-var event = $.CGEventCreateMouseEvent(
-    null,
-    $.kCGEventMouseMoved,
-    $.CGPointMake(x, y),
-    $.kCGMouseButtonLeft
-)
-
-$.CGEventPost($.kCGHIDEventTap, event)
-JXA
-
-# 3 seconds movement + 57 seconds wait = 60 seconds
-sleep 57
+  sed -i 's|RUN pip install --no-cache-dir -r requirements.txt|RUN pip config set global.trusted-host "pypi.org files.pythonhosted.org pypi.python.org" \&\& pip install --no-cache-dir -r requirements.txt|g' "$f"
 
 done
 
-# mouse_test.sh
-# git add .chmod +x mouse_test.sh
-# ./mouse_test.sh
+docker compose down --remove-orphans
+docker builder prune -af
+docker compose build --no-cache --progress=plain
+docker compose up
