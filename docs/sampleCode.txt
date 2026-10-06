@@ -1,85 +1,53 @@
-[+] Building 9.4s (27/30)                                                                                                                                       
- => [internal] load local bake definitions                                                                                                                 0.0s
- => => reading from stdin 1.02kB                                                                                                                           0.0s
- => [api internal] load build definition from Dockerfile                                                                                                   0.0s
- => => transferring dockerfile: 1.12kB                                                                                                                     0.0s
- => [web internal] load build definition from Dockerfile.web                                                                                               0.0s
- => => transferring dockerfile: 655B                                                                                                                       0.0s
- => [web internal] load metadata for docker.io/library/nginx:alpine                                                                                        0.4s
- => [web internal] load metadata for docker.io/library/node:22-alpine                                                                                      0.4s
- => [api internal] load metadata for docker.io/library/python:3.12-slim                                                                                    0.4s
- => [api internal] load .dockerignore                                                                                                                      0.0s
- => => transferring context: 2B                                                                                                                            0.0s
- => [api stage-0 1/8] FROM docker.io/library/python:3.12-slim@sha256:ddb0207ae1f0356c2b724d740769b0c5f5f51cc54a0525178f721825f78fe74c                      0.0s
- => => resolve docker.io/library/python:3.12-slim@sha256:ddb0207ae1f0356c2b724d740769b0c5f5f51cc54a0525178f721825f78fe74c                                  0.0s
- => [api internal] load build context                                                                                                                      0.0s
- => => transferring context: 600B                                                                                                                          0.0s
- => CACHED [api stage-0 2/8] RUN --mount=type=secret,id=corporate_ca,required=false     if [ -s /run/secrets/corporate_ca ]; then       if [ -f /etc/ssl/  0.0s
- => CACHED [api stage-0 3/8] WORKDIR /app                                                                                                                  0.0s
- => CACHED [api stage-0 4/8] COPY requirements.txt .                                                                                                       0.0s
- => ERROR [api stage-0 5/8] RUN pip install --no-cache-dir -r requirements.txt                                                                             8.8s
- => [web internal] load .dockerignore                                                                                                                      0.0s
- => => transferring context: 245B                                                                                                                          0.0s
- => [web build 1/7] FROM docker.io/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402                          0.0s
- => => resolve docker.io/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402                                    0.0s
- => [web stage-1 1/3] FROM docker.io/library/nginx:alpine@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2                          0.0s
- => => resolve docker.io/library/nginx:alpine@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2                                      0.0s
- => [web internal] load build context                                                                                                                      0.0s
- => => transferring context: 5.01kB                                                                                                                        0.0s
- => CACHED [web stage-1 2/3] COPY nginx.docker.conf /etc/nginx/conf.d/default.conf                                                                         0.0s
- => CACHED [web build 2/7] WORKDIR /app                                                                                                                    0.0s
- => CACHED [web build 3/7] COPY package.json package-lock.json ./                                                                                          0.0s
- => CACHED [web build 4/7] COPY company-ca.pem /tmp/company-ca.pem                                                                                         0.0s
- => CACHED [web build 5/7] RUN npm config set cafile /tmp/company-ca.pem     && npm config set strict-ssl true     && npm ci                               0.0s
- => CACHED [web build 6/7] COPY . .                                                                                                                        0.0s
- => CACHED [web build 7/7] RUN npm run build                                                                                                               0.0s
- => CACHED [web stage-1 3/3] COPY --from=build /app/dist /usr/share/nginx/html                                                                             0.0s
- => [web] exporting to image                                                                                                                               0.0s
- => => exporting layers                                                                                                                                    0.0s
- => => exporting manifest sha256:0eccbcc14912bf8dabd8f3ff3fba3207735550bb938135decfc35ecf9d36fe6c                                                          0.0s
- => => exporting config sha256:6f2a6440056be857520a9607393e56f33ead167080728ccd09fe2804c8ff0f02                                                            0.0s
- => => exporting attestation manifest sha256:77ac7d6fa29cb6af6de4bd61662c04a8f1d8e4d19e63a4725dc2d2f638d67f32                                              0.0s
- => => exporting manifest list sha256:06ecebada2adbab176bd24e6e5ac7ba3016a46ef717cd1569ab10e97f67ca269                                                     0.0s
- => => naming to docker.io/library/rove-web:latest                                                                                                         0.0s
- => => unpacking to docker.io/library/rove-web:latest                                                                                                      0.0s
- => [web] resolving provenance for metadata file                                                                                                           0.0s
-------                                                                                                                                                          
- > [api stage-0 5/8] RUN pip install --no-cache-dir -r requirements.txt:                                                                                        
-0.874 WARNING: Retrying (Retry(total=4, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))': /simple/fastapi/                          
-1.434 WARNING: Retrying (Retry(total=3, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))': /simple/fastapi/                          
-2.497 WARNING: Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))': /simple/fastapi/
-4.572 WARNING: Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))': /simple/fastapi/
-8.642 WARNING: Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))': /simple/fastapi/
-8.707 Could not fetch URL https://pypi.org/simple/fastapi/: There was a problem confirming the ssl certificate: HTTPSConnectionPool(host='pypi.org', port=443):Max retries exceeded with url: /simple/fastapi/ (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))) - skipping
-8.710 ERROR: Could not find a version that satisfies the requirement fastapi==0.116.1 (from versions: none)
-8.769 Could not fetch URL https://pypi.org/simple/pip/: There was a problem confirming the ssl certificate: HTTPSConnectionPool(host='pypi.org', port=443): Maxretries exceeded with url: /simple/pip/ (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))) - skipping
-8.771 ERROR: No matching distribution found for fastapi==0.116.1
-------
-[+] up 0/2
- ⠙ Image rove-web Building                                                                                                                                  9.5s
- ⠙ Image rove-api Building                                                                                                                                  9.5s
-Dockerfile:27
-
---------------------
-
-  25 |     
-
-  26 |     COPY requirements.txt .
-
-  27 | >>> RUN pip install --no-cache-dir -r requirements.txt
-
-  28 |     
-
-  29 |     COPY app ./app
-
---------------------
-
-target api: failed to solve: process "/bin/sh -c pip install --no-cache-dir -r requirements.txt" did not complete successfully: exit code: 1
+echo "=== Fixing Python/PIP SSL issue inside Docker ===" && \
+cp Dockerfile Dockerfile.backup && \
+sed -i 's|RUN pip install --no-cache-dir -r requirements.txt|RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.python.org -r requirements.txt|' Dockerfile && \
+echo "=== Dockerfile changed to ===" && \
+grep -n "pip install" Dockerfile && \
+echo "=== Clearing API build cache ===" && \
+docker compose down --remove-orphans 2>/dev/null || true; \
+docker builder prune -f && \
+echo "=== Rebuilding ===" && \
+docker compose build --no-cache --progress=plain && \
+echo "=== Starting ROVE ===" && \
+docker compose up -d && \
+echo "=== Containers ===" && \
+docker compose ps
 
 
+#####
 
-View build details: docker-desktop://dashboard/build/default/default/m9jbkqu38tg4k82t62lrwwh1w
 
+COPY company-ca.pem /tmp/company-ca.pem
+npm config set cafile /tmp/company-ca.pem
+npm config set strict-ssl true
+npm ci
 
-What's next:
-    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
+####
+
+cp Dockerfile Dockerfile.before-ca-fix && \
+python3 - <<'PY'
+from pathlib import Path
+
+p = Path("Dockerfile")
+s = p.read_text()
+
+old = "RUN pip install --no-cache-dir -r requirements.txt"
+
+new = """COPY company-ca.pem /usr/local/share/ca-certificates/company-ca.crt
+RUN update-ca-certificates && \\
+    PIP_CERT=/etc/ssl/certs/ca-certificates.crt \\
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \\
+    pip install --no-cache-dir -r requirements.txt"""
+
+if old not in s:
+    print("pip line not found - Dockerfile may already have been modified.")
+else:
+    p.write_text(s.replace(old, new))
+    print("Dockerfile updated successfully.")
+PY
+
+docker compose down --remove-orphans
+docker builder prune -f
+docker compose build --no-cache --progress=plain
+docker compose up -d
+docker compose ps
