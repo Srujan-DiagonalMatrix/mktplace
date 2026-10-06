@@ -1,81 +1,11 @@
-/bin/zsh -f <<'EOF'
-set -e
-
-echo "=== BACKING UP ZSH CONFIG ==="
-cp ~/.zshrc ~/.zshrc.backup.$(date +%Y%m%d%H%M%S) 2>/dev/null || true
-cp ~/.zprofile ~/.zprofile.backup.$(date +%Y%m%d%H%M%S) 2>/dev/null || true
-
-echo "=== REMOVING OLD CERT / BROKEN STARTUP SETTINGS ==="
-
-for f in ~/.zshrc ~/.zprofile ~/.zshenv; do
-  [ -f "$f" ] || continue
-
-  /usr/bin/sed -i.bak \
-    -e '/SSL_CERT_FILE/d' \
-    -e '/REQUESTS_CA_BUNDLE/d' \
-    -e '/CURL_CA_BUNDLE/d' \
-    -e '/NODE_EXTRA_CA_CERTS/d' \
-    -e '/combined_certs\.pem/d' \
-    -e '/company-ca/d' \
-    -e '/corporate_ca/d' \
-    -e '/security find-certificate/d' \
-    "$f"
-done
-
-echo "=== ADDING SAFE NODE CORPORATE CERT SUPPORT ==="
-
-touch ~/.zshrc
-grep -q '^export NODE_USE_SYSTEM_CA=1$' ~/.zshrc || \
-  echo 'export NODE_USE_SYSTEM_CA=1' >> ~/.zshrc
-
-echo "=== RESETTING GIT SSH OVERRIDES ==="
-
-git config --global --unset core.sshCommand 2>/dev/null || true
-
-echo "=== ENSURING COMPANY GITHUB SSH ALIAS ==="
-
-mkdir -p ~/.ssh
-chmod 700 ~/.ssh
-
-python3 <<'PY'
-from pathlib import Path
-
-p = Path.home() / ".ssh" / "config"
-text = p.read_text() if p.exists() else ""
-
-start = "# LBG-GITHUB-START"
-end = "# LBG-GITHUB-END"
-
-if start in text and end in text:
-    before = text.split(start)[0]
-    after = text.split(end,1)[1]
-    text = before + after
-
-block = """
-# LBG-GITHUB-START
-Host github-company
-    HostName github.com
-    User git
-    Port 22
-    IdentityFile ~/.ssh/id_rsa
-    IdentitiesOnly yes
-# LBG-GITHUB-END
-"""
-
-p.write_text(text.strip() + "\n" + block)
-PY
-
-chmod 600 ~/.ssh/config
-
-echo "=== TESTING CLEAN ZSH LOGIN ==="
-
-/bin/zsh -l -c 'echo "ZSH LOGIN OK"'
-
-echo "=== TESTING COMPANY GITHUB SSH ==="
-
-ssh -T github-company || true
+echo "=== ZSH TEST ==="
+echo $SHELL
+echo "terminal works"
 
 echo
-echo "=== DONE ==="
-echo "Close VS Code completely and reopen it."
-echo "Then open a new terminal."
+echo "=== GITHUB COMPANY SSH TEST ==="
+ssh -T github-company
+
+echo
+echo "=== REMOTES ==="
+git remote -v
