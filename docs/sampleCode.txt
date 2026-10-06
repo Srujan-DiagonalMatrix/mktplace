@@ -1,1 +1,26 @@
-git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git
+git remote -v
+
+git remote remove company 2>/dev/null || true
+
+git remote add company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
+
+git fetch origin
+git fetch company
+
+SYNC_BRANCH="rove-sync-$(date +%Y%m%d-%H%M%S)"
+
+git checkout -b "$SYNC_BRANCH" company/main
+
+git checkout origin/main -- .
+
+git status
+
+git add .
+git commit -m "Sync latest ROVE changes from personal repository"
+
+git push -u company "$SYNC_BRANCH"
+
+echo ""
+echo "Pushed branch: $SYNC_BRANCH"
+echo "Now create a PR in company GitHub:"
+echo "$SYNC_BRANCH  ->  main"
