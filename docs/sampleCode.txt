@@ -1,8 +1,78 @@
-=== GITHUB COMPANY SSH TEST ===
-Hi srujan-lbg-dev! You've successfully authenticated, but GitHub does not provide shell access.
+set -e
 
-=== REMOTES ===
-company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git (fetch)
-company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git (push)
-origin  git@github.com:Srujan-DiagonalMatrix/rove.git (fetch)
-origin  git@github.com:Srujan-DiagonalMatrix/rove.git (push)
+echo "=== FETCH BOTH REPOSITORIES ==="
+git fetch origin
+git fetch company
+
+echo
+echo "=== CLEAN UP LOCAL BACKUP FILES ==="
+rm -f \
+  Dockerfile.backup \
+  Dockerfile.backup.bak \
+  Dockerfile.bak \
+  Dockerfile.before-ca-fix \
+  Dockerfile.web.bak \
+  Dockerfile.web.backup.*.bak \
+  server/Dockerfile.backup.*.bak \
+  server/Dockerfile.bak \
+  server/Dockerfile.bank-backup
+
+echo
+echo "=== SAVE ANY LOCAL UNCOMMITTED CHANGES ==="
+git stash push -u -m "temporary-bank-local-fixes" || true
+
+echo
+echo "=== CREATE FRESH COMPANY SYNC BRANCH ==="
+SYNC_BRANCH="rove-sync-$(date +%Y%m%d-%H%M%S)"
+
+git switch --detach company/main
+git switch -c "$SYNC_BRANCH"
+
+echo
+echo "Created branch: $SYNC_BRANCH"
+
+echo
+echo "=== COPY PERSONAL GITHUB CODE ==="
+git checkout origin/main -- .
+
+echo
+echo "=== RESTORE COMPANY-MANAGED GITHUB FILES ==="
+git checkout company/main -- .github 2>/dev/null || true
+
+echo
+echo "=== REVIEW CHANGES ==="
+git status --short
+
+echo
+echo "=== COMMIT ==="
+git add -A
+
+if git diff --cached --quiet; then
+    echo "No code changes to commit."
+else
+    git commit -m "Sync latest ROVE changes"
+fi
+
+echo
+echo "=== PUSH TO COMPANY GITHUB ==="
+git push -u company "$SYNC_BRANCH"
+
+echo
+echo "========================================"
+echo "PUSH COMPLETE"
+echo "========================================"
+echo "Branch: $SYNC_BRANCH"
+echo "Create PR:"
+echo "$SYNC_BRANCH -> main"
+
+echo
+echo "=== RESTORE YOUR LOCAL BANK FIXES ==="
+git switch main
+
+if git stash list | grep -q "temporary-bank-local-fixes"; then
+    git stash pop || true
+fi
+
+echo
+echo "=== FINAL STATUS ==="
+git status
