@@ -1,26 +1,40 @@
-git remote -v
+From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
+ * [new branch]      main                      -> company/main
+ * [new branch]      rove-sync-20260923-103544 -> company/rove-sync-20260923-103544
+error: Your local changes to the following files would be overwritten by checkout:
+        server/Dockerfile
+Please commit your changes or stash them before you switch branches.
+Aborting
+On branch main
+Your branch is up to date with 'origin/main'.
 
-git remote remove company 2>/dev/null || true
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        Dockerfile.backup
+        Dockerfile.backup.bak
+        Dockerfile.bak
+        Dockerfile.before-ca-fix
+        Dockerfile.web.backup.20260922_135910.bak
+        Dockerfile.web.bak
+        server/Dockerfile.backup.20260922_133341.bak
+        server/Dockerfile.bak
+        server/Dockerfile.bank-backup
 
-git remote add company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
+nothing added to commit but untracked files present (use "git add" to track)
+[main 285bb02] Sync latest ROVE changes from personal repository
+ 9 files changed, 163 insertions(+)
+ create mode 100644 Dockerfile.backup
+ create mode 100644 Dockerfile.backup.bak
+ create mode 100644 Dockerfile.bak
+ create mode 100644 Dockerfile.before-ca-fix
+ create mode 100644 Dockerfile.web.backup.20260922_135910.bak
+ create mode 100644 Dockerfile.web.bak
+ create mode 100644 server/Dockerfile.backup.20260922_133341.bak
+ create mode 100644 server/Dockerfile.bak
+ create mode 100644 server/Dockerfile.bank-backup
+error: src refspec rove-sync-20261006-121706 does not match any
+error: failed to push some refs to 'github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git'
 
-git fetch origin
-git fetch company
-
-SYNC_BRANCH="rove-sync-$(date +%Y%m%d-%H%M%S)"
-
-git checkout -b "$SYNC_BRANCH" company/main
-
-git checkout origin/main -- .
-
-git status
-
-git add .
-git commit -m "Sync latest ROVE changes from personal repository"
-
-git push -u company "$SYNC_BRANCH"
-
-echo ""
-echo "Pushed branch: $SYNC_BRANCH"
-echo "Now create a PR in company GitHub:"
-echo "$SYNC_BRANCH  ->  main"
+Pushed branch: rove-sync-20261006-121706
+Now create a PR in company GitHub:
+rove-sync-20261006-121706  ->  main
