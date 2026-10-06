@@ -1,40 +1,131 @@
-From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
- * [new branch]      main                      -> company/main
- * [new branch]      rove-sync-20260923-103544 -> company/rove-sync-20260923-103544
-error: Your local changes to the following files would be overwritten by checkout:
-        server/Dockerfile
-Please commit your changes or stash them before you switch branches.
-Aborting
-On branch main
-Your branch is up to date with 'origin/main'.
+set -e
 
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-        Dockerfile.backup
-        Dockerfile.backup.bak
-        Dockerfile.bak
-        Dockerfile.before-ca-fix
-        Dockerfile.web.backup.20260922_135910.bak
-        Dockerfile.web.bak
-        server/Dockerfile.backup.20260922_133341.bak
-        server/Dockerfile.bak
-        server/Dockerfile.bank-backup
+echo "=================================================="
+echo " 1. SAVE LOCAL BANK DOCKERFILE FIX"
+echo "=================================================="
 
-nothing added to commit but untracked files present (use "git add" to track)
-[main 285bb02] Sync latest ROVE changes from personal repository
- 9 files changed, 163 insertions(+)
- create mode 100644 Dockerfile.backup
- create mode 100644 Dockerfile.backup.bak
- create mode 100644 Dockerfile.bak
- create mode 100644 Dockerfile.before-ca-fix
- create mode 100644 Dockerfile.web.backup.20260922_135910.bak
- create mode 100644 Dockerfile.web.bak
- create mode 100644 server/Dockerfile.backup.20260922_133341.bak
- create mode 100644 server/Dockerfile.bak
- create mode 100644 server/Dockerfile.bank-backup
-error: src refspec rove-sync-20261006-121706 does not match any
-error: failed to push some refs to 'github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git'
+PATCH_FILE="/tmp/rove-bank-dockerfile-fix.patch"
 
-Pushed branch: rove-sync-20261006-121706
-Now create a PR in company GitHub:
-rove-sync-20261006-121706  ->  main
+git diff -- server/Dockerfile > "$PATCH_FILE" || true
+
+echo "Saved local Dockerfile changes to:"
+echo "$PATCH_FILE"
+
+
+echo
+echo "=================================================="
+echo " 2. RESET LOCAL MAIN TO PERSONAL GITHUB"
+echo "=================================================="
+
+git switch main
+
+git fetch origin
+git fetch company
+
+# Remove the accidental local commit containing backup Dockerfiles
+git reset --hard origin/main
+
+# Remove only the temporary backup files created during SSL fixing
+rm -f \
+  Dockerfile.backup \
+  Dockerfile.backup.bak \
+  Dockerfile.bak \
+  Dockerfile.before-ca-fix \
+  Dockerfile.web.bak \
+  Dockerfile.web.backup.*.bak \
+  server/Dockerfile.backup.*.bak \
+  server/Dockerfile.bak \
+  server/Dockerfile.bank-backup
+
+echo
+echo "Local main restored to origin/main."
+
+
+echo
+echo "=================================================="
+echo " 3. CREATE FRESH COMPANY SYNC BRANCH"
+echo "=================================================="
+
+SYNC_BRANCH="rove-sync-$(date +%Y%m%d-%H%M%S)"
+
+git switch -c "$SYNC_BRANCH" company/main
+
+echo "Created:"
+echo "$SYNC_BRANCH"
+
+
+echo
+echo "=================================================="
+echo " 4. COPY PERSONAL GITHUB CODE INTO COMPANY BRANCH"
+echo "=================================================="
+
+# Copy tracked application code from your personal repo
+git checkout origin/main -- .
+
+# IMPORTANT:
+# Restore bank/company GitHub configuration instead of overwriting it
+git checkout company/main -- .github 2>/dev/null || true
+
+
+echo
+echo "=================================================="
+echo " 5. COMMIT CHANGES"
+echo "=================================================="
+
+git status
+
+git add -A
+
+if git diff --cached --quiet; then
+    echo "No code differences found to commit."
+else
+    git commit -m "Sync latest ROVE application changes"
+fi
+
+
+echo
+echo "=================================================="
+echo " 6. PUSH TO BANK GITHUB"
+echo "=================================================="
+
+git push -u company "$SYNC_BRANCH"
+
+
+echo
+echo "=================================================="
+echo " COMPANY PUSH SUCCESSFUL"
+echo "=================================================="
+
+echo
+echo "Branch:"
+echo "$SYNC_BRANCH"
+
+echo
+echo "Create PR:"
+echo "$SYNC_BRANCH  ->  main"
+
+
+echo
+echo "=================================================="
+echo " 7. RESTORE LOCAL BANK SSL FIX"
+echo "=================================================="
+
+git switch main
+
+if [ -s "$PATCH_FILE" ]; then
+    git apply "$PATCH_FILE" || {
+        echo ""
+        echo "NOTE: Could not automatically reapply the local Dockerfile SSL patch."
+        echo "The patch is safely stored here:"
+        echo "$PATCH_FILE"
+    }
+else
+    echo "No additional server/Dockerfile patch needed."
+fi
+
+echo
+echo "=================================================="
+echo " DONE"
+echo "=================================================="
+
+git status
