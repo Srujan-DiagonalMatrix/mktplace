@@ -1,78 +1,20 @@
-set -e
+Hi Team,
 
-echo "=== FETCH BOTH REPOSITORIES ==="
-git fetch origin
-git fetch company
+We have reviewed the BCA AutosOnShow API documentation (v2.9.08) and understand that it supports retrieving vehicle images, 360° imagery, videos, and certain vehicle identifiers.
 
-echo
-echo "=== CLEAN UP LOCAL BACKUP FILES ==="
-rm -f \
-  Dockerfile.backup \
-  Dockerfile.backup.bak \
-  Dockerfile.bak \
-  Dockerfile.before-ca-fix \
-  Dockerfile.web.bak \
-  Dockerfile.web.backup.*.bak \
-  server/Dockerfile.backup.*.bak \
-  server/Dockerfile.bak \
-  server/Dockerfile.bank-backup
+Before proceeding with the integration, could you please confirm the following?
 
-echo
-echo "=== SAVE ANY LOCAL UNCOMMITTED CHANGES ==="
-git stash push -u -m "temporary-bank-local-fixes" || true
+| # | Area | Clarification / Information Required |
+|---|---|---|
+| 1 | **API Access** | Can you confirm that our account is eligible for AutosOnShow API access and that we can retrieve media for the relevant BCA vehicles? |
+| 2 | **API Credentials** | Could you provide the Client ID, Client Secret, and associated Library ID(s), or advise how we can obtain them securely? |
+| 3 | **Vehicle Coverage** | Does our API access cover all vehicles available to us through BCA, or only vehicles within specific seller libraries? |
+| 4 | **Vehicle Identification** | Can we retrieve vehicle registration (VRM) and VIN alongside the corresponding media, allowing us to match vehicles with our existing datasets? |
+| 5 | **360° Images and Videos** | Are exterior 360°, interior 360°, and vehicle video capabilities enabled for our account? Are these available for all applicable vehicles or only selected vehicles? |
+| 6 | **Commercial Usage Rights** | Are we permitted to display the retrieved images, 360° views, and videos on our customer-facing website? |
+| 7 | **API Usage Restrictions** | Are there any API rate limits, media URL expiry restrictions, or limitations on storing/caching media references that we need to accommodate? |
 
-echo
-echo "=== CREATE FRESH COMPANY SYNC BRANCH ==="
-SYNC_BRANCH="rove-sync-$(date +%Y%m%d-%H%M%S)"
+Once confirmed, we can proceed with the API integration and vehicle media display.
 
-git switch --detach company/main
-git switch -c "$SYNC_BRANCH"
-
-echo
-echo "Created branch: $SYNC_BRANCH"
-
-echo
-echo "=== COPY PERSONAL GITHUB CODE ==="
-git checkout origin/main -- .
-
-echo
-echo "=== RESTORE COMPANY-MANAGED GITHUB FILES ==="
-git checkout company/main -- .github 2>/dev/null || true
-
-echo
-echo "=== REVIEW CHANGES ==="
-git status --short
-
-echo
-echo "=== COMMIT ==="
-git add -A
-
-if git diff --cached --quiet; then
-    echo "No code changes to commit."
-else
-    git commit -m "Sync latest ROVE changes"
-fi
-
-echo
-echo "=== PUSH TO COMPANY GITHUB ==="
-git push -u company "$SYNC_BRANCH"
-
-echo
-echo "========================================"
-echo "PUSH COMPLETE"
-echo "========================================"
-echo "Branch: $SYNC_BRANCH"
-echo "Create PR:"
-echo "$SYNC_BRANCH -> main"
-
-echo
-echo "=== RESTORE YOUR LOCAL BANK FIXES ==="
-git switch main
-
-if git stash list | grep -q "temporary-bank-local-fixes"; then
-    git stash pop || true
-fi
-
-echo
-echo "=== FINAL STATUS ==="
-git status
+Kind regards,  
+[Your Name]
