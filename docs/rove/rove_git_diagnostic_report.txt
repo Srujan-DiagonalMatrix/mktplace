@@ -1,0 +1,188 @@
+ROVE GitHub Diagnostic Report
+Generated: Tue 22 Sep 2026 12:19:43 BST
+Target repo: git@github.com:Srujan-DiagonalMatrix/rove.git
+Host: DEV-H59N27LXKY
+User: srujan.kumar
+
+============================================================
+1. SYSTEM / GIT INFORMATION
+============================================================
+macOS:
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+
+Git:
+git version 2.54.0
+
+Git executable:
+/opt/homebrew/bin/git
+
+SSH:
+OpenSSH_10.3p1, LibreSSL 3.3.6
+
+Git LFS:
+git-lfs/3.7.1 (GitHub; darwin arm64; go 1.25.3)
+
+============================================================
+2. SAFE GIT CONFIG CHECKS
+============================================================
+Global SSH command:
+<not set>
+
+Global proxy settings:
+http.proxy: <not set>
+https.proxy: <not set>
+
+URL rewrite rules:
+
+============================================================
+3. SSH AGENT / KEY VISIBILITY
+============================================================
+SSH_AUTH_SOCK=/var/run/com.apple.launchd.cgVq3l8on1/Listeners
+
+Keys currently loaded in ssh-agent (fingerprints only):
+4096 SHA256:EmpywIYnrOQ0o9gRMShu+J17axu+wIR23JSZ2dVCjcs srujan.kumar@DEV-H59N27LXKY (RSA)
+256 SHA256:UTKGwpMru0u5fF5dUCOftzCkch3zT0JEznOyKw2Q6UU personal-github-srujan.kumar@DEV-H59N27LXKY (ED25519)
+256 SHA256:c8sErbRaA0Eu2iGf9z2/JLcAyEFfy2SjNTVneyy7jNo company-github-srujan.kumar@DEV-H59N27LXKY (ED25519)
+
+Relevant ~/.ssh/config entries (safe fields only):
+Host github-personal
+    HostName ssh.github.com
+    Port 443
+    User git
+    IdentityFile /Users/srujan.kumar/.ssh/id_ed25519_github_personal
+    IdentitiesOnly yes
+Host github-company
+    HostName ssh.github.com
+    Port 443
+    User git
+    IdentityFile /Users/srujan.kumar/.ssh/id_ed25519_github_company
+    IdentitiesOnly yes
+Host github-lbg
+HostName github.com
+User git
+IdentityFile ~/.ssh/id_ed25519_lbg
+IdentitiesOnly yes
+
+============================================================
+4. BASIC GITHUB NETWORK TESTS
+============================================================
+
+--- DNS lookup: github.com ---
+name: github.com
+ip_address: 20.26.156.215
+
+[exit_code=0]
+
+--- HTTPS reachability: https://github.com ---
+HTTP/2 200 
+date: Tue, 22 Sep 2026 11:19:40 GMT
+content-type: text/html; charset=utf-8
+content-language: en-US
+vary: X-PJAX, X-PJAX-Container, Turbo-Visit, Turbo-Frame, X-Requested-With, X-GitHub-Client-Version, Accept-Language, Sec-Fetch-Site,Accept-Encoding, Accept, X-Requested-With
+etag: W/"a1c7d41c3b1fa26336dfb6ba5858d763"
+cache-control: max-age=0, private, must-revalidate
+strict-transport-security: max-age=31536000; includeSubdomains; preload
+x-frame-options: deny
+x-content-type-options: nosniff
+x-xss-protection: 0
+referrer-policy: origin-when-cross-origin, strict-origin-when-cross-origin
+content-security-policy: default-src 'none'; base-uri 'self'; child-src github.githubassets.com github.com/assets-cdn/worker/ github.com/assets/ gist.github.com/assets-cdn/worker/; connect-src 'self' uploads.github.com www.githubstatus.com collector.github.com raw.githubusercontent.com api.github.com github-cloud.s3.amazonaws.com github-production-repository-file-5c1aeb.s3.amazonaws.com github-production-upload-manifest-file-7fdce7.s3.amazonaws.com github-production-user-asset-6210df.s3.amazonaws.com *.rel.tunnels.api.visualstudio.com wss://*.rel.tunnels.api.visualstudio.com github.githubassets.com objects-origin.githubusercontent.com copilot-proxy.githubusercontent.com proxy.individual.githubcopilot.com proxy.business.githubcopilot.com proxy.enterprise.githubcopilot.com *.actions.githubusercontent.com wss://*.actions.githubusercontent.com productionresultssa0.blob.core.windows.net productionresultssa1.blob.core.windows.net productionresultssa2.blob.core.windows.net productionresultssa3.blob.core.windows.net productionresultssa4.blob.core.windows.net productionresultssa5.blob.core.windows.net productionresultssa6.blob.core.windows.net productionresultssa7.blob.core.windows.net productionresultssa8.blob.core.windows.net productionresultssa9.blob.core.windows.net productionresultssa10.blob.core.windows.net productionresultssa11.blob.core.windows.net productionresultssa12.blob.core.windows.net productionresultssa13.blob.core.windows.net productionresultssa14.blob.core.windows.net productionresultssa15.blob.core.windows.net productionresultssa16.blob.core.windows.net productionresultssa17.blob.core.windows.net productionresultssa18.blob.core.windows.net productionresultssa19.blob.core.windows.net github-production-repository-image-32fea6.s3.amazonaws.com github-production-release-asset-2e65be.s3.amazonaws.com insights.github.com wss://alive.github.com wss://alive-staging.github.com api.githubcopilot.com api.individual.githubcopilot.com api.business.githubcopilot.com api.enterprise.githubcopilot.com wss://production-copilot-host.webpubsub.azure.com api.github.com/cmc_internal/api/ edge.fullstory.com rs.fullstory.com; font-src github.githubassets.com; form-action 'self' github.com gist.github.com copilot-workspace.githubnext.com objects-origin.githubusercontent.com; frame-ancestors 'none'; frame-src viewscreen.githubusercontent.com notebooks.githubusercontent.com www.youtube-nocookie.com; img-src 'self' data: blob: github.githubassets.com media.githubusercontent.com camo.githubusercontent.com identicons.github.com avatars.githubusercontent.com private-avatars.githubusercontent.com github-cloud.s3.amazonaws.com objects.githubusercontent.com release-assets.githubusercontent.com secured-user-images.githubusercontent.com user-images.githubusercontent.com private-user-images.githubusercontent.com opengraph.githubassets.com repository-images.githubusercontent.com marketplace-screenshots.githubusercontent.com copilotprodattachments.blob.core.windows.net/github-production-copilot-attachments/ github-production-user-asset-6210df.s3.amazonaws.com customer-stories-feed.github.com spotlights-feed.github.com explore-feed.github.com *.googleusercontent.com objects-origin.githubusercontent.com *.githubusercontent.com images.ctfassets.net/8aevphvgewt8/; manifest-src 'self'; media-src github.com user-images.githubusercontent.com secured-user-images.githubusercontent.com private-user-images.githubusercontent.com github-production-user-asset-6210df.s3.amazonaws.com gist.github.com github.githubassets.com assets.ctfassets.net/8aevphvgewt8/ videos.ctfassets.net/8aevphvgewt8/; script-src github.githubassets.com 'sha256-tSjmyPUky1KbRZ0fw9VUil3wFEbeM82rtbJDygGJAXw='; style-src 'unsafe-inline' github.githubassets.com; upgrade-insecure-requests; worker-src github.githubassets.com github.com/assets-cdn/worker/ github.com/assets/ gist.github.com/assets-cdn/worker/
+server: github.com
+accept-ranges: bytes
+x-github-request-id: 6852:103351:6DE744:7B0A7B:6AB2644F
+x-github-edge-region: uksouth
+content-length: 0
+x-symc-transaction-uuid: 35577601b313d3e5-0000000026463776-000000006ab2644f
+set-cookie: _gh_sess=niCZAqvitnMbCVuE%2B6Kz1vwG9Ougt5V345KGZd%2BN4U2Skhs8%2Bypdw%2Bj4y%2BCksPI0uMq78jOsP64FcH1vxPITv%2Br%2BpVsLTj%2BwVghAylnK4Ez2hS%2Bk6ckSU%2FVY%2B92yfRrdlnP5d0ji%2FoVp5o5tMPjMhtlrgErNwsvZzAIIekXpnzFNEjDOTMANSj5XRNKEyBhpAzW%2BQlfZ2dPMJMgRIeILvcY2YOFYrAbm6nqmXtZSGbxrsMZAZcV85IiUR6qVbOjXFhdV4GwLY2%2Ft7CClmnWScw%3D%3D--IuVgWIlQ%2FFuv4I95--DRDVIGWLvw04J7mUP0hNSQ%3D%3D; path=/; HttpOnly; secure; SameSite=Lax
+set-cookie: _octo=GH1.1.1586038020.1790075984; expires=Wed, 22 Sep 2027 11:19:44 GMT; domain=.github.com; path=/; secure; SameSite=Lax
+set-cookie: logged_in=no; expires=Wed, 22 Sep 2027 11:19:44 GMT; domain=.github.com; path=/; HttpOnly; secure; SameSite=Lax
+
+[exit_code=0]
+
+--- TCP port 22 to github.com ---
+Connection to github.com port 22 [tcp/ssh] succeeded!
+[exit_code=0]
+
+--- TCP port 443 to ssh.github.com ---
+Connection to ssh.github.com port 443 [tcp/https] succeeded!
+[exit_code=0]
+
+============================================================
+5. GITHUB SSH AUTHENTICATION
+============================================================
+--- SSH authentication via github.com:22 ---
+Hi srujan-lbg-dev! You've successfully authenticated, but GitHub does not provide shell access.
+[exit_code=1]
+
+--- SSH authentication via ssh.github.com:443 ---
+Connection closed by 20.26.156.214 port 443
+[exit_code=255]
+
+============================================================
+6. ROVE REPOSITORY ACCESS TEST
+============================================================
+--- git ls-remote over SSH ---
+ERROR: Repository not found.
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+[exit_code=128]
+
+--- git ls-remote over HTTPS (non-interactive; private repo may require credentials) ---
+remote: Repository not found.
+fatal: repository 'https://github.com/Srujan-DiagonalMatrix/rove.git/' not found
+[exit_code=128]
+
+============================================================
+7. KNOWN-GOOD PERSONAL REPO COMPARISON
+============================================================
+Skipped. Optional usage:
+./diagnose-rove-github.sh git@github.com:YOUR-USER/KNOWN-GOOD-REPO.git
+
+============================================================
+8. LIGHTWEIGHT CLEAN CLONE TEST
+============================================================
+--- partial shallow clone output ---
+Cloning into '/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-git-diag.XXXXXX.fJKenerctb/rove-test'...
+ERROR: Repository not found.
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+[exit_code=128]
+
+============================================================
+9. EXISTING LOCAL ROVE CHECK
+============================================================
+No existing rove checkout found in the common locations checked.
+
+============================================================
+10. AUTOMATIC DIAGNOSIS
+============================================================
+LIKELY LOCATION: ROVE-specific repository access or wrong SSH identity.
+Reason: GitHub SSH authentication works, but git ls-remote for ROVE failed.
+
+Result codes:
+  DNS lookup               : 0
+  GitHub HTTPS             : 0
+  github.com port 22       : 0
+  ssh.github.com port 443  : 0
+  SSH auth port 22         : 1
+  SSH auth port 443        : 0
+  ROVE ls-remote           : 128
+  ROVE lightweight clone   : 128
+
+============================================================
+11. PRIVACY NOTE
+============================================================
+This report intentionally does NOT print:
+- private SSH key contents
+- GitHub tokens/passwords
+- credential-helper stored credentials
+- full Git environment variables
+
+Before sharing, you may still skim the report for company-specific hostnames,
+usernames, file paths, or policy information you do not want to disclose.

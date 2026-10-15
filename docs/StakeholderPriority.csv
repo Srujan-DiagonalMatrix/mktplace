@@ -1,0 +1,8 @@
+Stakeholder / Team,Priority,Information to request,Related MVP area
+Inventory / Lex Operations,P0,"Vehicle inventory extract, availability status rules, stock reservation process, refresh SLA, sample data.","Inventory catalogue, availability, recommendations"
+Data / Integration / Architecture,P0,"API/CSV/SFTP options, data dictionary, environments, credentials/sandbox, security constraints, data refresh approach.",Data integration and technical feasibility
+Motor Finance Product / Pricing,P0,"Finance products, APR/rate bands, deposit/term rules, fees, eligibility assumptions, representative example calculation.",Finance comparison and tweaking
+Sales / Digital Journey Owner,P1,"End-to-end sales journey, checkout handoff, lead capture fields, reservation process, sales follow-up process.",Customer journey and conversion
+Legal / Compliance,P1,"Advice boundaries, disclaimers, finance disclosure wording, DocuSign documents, user testing consent.",Compliance-safe prototype
+Partnerships / Add-ons,P2,"Insurance, breakdown cover, warranty/service plan providers, pricing, eligibility, integration method.",Upsell/cross-sell
+Analytics / Customer Research,P2,"Events to track, feedback questions, funnel KPIs, dashboard/reporting needs, interview success measures.",MVP learning and go/no-go decision
