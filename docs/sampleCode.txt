@@ -1,14 +1,33 @@
-POSTGRES_DB=rove
-POSTGRES_USER=rove
-POSTGRES_PASSWORD=rove_local_dev_password
-POSTGRES_PORT=5432
+s exceeded with url: /simple/fastapi/ (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))) - skipping
+9.254 ERROR: Could not find a version that satisfies the requirement fastapi==0.116.1 (from versions: none)
+9.405 Could not fetch URL https://pypi.org/simple/pip/: There was a problem confirming the ssl certificate: HTTPSConnectionPool(host='pypi.org', port=443): Maxretries exceeded with url: /simple/pip/ (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))) - skipping
+9.410 ERROR: No matching distribution found for fastapi==0.116.1
+------
+[+] up 0/2
+ ⠙ Image rove-api Building                                                                                                                                 11.3s
+ ⠙ Image rove-web Building                                                                                                                                 11.3s
+Dockerfile:27
 
-API_PORT=8000
-WEB_PORT=8081
+--------------------
 
-CORS_ORIGIN=http://localhost:8081
-VITE_API_URL=http://localhost:8000
+  25 |     
 
-APP_ENV=development
-ADMIN_USERNAME=rove-ops-admin
-ADMIN_PASSWORD='P$wd202610N#'
+  26 |     COPY requirements.txt .
+
+  27 | >>> RUN pip install --no-cache-dir -r requirements.txt
+
+  28 |     
+
+  29 |     COPY app ./app
+
+--------------------
+
+target api: failed to solve: process "/bin/sh -c pip install --no-cache-dir -r requirements.txt" did not complete successfully: exit code: 1
+
+
+
+View build details: docker-desktop://dashboard/build/default/default/x60z5z6iiz5y81u6ci0g7ympy
+
+
+What's next:
+    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
