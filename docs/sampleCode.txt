@@ -1,1 +1,27 @@
-The terminal process "/bin/zsh '-l'" terminated with exit code: 127.
+
+echo "===== ROVE MAC DIAGNOSTIC ====="
+
+echo "Shell: $SHELL"
+echo "PATH: $PATH"
+
+for CMD in git docker security grep; do
+  if command -v "$CMD" >/dev/null 2>&1; then
+    echo "PASS: $CMD -> $(command -v "$CMD")"
+  else
+    echo "FAIL: $CMD not found"
+  fi
+done
+
+echo "===== DOCKER CHECK ====="
+if command -v docker >/dev/null 2>&1; then
+  docker --version
+  docker compose version
+  docker info >/dev/null 2>&1 \
+    && echo "PASS: Docker engine running" \
+    || echo "FAIL: Docker engine unavailable"
+fi
+
+echo "===== GIT CHECK ====="
+git rev-parse --show-toplevel 2>&1
+
+echo "===== END DIAGNOSTIC ====="
