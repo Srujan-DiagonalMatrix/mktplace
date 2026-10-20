@@ -1,27 +1,14 @@
-
-echo "===== ROVE MAC DIAGNOSTIC ====="
-
-echo "Shell: $SHELL"
-echo "PATH: $PATH"
-
-for CMD in git docker security grep; do
-  if command -v "$CMD" >/dev/null 2>&1; then
-    echo "PASS: $CMD -> $(command -v "$CMD")"
-  else
-    echo "FAIL: $CMD not found"
-  fi
-done
-
-echo "===== DOCKER CHECK ====="
-if command -v docker >/dev/null 2>&1; then
-  docker --version
-  docker compose version
-  docker info >/dev/null 2>&1 \
-    && echo "PASS: Docker engine running" \
-    || echo "FAIL: Docker engine unavailable"
-fi
-
-echo "===== GIT CHECK ====="
-git rev-parse --show-toplevel 2>&1
-
-echo "===== END DIAGNOSTIC ====="
+===== ROVE MAC DIAGNOSTIC =====
+Shell: /bin/zsh
+PATH: /Users/srujan.kumar/.nvm/versions/node/v24.19.0/bin:/Users/srujan.kumar/Library/Application Support/Code/User/globalStorage/github.copilot-chat/debugCommand:/Users/srujan.kumar/Library/Application Support/Code/User/globalStorage/github.copilot-chat/copilotCli:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/usr/local/jamf/bin:/Users/srujan.kumar/google-cloud-sdk/bin
+PASS: git -> /opt/homebrew/bin/git
+PASS: docker -> /usr/local/bin/docker
+PASS: security -> alias security=/usr/local/.inhouse/scripts/.security.sh
+PASS: grep -> /usr/bin/grep
+===== DOCKER CHECK =====
+Docker version 29.4.3, build 055a478
+Docker Compose version v5.1.4
+PASS: Docker engine running
+===== GIT CHECK =====
+/Users/srujan.kumar/Documents/git/rove
+===== END DIAGNOSTIC =====
