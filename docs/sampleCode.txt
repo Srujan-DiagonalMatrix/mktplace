@@ -1,33 +1,74 @@
-s exceeded with url: /simple/fastapi/ (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))) - skipping
-9.254 ERROR: Could not find a version that satisfies the requirement fastapi==0.116.1 (from versions: none)
-9.405 Could not fetch URL https://pypi.org/simple/pip/: There was a problem confirming the ssl certificate: HTTPSConnectionPool(host='pypi.org', port=443): Maxretries exceeded with url: /simple/pip/ (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'))) - skipping
-9.410 ERROR: No matching distribution found for fastapi==0.116.1
-------
-[+] up 0/2
- ⠙ Image rove-api Building                                                                                                                                 11.3s
- ⠙ Image rove-web Building                                                                                                                                 11.3s
-Dockerfile:27
 
---------------------
+set -e
 
-  25 |     
+echo "===== ROVE CORPORATE DOCKER SSL FIX ====="
 
-  26 |     COPY requirements.txt .
+cd "$(git rev-parse --show-toplevel)"
 
-  27 | >>> RUN pip install --no-cache-dir -r requirements.txt
+echo "Branch: $(git branch --show-current)"
 
-  28 |     
+# 1. Export trusted certificates from macOS keychains
+echo "Exporting corporate SSL certificates..."
 
-  29 |     COPY app ./app
+CA_FILE="$PWD/company-ca.pem"
+: > "$CA_FILE"
 
---------------------
+for KEYCHAIN in \
+  /Library/Keychains/System.keychain \
+  "$HOME/Library/Keychains/login.keychain-db" \
+  /System/Library/Keychains/SystemRootCertificates.keychain
+do
+  if [ -f "$KEYCHAIN" ]; then
+    security find-certificate -a -p "$KEYCHAIN" \
+      >> "$CA_FILE" 2>/dev/null || true
+  fi
+done
 
-target api: failed to solve: process "/bin/sh -c pip install --no-cache-dir -r requirements.txt" did not complete successfully: exit code: 1
+if ! grep -q "BEGIN CERTIFICATE" "$CA_FILE"; then
+  echo "ERROR: No certificates exported"
+  exit 1
+fi
 
+echo "Certificate bundle created."
 
+# 2. Create local Docker Compose corporate override
+cat > docker-compose.corporate.yml <<'YAML'
+services:
+  api:
+    build:
+      secrets:
+        - corporate_ca
 
-View build details: docker-desktop://dashboard/build/default/default/x60z5z6iiz5y81u6ci0g7ympy
+secrets:
+  corporate_ca:
+    file: ./company-ca.pem
+YAML
 
+# 3. Exclude local override from Git
+grep -qxF 'docker-compose.corporate.yml' .git/info/exclude \
+  || echo 'docker-compose.corporate.yml' >> .git/info/exclude
 
-What's next:
-    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
+# 4. Enable BuildKit
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
+# 5. Validate configuration
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.corporate.yml \
+  config --quiet
+
+# 6. Build using corporate certificates
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.corporate.yml \
+  build api web
+
+echo "===== BUILD COMPLETE ====="
+echo "Corporate SSL configuration applied."
+
+######
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.corporate.yml \
+  up -d
