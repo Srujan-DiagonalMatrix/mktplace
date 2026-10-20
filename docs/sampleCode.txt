@@ -1,14 +1,67 @@
-===== ROVE MAC DIAGNOSTIC =====
-Shell: /bin/zsh
-PATH: /Users/srujan.kumar/.nvm/versions/node/v24.19.0/bin:/Users/srujan.kumar/Library/Application Support/Code/User/globalStorage/github.copilot-chat/debugCommand:/Users/srujan.kumar/Library/Application Support/Code/User/globalStorage/github.copilot-chat/copilotCli:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/usr/local/jamf/bin:/Users/srujan.kumar/google-cloud-sdk/bin
-PASS: git -> /opt/homebrew/bin/git
-PASS: docker -> /usr/local/bin/docker
-PASS: security -> alias security=/usr/local/.inhouse/scripts/.security.sh
-PASS: grep -> /usr/bin/grep
-===== DOCKER CHECK =====
-Docker version 29.4.3, build 055a478
-Docker Compose version v5.1.4
-PASS: Docker engine running
-===== GIT CHECK =====
-/Users/srujan.kumar/Documents/git/rove
-===== END DIAGNOSTIC =====
+
+(
+  cd /Users/srujan.kumar/Documents/git/rove || exit 1
+
+  echo "===== ROVE CORPORATE SSL FIX ====="
+
+  echo "Checking Docker..."
+  docker info >/dev/null 2>&1 || {
+    echo "ERROR: Docker engine unavailable"
+    exit 1
+  }
+
+  echo "Checking corporate certificates..."
+
+  if [ ! -s company-ca.pem ] || ! grep -q 'BEGIN CERTIFICATE' company-ca.pem; then
+    echo "No valid existing company-ca.pem found."
+    echo "Exporting macOS trusted certificates using system binary..."
+
+    /usr/bin/security find-certificate -a -p \
+      /Library/Keychains/System.keychain \
+      > company-ca.pem || {
+        echo "ERROR: Certificate export failed."
+        echo "Ask bank IT for the approved corporate CA PEM bundle."
+        exit 1
+      }
+  fi
+
+  if ! grep -q 'BEGIN CERTIFICATE' company-ca.pem; then
+    echo "ERROR: Certificate bundle is empty or invalid."
+    exit 1
+  fi
+
+  echo "Corporate certificate file available."
+
+  cat > docker-compose.corporate.yml <<'YAML'
+services:
+  api:
+    build:
+      secrets:
+        - corporate_ca
+
+secrets:
+  corporate_ca:
+    file: ./company-ca.pem
+YAML
+
+  grep -qxF 'docker-compose.corporate.yml' .git/info/exclude 2>/dev/null ||
+    echo 'docker-compose.corporate.yml' >> .git/info/exclude
+
+  export DOCKER_BUILDKIT=1
+
+  echo "Validating Docker configuration..."
+
+  docker compose \
+    -f docker-compose.yml \
+    -f docker-compose.corporate.yml \
+    config --quiet || exit 1
+
+  echo "Building API and Web..."
+
+  docker compose \
+    -f docker-compose.yml \
+    -f docker-compose.corporate.yml \
+    build api web || exit 1
+
+  echo "===== SUCCESS: DOCKER IMAGES BUILT ====="
+)
