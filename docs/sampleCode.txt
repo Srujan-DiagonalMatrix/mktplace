@@ -42,5 +42,5 @@ PY
     -f docker-compose.corporate.yml \
     build --no-cache api || exit 1
 
-  echo "===== API BUILD SUCCESSFUL ======"
+  echo "===== API BUILD SUCCESSFUL ====="
 )
