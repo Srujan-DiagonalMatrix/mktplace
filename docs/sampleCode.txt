@@ -1,46 +1,16 @@
-
-(
-  cd /Users/srujan.kumar/Documents/git/rove || exit 1
-
-  echo "===== ROVE PYPI SSL FIX ====="
-
-  python3 - <<'PY'
-from pathlib import Path
-
-p = Path("server/Dockerfile")
-s = p.read_text()
-
-old = "RUN pip install --no-cache-dir -r requirements.txt"
-new = (
-    "RUN pip install --no-cache-dir "
-    "--trusted-host pypi.org "
-    "--trusted-host files.pythonhosted.org "
-    "--trusted-host pypi.python.org "
-    "-r requirements.txt"
-)
-
-if new in s:
-    print("PyPI workaround already applied.")
-elif old in s:
-    p.write_text(s.replace(old, new, 1))
-    print("Applied PyPI trusted-host workaround.")
-else:
-    raise SystemExit("ERROR: Expected pip command not found.")
-PY
-
-  echo "===== VALIDATING DOCKER ====="
-
-  docker compose \
-    -f docker-compose.yml \
-    -f docker-compose.corporate.yml \
-    config --quiet || exit 1
-
-  echo "===== REBUILDING API ====="
-
-  docker compose \
-    -f docker-compose.yml \
-    -f docker-compose.corporate.yml \
-    build --no-cache api || exit 1
-
-  echo "===== API BUILD SUCCESSFUL ====="
-)
+srujan.kumar@DEV-H59N27LXKY rove % git pull origin main
+From github.com:Srujan-DiagonalMatrix/rove
+ * branch            main       -> FETCH_HEAD
+hint: You have divergent branches and need to specify how to reconcile them.
+hint: You can do so by running one of the following commands sometime before
+hint: your next pull:
+hint:
+hint:   git config pull.rebase false  # merge
+hint:   git config pull.rebase true   # rebase
+hint:   git config pull.ff only       # fast-forward only
+hint:
+hint: You can replace "git config" with "git config --global" to set a default
+hint: preference for all repositories. You can also pass --rebase, --no-rebase,
+hint: or --ff-only on the command line to override the configured default per
+hint: invocation.
+fatal: Need to specify how to reconcile divergent branches.
