@@ -1,18 +1,10 @@
-srujan.kumar@DEV-H59N27LXKY rove % git pull
-error: Pulling is not possible because you have unmerged files.
-hint: Fix them up in the work tree, and then use 'git add/rm <file>'
-hint: as appropriate to mark resolution and make a commit.
-fatal: Exiting because of an unresolved conflict.
-srujan.kumar@DEV-H59N27LXKY rove % git status 
-On branch main
-Your branch is ahead of 'origin/main' by 1 commit.
-  (use "git push" to publish your local commits)
+cd /Users/srujan.kumar/Documents/git/rove
 
-Changes to be committed:
-  (use "git restore --staged <file>..." to unstage)
-        modified:   server/Dockerfile
+# Accept deletion of readme.md
+git rm readme.md
 
-Unmerged paths:
-  (use "git restore --staged <file>..." to unstage)
-  (use "git add/rm <file>..." as appropriate to mark resolution)
-        deleted by them: readme.md
+# Keep your staged Dockerfile changes
+git add server/Dockerfile
+
+# Check whether a merge or rebase is in progress
+git status
