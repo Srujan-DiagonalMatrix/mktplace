@@ -1,0 +1,15 @@
+##### .env.docker ####
+POSTGRES_DB=rove
+POSTGRES_USER=rove
+POSTGRES_PASSWORD=rove_local_dev_password
+POSTGRES_PORT=5432
+
+API_PORT=8000
+WEB_PORT=8081
+
+CORS_ORIGIN=http://localhost:8081
+VITE_API_URL=http://localhost:8000
+
+APP_ENV=development
+ADMIN_USERNAME=rove-ops-admin
+ADMIN_PASSWORD='P$wd202610N#'
