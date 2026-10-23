@@ -1,15 +1,18 @@
-cd /Users/srujan.kumar/Documents/git/rove
+srujan.kumar@DEV-H59N27LXKY rove % git pull
+error: Pulling is not possible because you have unmerged files.
+hint: Fix them up in the work tree, and then use 'git add/rm <file>'
+hint: as appropriate to mark resolution and make a commit.
+fatal: Exiting because of an unresolved conflict.
+srujan.kumar@DEV-H59N27LXKY rove % git status 
+On branch main
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
 
-# Check current branch and changes
-git status
-git branch --show-current
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        modified:   server/Dockerfile
 
-# Save any uncommitted changes
-git stash push -u -m "Backup before pulling main"
-
-# Pull latest main using rebase
-git pull --rebase origin main
-
-# Restore uncommitted changes
-git stash pop
-
+Unmerged paths:
+  (use "git restore --staged <file>..." to unstage)
+  (use "git add/rm <file>..." as appropriate to mark resolution)
+        deleted by them: readme.md
