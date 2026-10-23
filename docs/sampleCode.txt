@@ -1,10 +1,15 @@
-cd /Users/srujan.kumar/Documents/git/rove
+##### .env.docker ####
+POSTGRES_DB=rove
+POSTGRES_USER=rove
+POSTGRES_PASSWORD=rove_local_dev_password
+POSTGRES_PORT=5432
 
-# Accept deletion of readme.md
-git rm readme.md
+API_PORT=8000
+WEB_PORT=8081
 
-# Keep your staged Dockerfile changes
-git add server/Dockerfile
+CORS_ORIGIN=http://localhost:8081
+VITE_API_URL=http://localhost:8000
 
-# Check whether a merge or rebase is in progress
-git status
+APP_ENV=development
+ADMIN_USERNAME=rove-ops-admin
+ADMIN_PASSWORD='P$wd202610N#'
