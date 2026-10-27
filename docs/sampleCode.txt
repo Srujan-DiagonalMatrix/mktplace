@@ -10,6 +10,27 @@ WEB_PORT=8081
 CORS_ORIGIN=http://localhost:8081
 VITE_API_URL=http://localhost:8000
 
+# Local admin dashboard
 APP_ENV=development
 ADMIN_USERNAME=rove-ops-admin
 ADMIN_PASSWORD='P$wd202610N#'
+
+AUTH_SESSION_DAYS=7
+# Set to true when the API is served over HTTPS in production.
+AUTH_COOKIE_SECURE=false
+
+# SMTP Configuration (Gmail)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=kumar83.reach@gmail.com
+SMTP_PASSWORD=zkva swsc znkm zukp
+SMTP_FROM_EMAIL=kumar83.reach@gmail.com
+SMTP_FROM_NAME=ROVE
+SMTP_USE_TLS=true
+SMTP_DELIVERY_MODE=smtp
+
+# Stable key for journey credential encryption
+CREDENTIAL_DELIVERY_KEY=2d6odjQtVkAB-7SqXCQZgwiVikq3wSmoJEL2h1NLko8
+
+# Admin reservation email recipient
+ADMIN_NOTIFICATION_EMAIL=srujan.kumar@lloydsbanking.com
