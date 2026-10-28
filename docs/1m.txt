@@ -1,14 +1,91 @@
-==================================================
-[2/8] DEPLOY API TO CLOUD RUN
-==================================================
-Deploying container to Cloud Run service [rove-api] in project [tactical-innovation-f2b97b] region [europe-west1]
-X Deploying...                                                                 
-  - Creating Revision...                                                       
-  . Routing traffic...                                                         
-    Setting IAM Policy...                                                      
-Deployment failed                                                              
-  Setting IAM policy failed, try "gcloud beta run services add-iam-policy-binding --region=europe-west1 --member=allUsers --role=roles/run.invoker rove-api"
-ERROR: (gcloud.run.deploy) The user-provided container failed to start and listen on the port defined provided by the PORT=8000 environment variable within theallocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+cd /Users/srujan.kumar/Documents/git/rove
 
-Logs URL: https://console.cloud.google.com/logs/viewer?project=tactical-innovation-f2b97b&resource=cloud_run_revision/service_name/rove-api/revision_name/rove-api-00002-whj&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22rove-api%22%0Aresource.labels.revision_name%3D%22rove-api-00002-whj%22 
-For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start
+GCP_PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
+REPOSITORY="cloud-run-source-deploy"
+API_SERVICE="rove-api"
+
+TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
+
+API_IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/rove-api:${TIMESTAMP}"
+
+echo "=== CREATE CLOUD RUN API DOCKERFILE ==="
+
+cat > server/Dockerfile.gcp <<'EOF'
+FROM python:3.12-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+COPY requirements.txt .
+
+RUN pip install \
+    --no-cache-dir \
+    --trusted-host pypi.org \
+    --trusted-host files.pythonhosted.org \
+    --trusted-host pypi.python.org \
+    -r requirements.txt
+
+COPY app ./app
+COPY scripts ./scripts
+COPY alembic ./alembic
+COPY alembic.ini ./alembic.ini
+
+EXPOSE 8080
+
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
+EOF
+
+echo
+echo "=== BUILD API IMAGE ==="
+
+gcloud config set project "$GCP_PROJECT"
+
+gcloud auth configure-docker \
+  "${REGION}-docker.pkg.dev" \
+  --quiet
+
+docker buildx build \
+  --platform linux/amd64 \
+  -f server/Dockerfile.gcp \
+  -t "$API_IMAGE" \
+  --push \
+  server
+
+echo
+echo "=== DEPLOY API ==="
+
+gcloud run deploy "$API_SERVICE" \
+  --image "$API_IMAGE" \
+  --region "$REGION" \
+  --platform managed \
+  --port 8080 \
+  --allow-unauthenticated \
+  --quiet
+
+echo
+echo "=== GET API URL ==="
+
+API_URL="$(gcloud run services describe "$API_SERVICE" \
+  --region "$REGION" \
+  --format='value(status.url)')"
+
+echo
+echo "API URL:"
+echo "$API_URL"
+
+echo
+echo "=== TEST API STARTUP ==="
+
+curl -i "$API_URL/docs" | head -20
+
+echo
+echo "=== RECENT API LOGS ==="
+
+gcloud logging read \
+  "resource.type=cloud_run_revision AND resource.labels.service_name=rove-api" \
+  --limit=30 \
+  --freshness=10m \
+  --format="value(timestamp,severity,textPayload)"
