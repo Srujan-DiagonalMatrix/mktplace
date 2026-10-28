@@ -1,36 +1,76 @@
-##### .env.docker ####
-POSTGRES_DB=rove
-POSTGRES_USER=rove
-POSTGRES_PASSWORD=rove_local_dev_password
-POSTGRES_PORT=5432
+set -e
 
-API_PORT=8000
-WEB_PORT=8081
+echo "=== FETCH BOTH REPOS ==="
+git fetch origin
+git fetch company
 
-CORS_ORIGIN=http://localhost:8081
-VITE_API_URL=http://localhost:8000
+echo
+echo "=== SAVE LOCAL BANK-ONLY CHANGES ==="
+git stash push -u -m "bank-local-only" || true
 
-# Local admin dashboard
-APP_ENV=development
-ADMIN_USERNAME=rove-ops-admin
-ADMIN_PASSWORD='P$wd202610N#'
+echo
+echo "=== CREATE FEATURE BRANCH FROM BANK MAIN ==="
+FEATURE_BRANCH="feature/rove-sync-$(date +%Y%m%d-%H%M%S)"
 
-AUTH_SESSION_DAYS=7
-# Set to true when the API is served over HTTPS in production.
-AUTH_COOKIE_SECURE=false
+git switch --detach company/main
+git switch -c "$FEATURE_BRANCH"
 
-# SMTP Configuration (Gmail)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=kumar83.reach@gmail.com
-SMTP_PASSWORD=zkva swsc znkm zukp
-SMTP_FROM_EMAIL=kumar83.reach@gmail.com
-SMTP_FROM_NAME=ROVE
-SMTP_USE_TLS=true
-SMTP_DELIVERY_MODE=smtp
+echo
+echo "=== COPY PERSONAL ROVE CODE ==="
+git checkout origin/main -- .
 
-# Stable key for journey credential encryption
-CREDENTIAL_DELIVERY_KEY=2d6odjQtVkAB-7SqXCQZgwiVikq3wSmoJEL2h1NLko8
+echo
+echo "=== RESTORE BANK-MANAGED GITHUB FILES ==="
+git checkout company/main -- .github 2>/dev/null || true
 
-# Admin reservation email recipient
-ADMIN_NOTIFICATION_EMAIL=srujan.kumar@lloydsbanking.com
+echo
+echo "=== REMOVE LOCAL SSL / BACKUP FILES ==="
+rm -f \
+  Dockerfile.backup \
+  Dockerfile.backup.bak \
+  Dockerfile.bak \
+  Dockerfile.before-ca-fix \
+  Dockerfile.web.bak \
+  Dockerfile.web.backup.*.bak \
+  server/Dockerfile.backup.*.bak \
+  server/Dockerfile.bak \
+  server/Dockerfile.bank-backup \
+  company-ca.pem \
+  docker-compose.corporate.yml
+
+echo
+echo "=== REVIEW ==="
+git status --short
+
+echo
+echo "=== COMMIT ==="
+git add -A
+
+git commit -m "Sync latest ROVE changes from personal repository" || true
+
+echo
+echo "=== PUSH FEATURE BRANCH TO BANK GITHUB ==="
+git push -u company "$FEATURE_BRANCH"
+
+echo
+echo "========================================"
+echo "PUSH COMPLETE"
+echo "========================================"
+echo "Feature branch: $FEATURE_BRANCH"
+echo "Create PR:"
+echo "$FEATURE_BRANCH -> main"
+
+echo
+echo "=== RETURN TO LOCAL MAIN ==="
+git switch main
+
+echo
+echo "=== RESTORE BANK-LAPTOP LOCAL CHANGES ==="
+git stash pop || true
+
+echo
+echo "=== DONE ==="
+git status
+
+
+
