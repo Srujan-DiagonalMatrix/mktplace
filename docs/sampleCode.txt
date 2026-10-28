@@ -1,3 +1,80 @@
-Unexpected token '<', "<!doctype "... is not valid JSON
+cd /Users/srujan.kumar/Documents/git/rove
 
-Retry
+GCP_PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
+SERVICE_NAME="rove-web"
+
+echo "=================================================="
+echo " ROVE QUICK ISSUE ANALYSIS"
+echo "=================================================="
+
+gcloud config set project "$GCP_PROJECT" >/dev/null
+
+SERVICE_URL="$(gcloud run services describe "$SERVICE_NAME" \
+  --region "$REGION" \
+  --format='value(status.url)')"
+
+echo
+echo "SERVICE URL:"
+echo "$SERVICE_URL"
+
+echo
+echo "=================================================="
+echo " 1. CHECK ROOT RESPONSE"
+echo "=================================================="
+
+curl -i "$SERVICE_URL/" | head -40
+
+echo
+echo "=================================================="
+echo " 2. FIND API REFERENCES IN BUILT FRONTEND"
+echo "=================================================="
+
+grep -RniE \
+  'fetch\(|axios|/api/|http://|https://' \
+  dist src 2>/dev/null | head -100 || true
+
+echo
+echo "=================================================="
+echo " 3. CHECK VITE ENV VARIABLES"
+echo "=================================================="
+
+grep -RniE \
+  'VITE_|API_URL|BASE_URL|BACKEND_URL' \
+  .env* src 2>/dev/null || true
+
+echo
+echo "=================================================="
+echo " 4. CHECK CLOUD RUN ENV CONFIG"
+echo "=================================================="
+
+gcloud run services describe "$SERVICE_NAME" \
+  --region "$REGION" \
+  --format="yaml(spec.template.spec.containers[0].env,spec.template.spec.containers[0].image)"
+
+echo
+echo "=================================================="
+echo " 5. RECENT CLOUD RUN LOGS"
+echo "=================================================="
+
+gcloud logging read \
+  "resource.type=cloud_run_revision AND resource.labels.service_name=$SERVICE_NAME" \
+  --limit=50 \
+  --format="value(timestamp,severity,textPayload)" \
+  --freshness=15m
+
+echo
+echo "=================================================="
+echo " 6. TEST COMMON API PATHS"
+echo "=================================================="
+
+for PATH_TO_TEST in /api /api/health /health /applications /api/applications; do
+  echo
+  echo "----- $PATH_TO_TEST -----"
+  curl -sS -i "$SERVICE_URL$PATH_TO_TEST" | head -20
+done
+
+echo
+echo "=================================================="
+echo " ANALYSIS COMPLETE"
+echo "=================================================="
