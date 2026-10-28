@@ -1,84 +1,58 @@
-./deploy-rove-updates-gcp.sh 
-ROVE deployment started
-[environment: untagged] Read more to tag: g.co/cloud/project-env-tag.
-Updated property [core/project].
-[1/6] Installing dependencies...
-Warning: Ignoring extra certs from `/Users/srujan.kumar/combined_certs.pem`, load failed: error:80000002:system library::No such file or directory
+cd /Users/srujan.kumar/Documents/git/rove
 
-added 164 packages, and audited 165 packages in 3s
+echo "=== FIXING .dockerignore ==="
 
-33 packages are looking for funding
-  run `npm fund` for details
+# Backup current dockerignore
+cp .dockerignore .dockerignore.backup 2>/dev/null || true
 
-5 high severity vulnerabilities
+# Remove every rule that excludes dist
+python3 <<'PY'
+from pathlib import Path
 
-To address issues that do not require attention, run:
-  npm audit fix
+p = Path(".dockerignore")
 
-To address all issues, run:
-  npm audit fix --force
+if not p.exists():
+    p.write_text("")
+    print("Created .dockerignore")
+else:
+    lines = p.read_text().splitlines()
 
-Run `npm audit` for details.
-npm warn allow-scripts 1 package has install scripts not yet covered by allowScripts:
-npm warn allow-scripts   fsevents@2.3.3 (install: (install scripts present))
-npm warn allow-scripts
-npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
-[2/6] Building React app...
+    cleaned = []
 
-> rove-vehicle-finance@1.0.0 build
-> vite build
+    for line in lines:
+        value = line.strip().rstrip("/")
 
-Warning: Ignoring extra certs from `/Users/srujan.kumar/combined_certs.pem`, load failed: error:80000002:system library::No such file or directory
-vite v8.2.0 building client environment for production...
-✓ 84 modules transformed.
-computing gzip size...
-dist/index.html                                    0.58 kB │ gzip:   0.36 kB
-dist/assets/polo-match-Y6dxMRZc.png              141.06 kB
-dist/assets/mercedes-benz-citan-CCdaCMxX.png     203.94 kB
-dist/assets/ford-ranger-wildtrak-C-WIDVWJ.png    205.45 kB
-dist/assets/volkswagen-golf-B7PpS_RT.png         238.14 kB
-dist/assets/how-it-works-F1VZfBAR.png          1,287.85 kB
-dist/assets/index-CC8X4vO_.css                    96.57 kB │ gzip:  18.21 kB
-dist/assets/index-Dy7h30kv.js                    363.41 kB │ gzip: 113.28 kB
+        if value in {
+            "dist",
+            "./dist",
+            "**/dist",
+            "*/dist"
+        }:
+            print("Removing:", line)
+            continue
 
-✓ built in 609ms
-[3/6] Preparing Docker runtime...
-WARNING: Your config file at [/Users/srujan.kumar/.docker/config.json] contains these credential helper entries:
+        cleaned.append(line)
 
-{
-  "credHelpers": {
-    "europe-west1-docker.pkg.dev": "gcloud"
-  }
-}
-Adding credentials for: europe-west1-docker.pkg.dev
-gcloud credential helpers already registered correctly.
-[4/6] Building and pushing linux/amd64 image...
-[+] Building 0.5s (7/7) FINISHED                                                                                                           docker:desktop-linux
- => [internal] load build definition from Dockerfile                                                                                                       0.0s
- => => transferring dockerfile: 183B                                                                                                                       0.0s
- => [internal] load metadata for docker.io/library/nginx:alpine                                                                                            0.4s
- => [internal] load .dockerignore                                                                                                                          0.0s
- => => transferring context: 245B                                                                                                                          0.0s
- => CANCELED [1/3] FROM docker.io/library/nginx:alpine@sha256:a3554c0d0b48177b1413c26e01f695334428020d9df01243fbae3e11cfd17417                             0.0s
- => => resolve docker.io/library/nginx:alpine@sha256:a3554c0d0b48177b1413c26e01f695334428020d9df01243fbae3e11cfd17417                                      0.0s
- => [internal] load build context                                                                                                                          0.0s
- => => transferring context: 207B                                                                                                                          0.0s
- => CACHED [2/3] COPY nginx.conf /etc/nginx/conf.d/default.conf                                                                                            0.0s
- => ERROR [3/3] COPY dist /usr/share/nginx/html                                                                                                            0.0s
-------
- > [3/3] COPY dist /usr/share/nginx/html:
-------
-Dockerfile:3
---------------------
-   1 |     FROM nginx:alpine
-   2 |     COPY nginx.conf /etc/nginx/conf.d/default.conf
-   3 | >>> COPY dist /usr/share/nginx/html
-   4 |     EXPOSE 8080
-   5 |     CMD ["nginx", "-g", "daemon off;"]
---------------------
-ERROR: failed to build: failed to solve: failed to compute cache key: failed to calculate checksum of ref 5p8oz4jro17gjsu0af02a4dcr::rvoevbo6xawx04c61i3gj8a09:"/dist": not found
+    p.write_text("\n".join(cleaned) + "\n")
 
-View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/fuhppi4qicrm2akwksry5wetb
+print("Current .dockerignore:")
+print("----------------------")
+print(p.read_text())
+PY
 
-What's next:
-    Debug this build failure with Gordon → docker ai "help me fix this build failure"
+echo
+echo "=== REBUILD REACT ==="
+
+rm -rf dist
+
+NODE_USE_SYSTEM_CA=1 npm run build
+
+echo
+echo "=== VERIFY DIST EXISTS ==="
+
+ls -la dist
+
+echo
+echo "==== BUILD + DEPLOY AGAIN ==="
+
+./deploy/deploy-rove-updates-gcp.sh
