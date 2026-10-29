@@ -1,205 +1,106 @@
-Updating service
-Failed. Details: Image 'europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web' not found.
-Routing traffic
-Failed. Details: Image 'europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web' not found.
+cd /Users/srujan.kumar/Documents/git/rove
 
-{
-  "protoPayload": {
-    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
-    "status": {
-      "code": 5,
-      "message": "Resource 'rove-web' of kind 'SERVICE' in region 'europe-west1' in project 'tactical-innovation-f2b97b' does not exist."
-    },
-    "authenticationInfo": {
-      "principalEmail": "srujan.kumar@lloydsbanking.dev",
-      "principalSubject": "user:srujan.kumar@lloydsbanking.dev",
-      "oauthInfo": {
-        "oauthClientId": "32555940559.apps.googleusercontent.com"
-      }
-    },
-    "requestMetadata": {
-      "callerIp": "148.64.26.123",
-      "callerSuppliedUserAgent": "google-cloud-sdk gcloud/579.0.0 command/gcloud.run.deploy invocation-id/88f1c071ca3341dcbd2f657659cc2e68 environment/None environment-version/None client-os/MACOSX client-os-ver/25.6.0 client-pltf-arch/arm interactive/True from-script/False python/3.14.6 term/xterm-256color  (Macintosh; Intel Mac OS X 25.6.0),gzip(gfe)",
-      "requestAttributes": {
-        "time": "2026-10-29T15:46:17.135361Z",
-        "auth": {}
-      },
-      "destinationAttributes": {}
-    },
-    "serviceName": "run.googleapis.com",
-    "methodName": "google.cloud.run.v1.Services.GetService",
-    "authorizationInfo": [
-      {
-        "resource": "namespaces/tactical-innovation-f2b97b/services/rove-web",
-        "permission": "run.services.get",
-        "granted": true,
-        "resourceAttributes": {},
-        "permissionType": "ADMIN_READ"
-      }
-    ],
-    "resourceName": "namespaces/tactical-innovation-f2b97b/services/rove-web",
-    "request": {
-      "name": "namespaces/tactical-innovation-f2b97b/services/rove-web",
-      "@type": "type.googleapis.com/google.cloud.run.v1.GetServiceRequest"
-    },
-    "resourceLocation": {
-      "currentLocations": [
-        "europe-west1"
-      ]
-    }
-  },
-  "insertId": "1s3zuxddnonm",
-  "resource": {
-    "type": "cloud_run_revision",
-    "labels": {
-      "service_name": "rove-web",
-      "project_id": "tactical-innovation-f2b97b",
-      "configuration_name": "",
-      "revision_name": "",
-      "location": "europe-west1"
-    }
-  },
-  "timestamp": "2026-10-29T15:46:17.077277Z",
-  "severity": "ERROR",
-  "logName": "projects/tactical-innovation-f2b97b/logs/cloudaudit.googleapis.com%2Fdata_access",
-  "receiveTimestamp": "2026-10-29T15:46:17.237193739Z"
-}
+PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
+REPOSITORY="cloud-run-source-deploy"
+IMAGE_NAME="rove-web"
 
-{
-  "protoPayload": {
-    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
-    "status": {
-      "code": 5,
-      "message": "Ready condition status changed to False for Service rove-web with message: Image 'europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web' not found."
-    },
-    "serviceName": "run.googleapis.com",
-    "methodName": "/Services.CreateService",
-    "resourceName": "namespaces/tactical-innovation-f2b97b/services/rove-web",
-    "response": {
-      "metadata": {
-        "name": "rove-web",
-        "namespace": "446065888450",
-        "selfLink": "/apis/serving.knative.dev/v1/namespaces/446065888450/services/rove-web",
-        "uid": "88f147ae-5262-4261-969c-4f4029f9af90",
-        "resourceVersion": "AAZe/JSYl/Q",
-        "generation": 1,
-        "creationTimestamp": "2026-10-29T15:46:17.637417Z",
-        "labels": {
-          "cloud.googleapis.com/location": "europe-west1"
-        },
-        "annotations": {
-          "run.googleapis.com/client-name": "gcloud",
-          "run.googleapis.com/client-version": "579.0.0",
-          "serving.knative.dev/creator": "srujan.kumar@lloydsbanking.dev",
-          "serving.knative.dev/lastModifier": "srujan.kumar@lloydsbanking.dev",
-          "run.googleapis.com/operation-id": "73bb67db-630e-4fdb-b763-242877581003",
-          "run.googleapis.com/ingress": "all",
-          "run.googleapis.com/ingress-status": "all",
-          "run.googleapis.com/invoker-iam-disabled": "true",
-          "run.googleapis.com/maxScale": "2",
-          "run.googleapis.com/urls": "[\"https://rove-web-446065888450.europe-west1.run.app\"]"
-        }
-      },
-      "apiVersion": "serving.knative.dev/v1",
-      "kind": "Service",
-      "spec": {
-        "template": {
-          "metadata": {
-            "labels": {
-              "client.knative.dev/nonce": "vpfqjrffcj",
-              "run.googleapis.com/startupProbeType": "Default"
-            },
-            "annotations": {
-              "run.googleapis.com/client-name": "gcloud",
-              "run.googleapis.com/client-version": "579.0.0",
-              "run.googleapis.com/execution-environment": "gen2",
-              "run.googleapis.com/startup-cpu-boost": "true"
-            }
-          },
-          "spec": {
-            "containerConcurrency": 80,
-            "timeoutSeconds": 300,
-            "serviceAccountName": "446065888450-compute@developer.gserviceaccount.com",
-            "containers": [
-              {
-                "image": "europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web",
-                "ports": [
-                  {
-                    "name": "http1",
-                    "containerPort": 8080
-                  }
-                ],
-                "env": [
-                  {
-                    "name": "DEPLOYMENT_ID",
-                    "value": "20261029-154613"
-                  }
-                ],
-                "resources": {
-                  "limits": {
-                    "cpu": "1",
-                    "memory": "512Mi"
-                  }
-                },
-                "startupProbe": {
-                  "timeoutSeconds": 240,
-                  "periodSeconds": 240,
-                  "failureThreshold": 1,
-                  "tcpSocket": {
-                    "port": 8080
-                  }
-                }
-              }
-            ]
-          }
-        },
-        "traffic": [
-          {
-            "percent": 100,
-            "latestRevision": true
-          }
-        ]
-      },
-      "status": {
-        "observedGeneration": 1,
-        "conditions": [
-          {
-            "type": "Ready",
-            "status": "False",
-            "message": "Image 'europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web' not found.",
-            "lastTransitionTime": "2026-10-29T15:46:18.032272Z"
-          },
-          {
-            "type": "ConfigurationsReady",
-            "status": "False",
-            "message": "Image 'europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web' not found.",
-            "lastTransitionTime": "2026-10-29T15:46:18.032272Z"
-          },
-          {
-            "type": "RoutesReady",
-            "status": "Unknown",
-            "message": "Deploying Revision. Waiting on revision rove-web-00001-tk9.",
-            "lastTransitionTime": "2026-10-29T15:46:18.003309Z"
-          }
-        ],
-        "latestCreatedRevisionName": "rove-web-00001-tk9"
-      },
-      "@type": "type.googleapis.com/google.cloud.run.v1.Service"
-    }
-  },
-  "insertId": "ozsoone1i4z2",
-  "resource": {
-    "type": "cloud_run_revision",
-    "labels": {
-      "location": "europe-west1",
-      "project_id": "tactical-innovation-f2b97b",
-      "service_name": "rove-web",
-      "configuration_name": "",
-      "revision_name": ""
-    }
-  },
-  "timestamp": "2026-10-29T15:46:18.072980Z",
-  "severity": "ERROR",
-  "logName": "projects/tactical-innovation-f2b97b/logs/cloudaudit.googleapis.com%2Fsystem_event",
-  "receiveTimestamp": "2026-10-29T15:46:18.499176094Z"
-}
+FULL_IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPOSITORY}/${IMAGE_NAME}"
+
+echo
+echo "============================================================"
+echo "1. LIST ROVE-WEB IMAGE VERSIONS + TAGS"
+echo "============================================================"
+
+gcloud artifacts docker images list "$FULL_IMAGE" \
+  --project="$PROJECT" \
+  --include-tags \
+  --sort-by="~UPDATE_TIME" \
+  --format="table(
+    IMAGE,
+    DIGEST,
+    TAGS,
+    CREATE_TIME,
+    UPDATE_TIME
+  )"
+
+echo
+echo "============================================================"
+echo "2. LIST ROVE-WEB TAGS"
+echo "============================================================"
+
+gcloud artifacts docker tags list "$FULL_IMAGE" \
+  --project="$PROJECT" \
+  --format="table(
+    tag,
+    version
+  )" \
+  2>&1 || true
+
+echo
+echo "============================================================"
+echo "3. GET LATEST DIGEST"
+echo "============================================================"
+
+LATEST_DIGEST="$(gcloud artifacts docker images list "$FULL_IMAGE" \
+  --project="$PROJECT" \
+  --include-tags \
+  --sort-by="~UPDATE_TIME" \
+  --limit=1 \
+  --format='value(DIGEST)')"
+
+echo "Latest digest:"
+echo "$LATEST_DIGEST"
+
+echo
+echo "============================================================"
+echo "4. BUILD DEPLOYABLE IMAGE REFERENCE"
+echo "============================================================"
+
+if [ -n "$LATEST_DIGEST" ]; then
+
+  DEPLOY_IMAGE="${FULL_IMAGE}@${LATEST_DIGEST}"
+
+  echo "Deployable image:"
+  echo "$DEPLOY_IMAGE"
+
+else
+
+  echo "ERROR: No rove-web image digest found."
+  echo "This means the web image was not successfully pushed."
+  exit 1
+
+fi
+
+echo
+echo "============================================================"
+echo "5. VERIFY IMAGE EXISTS"
+echo "============================================================"
+
+gcloud artifacts docker images describe "$DEPLOY_IMAGE" \
+  --project="$PROJECT" \
+  --format="yaml(
+    image_summary.digest,
+    image_summary.fully_qualified_digest
+  )"
+
+echo
+echo "============================================================"
+echo "6. CURRENT ROVE-WEB CLOUD RUN STATUS"
+echo "============================================================"
+
+gcloud run services describe rove-web \
+  --project="$PROJECT" \
+  --region="$REGION" \
+  --format="yaml(
+    metadata.name,
+    status.conditions,
+    status.latestCreatedRevisionName,
+    status.latestReadyRevisionName
+  )" \
+  2>&1 || true
+
+echo
+echo "============================================================"
+echo " ANALYSIS COMPLETE"
+echo "============================================================"
