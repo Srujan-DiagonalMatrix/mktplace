@@ -1,4 +1,66 @@
-Updating service
-Failed. Details: The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information. Logs URL: Open Cloud Logging  For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start 
-Routing traffic
-Failed. Details: The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information. Logs URL: Open Cloud Logging  For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start 
+cd /Users/srujan.kumar/Documents/git/rove
+
+set -euo pipefail
+
+echo "============================================================"
+echo " FIX ALEMBIC DATABASE URL INTERPOLATION"
+echo "============================================================"
+
+python3 <<'PY'
+from pathlib import Path
+
+path = Path("server/alembic/env.py")
+
+if not path.exists():
+    raise SystemExit("ERROR: server/alembic/env.py not found")
+
+text = path.read_text()
+
+old = 'config.set_main_option("sqlalchemy.url", database_url)'
+
+new = '''config.set_main_option(
+    "sqlalchemy.url",
+    database_url.replace("%", "%%")
+)'''
+
+if old in text:
+    path.write_text(text.replace(old, new))
+    print("Alembic env.py updated successfully.")
+
+elif 'database_url.replace("%", "%%")' in text:
+    print("Alembic env.py is already fixed.")
+
+else:
+    print("ERROR: Expected Alembic configuration line was not found.")
+    print()
+    print("Current server/alembic/env.py:")
+    print("------------------------------------------------------------")
+    print(text)
+    raise SystemExit(1)
+PY
+
+
+echo
+echo "============================================================"
+echo " VERIFY ALEMBIC FIX"
+echo "============================================================"
+
+grep -n -A4 -B2 "set_main_option" server/alembic/env.py
+
+
+echo
+echo "============================================================"
+echo " CLEAN EXISTING ROVE GCP RESOURCES"
+echo "============================================================"
+
+chmod +x cleanup-rove-gcp.sh
+./cleanup-rove-gcp.sh
+
+
+echo
+echo "============================================================"
+echo " START BRAND NEW ROVE INSTALLATION"
+echo "============================================================"
+
+chmod +x install-rove-gcp.sh
+./install-rove-gcp.sh
