@@ -1,76 +1,256 @@
-============================================================
-1. GET CLOUD SQL CONNECTION
-============================================================
-tactical-innovation-f2b97b:europe-west1:rove-postgres
+#!/usr/bin/env bash
+set -euo pipefail
 
-============================================================
-2. URL-ENCODE PASSWORD
-============================================================
-
-============================================================
-3. GET SERVICE ACCOUNT
-============================================================
-446065888450-compute@developer.gserviceaccount.com
-
-============================================================
-4. DEPLOY API WITH DATABASE
-============================================================
-DEBUG: Running [gcloud.run.deploy] with arguments: [--add-cloudsql-instances: "['tactical-innovation-f2b97b:europe-west1:rove-postgres']", --image: "europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-api:20261029-142016", --no-invoker-iam-check: "False", --platform: "managed", --port: "8080", --project: "tactical-innovation-f2b97b", --quiet: "True", --region: "europe-west1", --service-account: "446065888450-compute@developer.gserviceaccount.com", --set-env-vars: "OrderedDict({'DATABASE_URL': 'postgresql+psycopg://postgres:RovePov%232026Secure%21@/rove?host=/cloudsql/tactical-innovation-f2b97b:europe-west1:rove-postgres', 'APP_ENV': 'production'})", --verbosity: "debug", SERVICE: "rove-api"]
-DEBUG: On GCE from memory cache: False
-DEBUG: On GCE from memory cache: False
-DEBUG: Starting new HTTPS connection (1): serviceusage.googleapis.com:443
-DEBUG: https://serviceusage.googleapis.com:443 "GET /v1/projects/tactical-innovation-f2b97b/services/run.googleapis.com?alt=json HTTP/1.1" 200None
-DEBUG: On GCE from memory cache: False
-DEBUG: On GCE from memory cache: False
-DEBUG: On GCE from memory cache: False
-DEBUG: Starting new HTTPS connection (1): europe-west1-run.googleapis.com:443
-DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-DEBUG: On GCE from memory cache: False
-DEBUG: Starting new HTTPS connection (1): serviceusage.googleapis.com:443
-DEBUG: https://serviceusage.googleapis.com:443 "GET /v1/projects/tactical-innovation-f2b97b/services/sql-component.googleapis.com?alt=json HTTP/1.1" 200 None
-DEBUG: On GCE from memory cache: False
-DEBUG: (gcloud.run.deploy) Aborted by user.
-Traceback (most recent call last):
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/calliope/cli.py", line 941, in Execute
-    resources = calliope_command.Run(cli=self, args=args)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/calliope/backend.py", line 968, in Run
-    resources = command_instance.Run(args)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/surface/run/deploy.py", line 1046, in Run
-    changes = self._GetBaseChanges(args)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/surface/run/deploy.py", line 661, in _GetBaseChanges
-    changes = flags.GetServiceConfigurationChanges(args, self.ReleaseTrack())
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/flags.py", line 3627, in GetServiceConfigurationChanges
-    changes = _GetConfigurationChanges(args, release_track=release_track)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/flags.py", line 3089, in _GetConfigurationChanges
-    CheckCloudSQLApiEnablement()
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/flags.py", line 2960, in CheckCloudSQLApiEnablement
-    PromptToEnableApi(_CLOUD_SQL_API_SERVICE_TOKEN)
-    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/flags.py", line 2940, in PromptToEnableApi
-    if console_io.PromptContinue(
-       ~~~~~~~~~~~~~~~~~~~~~~~~~^
-        default=False,
-        ^^^^^^^^^^^^^^
-    ...<5 lines>...
-        ).format(service_name, project),
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ):
-    ^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/core/console/console_io.py", line 258, in PromptContinue
-    raise OperationCancelledError()
-googlecloudsdk.core.console.console_io.OperationCancelledError: Aborted by user.
-ERROR: (gcloud.run.deploy) Aborted by user.
-
-============================================================
-5. TEST API
-============================================================
-API URL:
+# ============================================================
+# ROVE - COMPLETE GCP CLEANUP
+#
+# Deletes:
+#   - rove-api Cloud Run service
+#   - rove-web Cloud Run service
+#   - rove-postgres Cloud SQL instance + ALL DATABASE DATA
+#   - cloud-run-source-deploy Artifact Registry repository
+#   - locally generated deployment files
+#
+# DOES NOT:
+#   - delete GCP project
+#   - disable shared GCP APIs
+#
+# WARNING:
+#   DATABASE DATA WILL BE PERMANENTLY DELETED.
+# ============================================================
 
 
-Docs:
-HTTP 000
+PROJECT_DIR="/Users/srujan.kumar/Documents/git/rove"
 
-Database health:
+PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
 
-srujan.kumar@DEV-H59N27LXKY rove % 
+API_SERVICE="rove-api"
+WEB_SERVICE="rove-web"
+
+DB_INSTANCE="rove-postgres"
+
+REPOSITORY="cloud-run-source-deploy"
+
+
+cd "$PROJECT_DIR"
+
+
+echo
+echo "============================================================"
+echo " ROVE COMPLETE GCP CLEANUP"
+echo "============================================================"
+echo
+echo "Project : $PROJECT"
+echo "Region  : $REGION"
+echo
+echo "WARNING:"
+echo "ROVE PostgreSQL data will be permanently deleted."
+echo "============================================================"
+
+
+gcloud config set project "$PROJECT" >/dev/null
+
+
+# ============================================================
+# 1. DELETE CLOUD RUN API
+# ============================================================
+
+echo
+echo "============================================================"
+echo "[1/5] DELETE ROVE API"
+echo "============================================================"
+
+
+if gcloud run services describe "$API_SERVICE" \
+    --project="$PROJECT" \
+    --region="$REGION" \
+    >/dev/null 2>&1
+then
+
+    echo "Deleting $API_SERVICE..."
+
+    gcloud run services delete "$API_SERVICE" \
+        --project="$PROJECT" \
+        --region="$REGION" \
+        --quiet
+
+else
+
+    echo "$API_SERVICE does not exist."
+
+fi
+
+
+# ============================================================
+# 2. DELETE CLOUD RUN WEB
+# ============================================================
+
+echo
+echo "============================================================"
+echo "[2/5] DELETE ROVE WEB"
+echo "============================================================"
+
+
+if gcloud run services describe "$WEB_SERVICE" \
+    --project="$PROJECT" \
+    --region="$REGION" \
+    >/dev/null 2>&1
+then
+
+    echo "Deleting $WEB_SERVICE..."
+
+    gcloud run services delete "$WEB_SERVICE" \
+        --project="$PROJECT" \
+        --region="$REGION" \
+        --quiet
+
+else
+
+    echo "$WEB_SERVICE does not exist."
+
+fi
+
+
+# ============================================================
+# 3. DELETE CLOUD SQL
+# ============================================================
+
+echo
+echo "============================================================"
+echo "[3/5] DELETE POSTGRESQL"
+echo "============================================================"
+
+
+if gcloud sql instances describe "$DB_INSTANCE" \
+    --project="$PROJECT" \
+    >/dev/null 2>&1
+then
+
+    echo "Cloud SQL instance found."
+    echo "Disabling deletion protection..."
+
+    gcloud sql instances patch "$DB_INSTANCE" \
+        --project="$PROJECT" \
+        --no-deletion-protection \
+        --quiet \
+        >/dev/null 2>&1 || true
+
+
+    echo "Deleting $DB_INSTANCE..."
+
+
+    gcloud sql instances delete "$DB_INSTANCE" \
+        --project="$PROJECT" \
+        --no-enable-final-backup \
+        --quiet
+
+
+    echo "PostgreSQL deleted."
+
+else
+
+    echo "$DB_INSTANCE does not exist."
+
+fi
+
+
+# ============================================================
+# 4. DELETE ARTIFACT REGISTRY
+# ============================================================
+
+echo
+echo "============================================================"
+echo "[4/5] DELETE ROVE CONTAINER REPOSITORY"
+echo "============================================================"
+
+
+if gcloud artifacts repositories describe "$REPOSITORY" \
+    --project="$PROJECT" \
+    --location="$REGION" \
+    >/dev/null 2>&1
+then
+
+    echo "Deleting Artifact Registry repository:"
+    echo "$REPOSITORY"
+
+    gcloud artifacts repositories delete "$REPOSITORY" \
+        --project="$PROJECT" \
+        --location="$REGION" \
+        --quiet
+
+else
+
+    echo "$REPOSITORY does not exist."
+
+fi
+
+
+# ============================================================
+# 5. CLEAN LOCAL GENERATED FILES
+# ============================================================
+
+echo
+echo "============================================================"
+echo "[5/5] CLEAN LOCAL DEPLOYMENT FILES"
+echo "============================================================"
+
+
+rm -f \
+    Dockerfile.gcp \
+    Dockerfile.gcp.dockerignore \
+    nginx.conf.gcp \
+    server/Dockerfile.gcp
+
+
+rm -rf \
+    .rove-gcp-web-build \
+    /tmp/rove-api-docs.html \
+    /tmp/rove-cloudrun-debug.log
+
+
+echo "Local deployment files removed."
+
+
+# ============================================================
+# FINAL VERIFICATION
+# ============================================================
+
+echo
+echo "============================================================"
+echo " VERIFY CLEAN STATE"
+echo "============================================================"
+
+echo
+echo "Cloud Run:"
+gcloud run services list \
+    --project="$PROJECT" \
+    --region="$REGION" \
+    --filter="metadata.name:(rove-api OR rove-web)" \
+    --format="table(metadata.name,status.url)" || true
+
+
+echo
+echo "Cloud SQL:"
+gcloud sql instances list \
+    --project="$PROJECT" \
+    --filter="name=$DB_INSTANCE" \
+    --format="table(name,state)" || true
+
+
+echo
+echo "Artifact Registry:"
+gcloud artifacts repositories list \
+    --project="$PROJECT" \
+    --location="$REGION" \
+    --filter="name~$REPOSITORY" \
+    --format="table(name)" || true
+
+
+echo
+echo "============================================================"
+echo " ROVE CLEANUP COMPLETE"
+echo "============================================================"
+echo
+echo "ROVE GCP environment is ready for a fresh installation."
+echo
