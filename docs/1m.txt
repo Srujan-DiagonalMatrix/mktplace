@@ -1,106 +1,182 @@
-cd /Users/srujan.kumar/Documents/git/rove
+============================================================
+1. LIST ROVE-WEB IMAGE VERSIONS + TAGS
+============================================================
+Listing items under project tactical-innovation-f2b97b, location europe-west1, repository cloud-run-source-deploy.
 
-PROJECT="tactical-innovation-f2b97b"
-REGION="europe-west1"
-REPOSITORY="cloud-run-source-deploy"
-IMAGE_NAME="rove-web"
+IMAGE                                                                                    DIGEST                   TAGS             CREATE_TIME          UPDATE_TIME
+europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web  sha256:ed7fca28663c49fa4451120df6409c6c142fde5624dd74e86e3544e50bbbc9a1  20261029-152916  2026-10-29T15:44:12  2026-10-29T15:44:12
+europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web  sha256:dc58a70455ce04225ae4a0253f50c17dda14dbe458fac4a0c88f33b6859b355f                   2026-10-29T15:44:11  2026-10-29T15:44:11
+europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web  sha256:38667a562a11dc950a7ce9d2a912318472a9a95b9c5eab8867cd3bc0c2009814                   2026-10-29T15:44:11  2026-10-29T15:44:11
 
-FULL_IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPOSITORY}/${IMAGE_NAME}"
+============================================================
+2. LIST ROVE-WEB TAGS
+============================================================
+Listing items under project tactical-innovation-f2b97b, location europe-west1, repository cloud-run-source-deploy.
 
-echo
-echo "============================================================"
-echo "1. LIST ROVE-WEB IMAGE VERSIONS + TAGS"
-echo "============================================================"
+TAG              DIGEST
+20261029-152916  sha256:ed7fca28663c49fa4451120df6409c6c142fde5624dd74e86e3544e50bbbc9a1
 
-gcloud artifacts docker images list "$FULL_IMAGE" \
-  --project="$PROJECT" \
-  --include-tags \
-  --sort-by="~UPDATE_TIME" \
-  --format="table(
-    IMAGE,
-    DIGEST,
-    TAGS,
-    CREATE_TIME,
-    UPDATE_TIME
-  )"
+============================================================
+3. GET LATEST DIGEST
+============================================================
+Listing items under project tactical-innovation-f2b97b, location europe-west1, repository cloud-run-source-deploy.
 
-echo
-echo "============================================================"
-echo "2. LIST ROVE-WEB TAGS"
-echo "============================================================"
+Latest digest:
+sha256:ed7fca28663c49fa4451120df6409c6c142fde5624dd74e86e3544e50bbbc9a1
 
-gcloud artifacts docker tags list "$FULL_IMAGE" \
-  --project="$PROJECT" \
-  --format="table(
-    tag,
-    version
-  )" \
-  2>&1 || true
+============================================================
+4. BUILD DEPLOYABLE IMAGE REFERENCE
+============================================================
+Deployable image:
+europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web@sha256:ed7fca28663c49fa4451120df6409c6c142fde5624dd74e86e3544e50bbbc9a1
 
-echo
-echo "============================================================"
-echo "3. GET LATEST DIGEST"
-echo "============================================================"
+============================================================
+5. VERIFY IMAGE EXISTS
+============================================================
+image_summary:
+  digest: sha256:ed7fca28663c49fa4451120df6409c6c142fde5624dd74e86e3544e50bbbc9a1
+  fully_qualified_digest: europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web@sha256:ed7fca28663c49fa4451120df6409c6c142fde5624dd74e86e3544e50bbbc9a1
 
-LATEST_DIGEST="$(gcloud artifacts docker images list "$FULL_IMAGE" \
-  --project="$PROJECT" \
-  --include-tags \
-  --sort-by="~UPDATE_TIME" \
-  --limit=1 \
-  --format='value(DIGEST)')"
+============================================================
+6. CURRENT ROVE-WEB CLOUD RUN STATUS
+============================================================
+metadata:
+  name: rove-web
+status:
+  conditions:
+  - lastTransitionTime: '2026-10-29T15:46:18.109943Z'
+    message: Image 'europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web'
+      not found.
+    reason: RevisionFailed
+    status: 'False'
+    type: Ready
+  - lastTransitionTime: '2026-10-29T15:46:18.032272Z'
+    message: Image 'europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web'
+      not found.
+    status: 'False'
+    type: ConfigurationsReady
+  - lastTransitionTime: '2026-10-29T15:46:18.109943Z'
+    message: Image 'europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-web'
+      not found.
+    reason: RevisionFailed
+    status: 'False'
+    type: RoutesReady
+  latestCreatedRevisionName: rove-web-00001-tk9
 
-echo "Latest digest:"
-echo "$LATEST_DIGEST"
+============================================================
+ ANALYSIS COMPLETE
+============================================================
 
-echo
-echo "============================================================"
-echo "4. BUILD DEPLOYABLE IMAGE REFERENCE"
-echo "============================================================"
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "status": {},
+    "authenticationInfo": {
+      "principalEmail": "srujan.kumar@lloydsbanking.dev",
+      "principalSubject": "user:srujan.kumar@lloydsbanking.dev",
+      "oauthInfo": {
+        "oauthClientId": "32555940559.apps.googleusercontent.com"
+      }
+    },
+    "requestMetadata": {
+      "callerIp": "148.64.26.123",
+      "callerSuppliedUserAgent": "google-cloud-sdk gcloud/579.0.0 command/gcloud.run.services.describe invocation-id/6fa7dd9c6c9a40d5889286d972dec921 environment/None environment-version/None client-os/MACOSX client-os-ver/25.6.0 client-pltf-arch/arm interactive/True from-script/False python/3.14.6 term/xterm-256color  (Macintosh; Intel Mac OS X 25.6.0),gzip(gfe)",
+      "requestAttributes": {
+        "time": "2026-10-29T15:51:25.462661Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "run.googleapis.com",
+    "methodName": "google.cloud.run.v1.Services.GetService",
+    "authorizationInfo": [
+      {
+        "resource": "namespaces/tactical-innovation-f2b97b/services/rove-web",
+        "permission": "run.services.get",
+        "granted": true,
+        "resourceAttributes": {},
+        "permissionType": "ADMIN_READ"
+      }
+    ],
+    "resourceName": "namespaces/tactical-innovation-f2b97b/services/rove-web",
+    "request": {
+      "name": "namespaces/tactical-innovation-f2b97b/services/rove-web",
+      "@type": "type.googleapis.com/google.cloud.run.v1.GetServiceRequest"
+    },
+    "resourceLocation": {
+      "currentLocations": [
+        "europe-west1"
+      ]
+    }
+  },
+  "insertId": "4h64b9dwp8f",
+  "resource": {
+    "type": "cloud_run_revision",
+    "labels": {
+      "configuration_name": "",
+      "revision_name": "",
+      "service_name": "rove-web",
+      "project_id": "tactical-innovation-f2b97b",
+      "location": "europe-west1"
+    }
+  },
+  "timestamp": "2026-10-29T15:51:25.417635Z",
+  "severity": "INFO",
+  "logName": "projects/tactical-innovation-f2b97b/logs/cloudaudit.googleapis.com%2Fdata_access",
+  "receiveTimestamp": "2026-10-29T15:51:26.037845403Z"
+}
 
-if [ -n "$LATEST_DIGEST" ]; then
-
-  DEPLOY_IMAGE="${FULL_IMAGE}@${LATEST_DIGEST}"
-
-  echo "Deployable image:"
-  echo "$DEPLOY_IMAGE"
-
-else
-
-  echo "ERROR: No rove-web image digest found."
-  echo "This means the web image was not successfully pushed."
-  exit 1
-
-fi
-
-echo
-echo "============================================================"
-echo "5. VERIFY IMAGE EXISTS"
-echo "============================================================"
-
-gcloud artifacts docker images describe "$DEPLOY_IMAGE" \
-  --project="$PROJECT" \
-  --format="yaml(
-    image_summary.digest,
-    image_summary.fully_qualified_digest
-  )"
-
-echo
-echo "============================================================"
-echo "6. CURRENT ROVE-WEB CLOUD RUN STATUS"
-echo "============================================================"
-
-gcloud run services describe rove-web \
-  --project="$PROJECT" \
-  --region="$REGION" \
-  --format="yaml(
-    metadata.name,
-    status.conditions,
-    status.latestCreatedRevisionName,
-    status.latestReadyRevisionName
-  )" \
-  2>&1 || true
-
-echo
-echo "============================================================"
-echo " ANALYSIS COMPLETE"
-echo "============================================================"
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "status": {},
+    "authenticationInfo": {
+      "principalEmail": "srujan.kumar@lloydsbanking.dev"
+    },
+    "requestMetadata": {
+      "callerIp": "148.64.26.123",
+      "callerSuppliedUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36,gzip(gfe),gzip(gfe)",
+      "requestAttributes": {
+        "time": "2026-10-29T15:53:29.308898Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "run.googleapis.com",
+    "methodName": "google.cloud.run.v1.Services.GetService",
+    "authorizationInfo": [
+      {
+        "resource": "namespaces/tactical-innovation-f2b97b/services/rove-web",
+        "permission": "run.services.get",
+        "granted": true,
+        "resourceAttributes": {},
+        "permissionType": "ADMIN_READ"
+      }
+    ],
+    "resourceName": "namespaces/tactical-innovation-f2b97b/services/rove-web",
+    "request": {
+      "name": "projects/tactical-innovation-f2b97b/locations/europe-west1/services/rove-web",
+      "@type": "type.googleapis.com/google.cloud.run.v1.GetServiceRequest"
+    },
+    "resourceLocation": {
+      "currentLocations": [
+        "europe-west1"
+      ]
+    }
+  },
+  "insertId": "12kmu0sdmbty",
+  "resource": {
+    "type": "cloud_run_revision",
+    "labels": {
+      "service_name": "rove-web",
+      "project_id": "tactical-innovation-f2b97b",
+      "revision_name": "",
+      "configuration_name": "",
+      "location": "europe-west1"
+    }
+  },
+  "timestamp": "2026-10-29T15:53:29.254462Z",
+  "severity": "INFO",
+  "logName": "projects/tactical-innovation-f2b97b/logs/cloudaudit.googleapis.com%2Fdata_access",
+  "receiveTimestamp": "2026-10-29T15:53:29.624723153Z"
+}
