@@ -1,19 +1,81 @@
-============================================================
-[6/10] DEPLOY API
-============================================================
-Deploying new rove-api revision...
-ERROR: (gcloud.run.deploy) Aborted by user.
+PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
+SERVICE="rove-api"
 
-============================================================
- API DEPLOYMENT FAILED
-============================================================
+echo "============================================================"
+echo "1. CHECK WHETHER ROVE-API EXISTS"
+echo "============================================================"
 
-Recent rove-api logs:
+gcloud run services describe "$SERVICE" \
+  --project="$PROJECT" \
+  --region="$REGION" \
+  --format="yaml(metadata.name,status)" \
+  2>&1 || true
 
-2026-10-29T14:20:36.950790Z     ERROR
-2026-10-29T14:10:37.102327Z     ERROR
-2026-10-29T14:09:59.067694Z     ERROR
 
-Database was NOT deleted.
-API image remains available:
-europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-api:20261029-142016
+echo
+echo "============================================================"
+echo "2. CLOUD RUN ADMIN / AUDIT EVENTS - LAST 2 HOURS"
+echo "============================================================"
+
+gcloud logging read \
+  'protoPayload.serviceName="run.googleapis.com"' \
+  --project="$PROJECT" \
+  --freshness=2h \
+  --limit=100 \
+  --format="table(
+timestamp,
+severity,
+protoPayload.methodName,
+protoPayload.status.code,
+protoPayload.status.message
+)"
+
+
+echo
+echo "============================================================"
+echo "3. CLOUD RUN ERRORS ONLY"
+echo "============================================================"
+
+gcloud logging read \
+  'protoPayload.serviceName="run.googleapis.com" AND severity>=ERROR' \
+  --project="$PROJECT" \
+  --freshness=2h \
+  --limit=50 \
+  --format="json"
+
+
+echo
+echo "============================================================"
+echo "4. CHECK POSTGRESQL"
+echo "============================================================"
+
+gcloud sql instances describe rove-postgres \
+  --project="$PROJECT" \
+  --format="yaml(
+name,
+state,
+connectionName
+)" \
+  2>&1 || true
+
+
+echo
+echo "============================================================"
+echo "5. CHECK API IMAGE EXISTS"
+echo "============================================================"
+
+gcloud artifacts docker images list \
+  "europe-west1-docker.pkg.dev/$PROJECT/cloud-run-source-deploy" \
+  --project="$PROJECT" \
+  --include-tags \
+  --filter="package~rove-api" \
+  --sort-by="~UPDATE_TIME" \
+  --limit=5 \
+  --format="table(package,version,updateTime)"
+
+
+echo
+echo "============================================================"
+echo " ANALYSIS COMPLETE"
+echo "============================================================"
