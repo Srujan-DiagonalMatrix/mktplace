@@ -1,98 +1,76 @@
-cd /Users/srujan.kumar/Documents/git/rove
+============================================================
+1. GET CLOUD SQL CONNECTION
+============================================================
+tactical-innovation-f2b97b:europe-west1:rove-postgres
 
-PROJECT="tactical-innovation-f2b97b"
-REGION="europe-west1"
+============================================================
+2. URL-ENCODE PASSWORD
+============================================================
 
-SERVICE="rove-api"
+============================================================
+3. GET SERVICE ACCOUNT
+============================================================
+446065888450-compute@developer.gserviceaccount.com
 
-DB_INSTANCE="rove-postgres"
-DB_NAME="rove"
-DB_USER="postgres"
-DB_PASSWORD='RovePov#2026Secure!'
+============================================================
+4. DEPLOY API WITH DATABASE
+============================================================
+DEBUG: Running [gcloud.run.deploy] with arguments: [--add-cloudsql-instances: "['tactical-innovation-f2b97b:europe-west1:rove-postgres']", --image: "europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-api:20261029-142016", --no-invoker-iam-check: "False", --platform: "managed", --port: "8080", --project: "tactical-innovation-f2b97b", --quiet: "True", --region: "europe-west1", --service-account: "446065888450-compute@developer.gserviceaccount.com", --set-env-vars: "OrderedDict({'DATABASE_URL': 'postgresql+psycopg://postgres:RovePov%232026Secure%21@/rove?host=/cloudsql/tactical-innovation-f2b97b:europe-west1:rove-postgres', 'APP_ENV': 'production'})", --verbosity: "debug", SERVICE: "rove-api"]
+DEBUG: On GCE from memory cache: False
+DEBUG: On GCE from memory cache: False
+DEBUG: Starting new HTTPS connection (1): serviceusage.googleapis.com:443
+DEBUG: https://serviceusage.googleapis.com:443 "GET /v1/projects/tactical-innovation-f2b97b/services/run.googleapis.com?alt=json HTTP/1.1" 200None
+DEBUG: On GCE from memory cache: False
+DEBUG: On GCE from memory cache: False
+DEBUG: On GCE from memory cache: False
+DEBUG: Starting new HTTPS connection (1): europe-west1-run.googleapis.com:443
+DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
+DEBUG: On GCE from memory cache: False
+DEBUG: Starting new HTTPS connection (1): serviceusage.googleapis.com:443
+DEBUG: https://serviceusage.googleapis.com:443 "GET /v1/projects/tactical-innovation-f2b97b/services/sql-component.googleapis.com?alt=json HTTP/1.1" 200 None
+DEBUG: On GCE from memory cache: False
+DEBUG: (gcloud.run.deploy) Aborted by user.
+Traceback (most recent call last):
+  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/calliope/cli.py", line 941, in Execute
+    resources = calliope_command.Run(cli=self, args=args)
+  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/calliope/backend.py", line 968, in Run
+    resources = command_instance.Run(args)
+  File "/Users/srujan.kumar/google-cloud-sdk/lib/surface/run/deploy.py", line 1046, in Run
+    changes = self._GetBaseChanges(args)
+  File "/Users/srujan.kumar/google-cloud-sdk/lib/surface/run/deploy.py", line 661, in _GetBaseChanges
+    changes = flags.GetServiceConfigurationChanges(args, self.ReleaseTrack())
+  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/flags.py", line 3627, in GetServiceConfigurationChanges
+    changes = _GetConfigurationChanges(args, release_track=release_track)
+  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/flags.py", line 3089, in _GetConfigurationChanges
+    CheckCloudSQLApiEnablement()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/flags.py", line 2960, in CheckCloudSQLApiEnablement
+    PromptToEnableApi(_CLOUD_SQL_API_SERVICE_TOKEN)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/flags.py", line 2940, in PromptToEnableApi
+    if console_io.PromptContinue(
+       ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        default=False,
+        ^^^^^^^^^^^^^^
+    ...<5 lines>...
+        ).format(service_name, project),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/core/console/console_io.py", line 258, in PromptContinue
+    raise OperationCancelledError()
+googlecloudsdk.core.console.console_io.OperationCancelledError: Aborted by user.
+ERROR: (gcloud.run.deploy) Aborted by user.
 
-IMAGE="europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-api:20261029-142016"
-
-
-echo "============================================================"
-echo "1. GET CLOUD SQL CONNECTION"
-echo "============================================================"
-
-CONNECTION_NAME="$(gcloud sql instances describe "$DB_INSTANCE" \
-  --project="$PROJECT" \
-  --format='value(connectionName)')"
-
-echo "$CONNECTION_NAME"
-
-
-echo
-echo "============================================================"
-echo "2. URL-ENCODE PASSWORD"
-echo "============================================================"
-
-DB_PASSWORD_URL="$(
-  DB_PASSWORD="$DB_PASSWORD" python3 <<'PY'
-import os
-from urllib.parse import quote
-print(quote(os.environ["DB_PASSWORD"], safe=""))
-PY
-)"
-
-DATABASE_URL="postgresql+psycopg://${DB_USER}:${DB_PASSWORD_URL}@/${DB_NAME}?host=/cloudsql/${CONNECTION_NAME}"
-
-
-echo
-echo "============================================================"
-echo "3. GET SERVICE ACCOUNT"
-echo "============================================================"
-
-PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" \
-  --format='value(projectNumber)')"
-
-SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
-
-echo "$SERVICE_ACCOUNT"
-
-
-echo
-echo "============================================================"
-echo "4. DEPLOY API WITH DATABASE"
-echo "============================================================"
-
-gcloud run deploy "$SERVICE" \
-  --project="$PROJECT" \
-  --region="$REGION" \
-  --platform=managed \
-  --image="$IMAGE" \
-  --port=8080 \
-  --add-cloudsql-instances="$CONNECTION_NAME" \
-  --service-account="$SERVICE_ACCOUNT" \
-  --set-env-vars="DATABASE_URL=${DATABASE_URL},APP_ENV=production" \
-  --no-invoker-iam-check \
-  --quiet \
-  --verbosity=debug
+============================================================
+5. TEST API
+============================================================
+API URL:
 
 
-echo
-echo "============================================================"
-echo "5. TEST API"
-echo "============================================================"
+Docs:
+HTTP 000
 
-API_URL="$(gcloud run services describe "$SERVICE" \
-  --project="$PROJECT" \
-  --region="$REGION" \
-  --format='value(status.url)')"
+Database health:
 
-echo "API URL:"
-echo "$API_URL"
-
-echo
-echo "Docs:"
-curl -s -o /dev/null \
-  -w "HTTP %{http_code}\n" \
-  "$API_URL/docs"
-
-echo
-echo "Database health:"
-curl -s "$API_URL/api/health"
-
-echo
+srujan.kumar@DEV-H59N27LXKY rove % 
