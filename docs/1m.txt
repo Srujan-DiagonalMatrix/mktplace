@@ -1,263 +1,31 @@
-==========================================================
-[3/10] CREATE POSTGRESQL
-==========================================================
-Creating Cloud SQL PostgreSQL Enterprise instance...
-ERROR: (gcloud.sql.instances.create) HTTPError 400: Invalid request: Operation denied by org policy on resource 'projects/tactical-innovation-f2b97b': ["customConstraints/custom.sqlSSLConfigured": "  Ensure that SSL is configured for any cloud sql instances to communicate securely
-", "customConstraints/custom.sqlIAMAuthenticationFlagsv2": "  Ensure GCP IAM Authentication flags are present to connect to MySQL & PostgreSQL databases
-", "customConstraints/custom.sqlRootPasswordComplexity": "  Ensure that all Cloud SQL instances are configured with a complex password policy
-", "customConstraints/custom.sqlEnsureAuditlogsconfiguredv1": "  Ensure Audit Logs are configured for SQL Server and PostgreSQL Server
-"]..
-srujan.kumar@DEV-H59N27LXKY rove % clear
-srujan.kumar@DEV-H59N27LXKY rove % >....                                                                                                                        
-
+# ==========================================================
+# 3. CREATE NEW POSTGRESQL
+# ==========================================================
 
 echo
-echo "============================================================"
-echo "13. CURRENT CLOUD RUN SERVICES"
-echo "============================================================"
+echo "=========================================================="
+echo "[3/10] CREATE POSTGRESQL"
+echo "=========================================================="
 
-gcloud run services list \
-  --project="$PROJECT" \
-  --region="$REGION" \
-  --format="table(metadata.name,status.url,status.latestReadyRevisionName)" \
-  2>/dev/null || true
+echo "Creating bank-compliant Cloud SQL PostgreSQL instance..."
 
-
-echo
-echo "============================================================"
-echo "14. SUMMARY OF REQUIREMENTS ALREADY KNOWN"
-echo "============================================================"
-
-echo "From the bank policy rejection:"
-echo
-echo "[REQUIRED] SSL/TLS must be configured"
-echo "[REQUIRED] PostgreSQL IAM database authentication flag"
-echo "           cloudsql.iam_authentication=on"
-echo "[REQUIRED] Complex Cloud SQL password policy"
-echo "[REQUIRED] PostgreSQL audit logging"
-echo
-echo "The exact required values should appear in sections 4 and 6 above."
-echo
-echo "============================================================"
-echo " ANALYSIS COMPLETE"
-echo "============================================================"
-
-============================================================
- ROVE - BANK GCP READ-ONLY CAPABILITY / POLICY ANALYSIS
-============================================================
-
-============================================================
-1. ACTIVE ACCOUNT + PROJECT
-============================================================
-Active account:
-srujan.kumar@lloydsbanking.dev
-
-Active gcloud project:
-tactical-innovation-f2b97b
-
-Target project:
-tactical-innovation-f2b97b
-
-Project details:
-name: tactical-innovation-f2b97b
-parent:
-  id: '277028128664'
-  type: folder
-projectId: tactical-innovation-f2b97b
-projectNumber: '446065888450'
-
-============================================================
-2. ENABLED APIs
-============================================================
-NAME
-artifactregistry.googleapis.com
-iam.googleapis.com
-run.googleapis.com
-sqladmin.googleapis.com
-
-============================================================
-3. ORGANIZATION POLICIES APPLIED TO PROJECT
-============================================================
-^C
-srujan.kumar@DEV-H59N27LXKY rove % >....                                                                                                                        
-    2>&1 || true
-done
+gcloud sql instances create "$DB_INSTANCE" \
+    --project="$GCP_PROJECT" \
+    --database-version=POSTGRES_16 \
+    --edition=ENTERPRISE \
+    --tier=db-f1-micro \
+    --region="$REGION" \
+    --storage-size=10GB \
+    --storage-type=SSD \
+    --availability-type=zonal \
+    --ssl-mode=ENCRYPTED_ONLY \
+    --database-flags=cloudsql.iam_authentication=on,cloudsql.enable_pgaudit=on,pgaudit.log=all \
+    --enable-password-policy \
+    --password-policy-min-length=12 \
+    --password-policy-complexity=COMPLEXITY_DEFAULT \
+    --password-policy-disallow-username-substring \
+    --root-password="$DB_PASSWORD" \
+    --no-deletion-protection
 
 echo
-echo "4. POSTGRES 16 FLAGS"
-
-gcloud sql flags list \
-  --database-version=POSTGRES_16 \
-  --filter="name:(cloudsql.iam_authentication OR pgaudit.log OR pgaudit.log_catalog)" \
-  --format="table(name,type,allowedStringValues)" \
-  2>&1 || true
-
-echo
-echo "5. CLOUD SQL CREATE OPTIONS"
-
-gcloud sql instances create --help 2>/dev/null | \
-grep -E \
-"--edition|--tier|--ssl-mode|--require-ssl|--database-flags|--enable-password-policy|--password-policy|--root-password|--audit" \
-| head -80 || true
-
-echo
-echo "6. CURRENT SQL INSTANCES"
-
-gcloud sql instances list \
-  --project="$PROJECT" \
-  --format="table(name,databaseVersion,region,settings.edition,settings.tier)" \
-  2>&1 || true
-
-echo
-echo "============================================================"
-echo " DONE"
-echo "============================================================"
-============================================================
- ROVE - TARGETED BANK CLOUD SQL POLICY CHECK
-============================================================
-
-1. ACTIVE ACCOUNT
-srujan.kumar@lloydsbanking.dev
-
-2. PROJECT
-tactical-innovation-f2b97b
-
-3. TARGETED EFFECTIVE POLICIES
-
-------------------------------------------------------------
-customConstraints/custom.sqlSSLConfigured
-------------------------------------------------------------
-ERROR: (gcloud.org-policies.describe) HTTPError 404: <!DOCTYPE html>
-<html lang=en>
-  <meta charset=utf-8>
-  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
-  <title>Error 404 (Not Found)!!1</title>
-  <style>
-    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
-  </style>
-  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
-  <p><b>404.</b> <ins>That’s an error.</ins>
-  <p>The requested URL <code>/v2/projects/tactical-innovation-f2b97b/policies/customConstraints/custom.sqlSSLConfigured:getEffectivePolicy?alt=json</code> was not found on this server.  <ins>That’s all we know.</ins>
-
-
-------------------------------------------------------------
-customConstraints/custom.sqlIAMAuthenticationFlagsv2
-------------------------------------------------------------
-ERROR: (gcloud.org-policies.describe) HTTPError 404: <!DOCTYPE html>
-<html lang=en>
-  <meta charset=utf-8>
-  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
-  <title>Error 404 (Not Found)!!1</title>
-  <style>
-    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
-  </style>
-  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
-  <p><b>404.</b> <ins>That’s an error.</ins>
-  <p>The requested URL <code>/v2/projects/tactical-innovation-f2b97b/policies/customConstraints/custom.sqlIAMAuthenticationFlagsv2:getEffectivePolicy?alt=json</code> was not found on this server.  <ins>That’s all we know.</ins>
-
-
-------------------------------------------------------------
-customConstraints/custom.sqlRootPasswordComplexity
-------------------------------------------------------------
-ERROR: (gcloud.org-policies.describe) HTTPError 404: <!DOCTYPE html>
-<html lang=en>
-  <meta charset=utf-8>
-  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
-  <title>Error 404 (Not Found)!!1</title>
-  <style>
-    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
-  </style>
-  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
-  <p><b>404.</b> <ins>That’s an error.</ins>
-  <p>The requested URL <code>/v2/projects/tactical-innovation-f2b97b/policies/customConstraints/custom.sqlRootPasswordComplexity:getEffectivePolicy?alt=json</code> was not found on this server.  <ins>That’s all we know.</ins>
-
-
-------------------------------------------------------------
-customConstraints/custom.sqlEnsureAuditlogsconfiguredv1
-------------------------------------------------------------
-ERROR: (gcloud.org-policies.describe) HTTPError 404: <!DOCTYPE html>
-<html lang=en>
-  <meta charset=utf-8>
-  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
-  <title>Error 404 (Not Found)!!1</title>
-  <style>
-    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
-  </style>
-  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
-  <p><b>404.</b> <ins>That’s an error.</ins>
-  <p>The requested URL <code>/v2/projects/tactical-innovation-f2b97b/policies/customConstraints/custom.sqlEnsureAuditlogsconfiguredv1:getEffectivePolicy?alt=json</code> was not found on this server.  <ins>That’s all we know.</ins>
-
-
-4. POSTGRES 16 FLAGS
-WARNING: --filter : operator evaluation is changing for consistency across Google APIs.  name:pgaudit.log currently matches but will not match in the near future.  Run `gcloud topic filters` for details.
-NAME                         TYPE             ALLOWED_VALUES
-cloudsql.iam_authentication  BOOLEAN
-pgaudit.log_catalog          BOOLEAN
-pgaudit.log_client           BOOLEAN
-pgaudit.log_level            STRING           debug,debug5,debug4,debug3,debug2,debug1,info,notice,warning,log
-pgaudit.log_parameter        BOOLEAN
-pgaudit.log_relation         BOOLEAN
-pgaudit.log_rows             BOOLEAN
-pgaudit.log_statement_once   BOOLEAN
-pgaudit.log                  REPEATED_STRING  read,write,function,role,ddl,misc,all,none,-read,-write,-function,-role,-ddl,-misc,-all,-none,misc_set,-misc_set
-
-5. CLOUD SQL CREATE OPTIONS
-grep: unrecognized option `--edition|--tier|--ssl-mode|--require-ssl|--database-flags|--enable-password-policy|--password-policy|--root-password|--audit'
-usage: grep [-abcdDEFGHhIiJLlMmnOopqRSsUVvwXxZz] [-A num] [-B num] [-C[num]]
-        [-e pattern] [-f file] [--binary-files=value] [--color=when]
-        [--context[=num]] [--directories=action] [--label] [--line-buffered]
-        [--null] [pattern] [file ...]
-
-6. CURRENT SQL INSTANCES
-
-============================================================
- DONE
-============================================================
-srujan.kumar@DEV-H59N27LXKY rove % >....                                                                                                                        
-  --edition=ENTERPRISE \
-  --tier=db-f1-micro \
-  --region="$REGION" \
-  --storage-size=10GB \
-  --storage-type=SSD \
-  --availability-type=zonal \
-  --ssl-mode=ENCRYPTED_ONLY \
-  --database-flags=cloudsql.iam_authentication=on,pgaudit.log=all \
-  --enable-password-policy \
-  --password-policy-min-length=12 \
-  --password-policy-complexity=COMPLEXITY_DEFAULT \
-  --password-policy-disallow-username-substring \
-  --root-password="$ROOT_PASSWORD" \
-  --no-deletion-protection
-
-echo
-echo "=================================================="
-echo " INSTANCE CREATED"
-echo "=================================================="
-
-gcloud sql instances describe "$DB_INSTANCE" \
-  --project="$PROJECT" \
-  --format="yaml(
-    name,
-    databaseVersion,
-    region,
-    settings.edition,
-    settings.tier,
-    settings.ipConfiguration.sslMode,
-    settings.databaseFlags,
-    settings.passwordValidationPolicy
-  )"
-zsh: command not found: #
-==================================================
- DELETE PREVIOUS TEST INSTANCE IF PRESENT
-==================================================
-
-==================================================
- CREATE BANK-COMPLIANT POSTGRESQL
-==================================================
-ERROR: (gcloud.sql.instances.create) HTTPError 400: Invalid request: Operation denied by org policy on resource 'projects/tactical-innovation-f2b97b': ["customConstraints/custom.sqlEnsureAuditlogsconfiguredv1": "  Ensure Audit Logs are configured for SQL Server and PostgreSQL Server
-"]..
-
-==================================================
- INSTANCE CREATED
-==================================================
-ERROR: (gcloud.sql.instances.describe) HTTPError 404: The Cloud SQL instance does not exist. This command is authenticated as srujan.kumar@lloydsbanking.dev which is the active account specified by the [core/account] property.
+echo "PostgreSQL instance created successfully."
