@@ -1,9 +1,47 @@
-============================================================
-[10/10] DEPLOY WEB
-============================================================
-Deploying container to Cloud Run service [rove-web] in project [tactical-innovation-f2b97b] region [europe-west1]
-X Deploying new service...                                                     
-  . Creating Revision...                                                       
-  . Routing traffic...                                                         
-Deployment failed                                                              
-ERROR: (gcloud.run.deploy) spec.template.spec.containers.resources.limits.memory: Invalid value specified for memory. Total memory < 512 Mi isnot supported with gen2 execution environment.
+cd /Users/srujan.kumar/Documents/git/rove
+
+PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
+WEB_SERVICE="rove-web"
+DEPLOYMENT_ID="$(date +%Y%m%d-%H%M%S)"
+
+WEB_IMAGE="$(gcloud artifacts docker images list \
+  "europe-west1-docker.pkg.dev/${PROJECT}/cloud-run-source-deploy/rove-web" \
+  --project="$PROJECT" \
+  --include-tags \
+  --sort-by="~UPDATE_TIME" \
+  --limit=1 \
+  --format='value(IMAGE)')"
+
+echo "Using image:"
+echo "$WEB_IMAGE"
+
+gcloud run deploy "$WEB_SERVICE" \
+  --project="$PROJECT" \
+  --region="$REGION" \
+  --platform=managed \
+  --execution-environment=gen2 \
+  --image="$WEB_IMAGE" \
+  --port=8080 \
+  --memory=512Mi \
+  --cpu=1 \
+  --min=0 \
+  --max=2 \
+  --set-env-vars="DEPLOYMENT_ID=${DEPLOYMENT_ID}" \
+  --no-invoker-iam-check \
+  --quiet
+
+WEB_URL="$(gcloud run services describe "$WEB_SERVICE" \
+  --project="$PROJECT" \
+  --region="$REGION" \
+  --format='value(status.url)')"
+
+echo
+echo "ROVE Web URL:"
+echo "$WEB_URL"
+
+echo
+echo "Web health:"
+curl -s -o /dev/null \
+  -w "HTTP %{http_code}\n" \
+  "$WEB_URL/"
