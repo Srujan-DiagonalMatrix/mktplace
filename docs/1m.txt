@@ -1,8 +1,3 @@
-
-# ============================================================
-# CREATE 2) install-rove-gcp.sh
-# ============================================================
-
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -73,6 +68,11 @@ command -v npm >/dev/null || {
 
 command -v python3 >/dev/null || {
   echo "ERROR: python3 not installed"
+  exit 1
+}
+
+command -v curl >/dev/null || {
+  echo "ERROR: curl not installed"
   exit 1
 }
 
@@ -377,11 +377,9 @@ API_URL="$(gcloud run services describe "$API_SERVICE" \
   --region="$REGION" \
   --format='value(status.url)')"
 
-
 echo
 echo "API URL:"
 echo "$API_URL"
-
 
 echo
 echo "Testing API..."
@@ -395,7 +393,6 @@ API_STATUS="$(curl \
   "$API_URL/docs" || true)"
 
 echo "FastAPI HTTP: $API_STATUS"
-
 
 if [ "$API_STATUS" != "200" ]; then
 
@@ -415,7 +412,6 @@ if [ "$API_STATUS" != "200" ]; then
 
   exit 1
 fi
-
 
 echo
 echo "Database health:"
@@ -523,6 +519,17 @@ docker buildx build \
   "$WEB_BUILD_DIR"
 
 
+echo
+echo "Verifying pushed Web image..."
+
+gcloud artifacts docker images describe "$WEB_VERSION_IMAGE" \
+  --project="$PROJECT" \
+  >/dev/null
+
+echo "Web image verified:"
+echo "$WEB_VERSION_IMAGE"
+
+
 # ============================================================
 # 10. DEPLOY WEB
 # ============================================================
@@ -532,6 +539,9 @@ echo "============================================================"
 echo "[10/10] DEPLOY WEB"
 echo "============================================================"
 
+echo "Deploying exact tagged image:"
+echo "$WEB_VERSION_IMAGE"
+
 gcloud run deploy "$WEB_SERVICE" \
   --project="$PROJECT" \
   --region="$REGION" \
@@ -539,7 +549,8 @@ gcloud run deploy "$WEB_SERVICE" \
   --execution-environment=gen2 \
   --image="$WEB_VERSION_IMAGE" \
   --port=8080 \
-  --memory=256Mi \
+  --timeout=300 \
+  --memory=512Mi \
   --cpu=1 \
   --min=0 \
   --max=2 \
@@ -553,6 +564,16 @@ WEB_URL="$(gcloud run services describe "$WEB_SERVICE" \
   --region="$REGION" \
   --format='value(status.url)')"
 
+
+if [ -z "$WEB_URL" ]; then
+  echo "ERROR: Unable to obtain rove-web URL."
+  exit 1
+fi
+
+
+# ============================================================
+# FINAL TESTS
+# ============================================================
 
 echo
 echo "============================================================"
@@ -598,7 +619,14 @@ echo
 echo "Website:"
 echo "$WEB_URL"
 echo
+echo "API Image:"
+echo "$API_VERSION_IMAGE"
+echo
+echo "Web Image:"
+echo "$WEB_VERSION_IMAGE"
+echo
 echo "============================================================"
+
 
 rm -f server/Dockerfile.gcp
 rm -rf "$WEB_BUILD_DIR"
