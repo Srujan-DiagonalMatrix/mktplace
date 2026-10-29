@@ -1,32 +1,69 @@
-============================================================
-1. ACTIVE ACCOUNT + PROJECT
-============================================================
-Active account:
-srujan.kumar@lloydsbanking.dev
+PROJECT="tactical-innovation-f2b97b"
 
-Active gcloud project:
-tactical-innovation-f2b97b
+CONSTRAINTS=(
+  "customConstraints/custom.sqlSSLConfigured"
+  "customConstraints/custom.sqlIAMAuthenticationFlagsv2"
+  "customConstraints/custom.sqlRootPasswordComplexity"
+  "customConstraints/custom.sqlEnsureAuditlogsconfiguredv1"
+)
 
-Target project:
-tactical-innovation-f2b97b
+echo "============================================================"
+echo " ROVE - TARGETED BANK CLOUD SQL POLICY CHECK"
+echo "============================================================"
 
-Project details:
-name: tactical-innovation-f2b97b
-parent:
-  id: '277028128664'
-  type: folder
-projectId: tactical-innovation-f2b97b
-projectNumber: '446065888450'
+echo
+echo "1. ACTIVE ACCOUNT"
+gcloud auth list \
+  --filter=status:ACTIVE \
+  --format="value(account)"
 
-============================================================
-2. ENABLED APIs
-============================================================
-NAME
-artifactregistry.googleapis.com
-iam.googleapis.com
-run.googleapis.com
-sqladmin.googleapis.com
+echo
+echo "2. PROJECT"
+gcloud config get-value project
 
-============================================================
-3. ORGANIZATION POLICIES APPLIED TO PROJECT
-============================================================
+echo
+echo "3. TARGETED EFFECTIVE POLICIES"
+
+for C in "${CONSTRAINTS[@]}"
+do
+  echo
+  echo "------------------------------------------------------------"
+  echo "$C"
+  echo "------------------------------------------------------------"
+
+  gcloud org-policies describe "$C" \
+    --project="$PROJECT" \
+    --effective \
+    --format=yaml \
+    2>&1 || true
+done
+
+echo
+echo "4. POSTGRES 16 FLAGS"
+
+gcloud sql flags list \
+  --database-version=POSTGRES_16 \
+  --filter="name:(cloudsql.iam_authentication OR pgaudit.log OR pgaudit.log_catalog)" \
+  --format="table(name,type,allowedStringValues)" \
+  2>&1 || true
+
+echo
+echo "5. CLOUD SQL CREATE OPTIONS"
+
+gcloud sql instances create --help 2>/dev/null | \
+grep -E \
+"--edition|--tier|--ssl-mode|--require-ssl|--database-flags|--enable-password-policy|--password-policy|--root-password|--audit" \
+| head -80 || true
+
+echo
+echo "6. CURRENT SQL INSTANCES"
+
+gcloud sql instances list \
+  --project="$PROJECT" \
+  --format="table(name,databaseVersion,region,settings.edition,settings.tier)" \
+  2>&1 || true
+
+echo
+echo "============================================================"
+echo " DONE"
+echo "============================================================"
