@@ -9,7 +9,7 @@ TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 
 API_IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/rove-api:${TIMESTAMP}"
 
-echo "=== CREATE CLOUD RUN API DOCKERFILE ==="
+echo "=== CREATE CLOUD RUN API DOCKERFILE ====="
 
 cat > server/Dockerfile.gcp <<'EOF'
 FROM python:3.12-slim
