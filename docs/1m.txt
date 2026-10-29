@@ -1,165 +1,98 @@
-============================================================
- MINIMAL CLOUD RUN CREATE TEST
-============================================================
-DEBUG: Running [gcloud.run.deploy] with arguments: [--image: "europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-api:20261029-142016", --no-invoker-iam-check: "False", --platform: "managed", --port: "8080", --project: "tactical-innovation-f2b97b", --quiet: "True", --region: "europe-west1", --verbosity: "debug", SERVICE: "rove-api"]
-DEBUG: On GCE from memory cache: False
-DEBUG: On GCE from memory cache: False
-DEBUG: Starting new HTTPS connection (1): serviceusage.googleapis.com:443
-DEBUG: https://serviceusage.googleapis.com:443 "GET /v1/projects/tactical-innovation-f2b97b/services/run.googleapis.com?alt=json HTTP/1.1" 200None
-DEBUG: On GCE from memory cache: False
-DEBUG: On GCE from memory cache: False
-DEBUG: On GCE from memory cache: False
-DEBUG: Starting new HTTPS connection (1): europe-west1-run.googleapis.com:443
-DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 404 None
-Deploying container to Cloud Run service [rove-api] in project [tactical-innovation-f2b97b] region [europe-west1]
-Deploying new service...
-DEBUG: https://europe-west1-run.googleapis.com:443 "POST /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services?alt=json HTTP/1.1" 200 None
-Creating Revision......DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-............DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-..done
-Routing traffic..............DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-............DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-..........DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-...........DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-...........DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-failed
-Deployment failed
-DEBUG: (gcloud.run.deploy) The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+cd /Users/srujan.kumar/Documents/git/rove
 
-Logs URL: https://console.cloud.google.com/logs/viewer?project=tactical-innovation-f2b97b&resource=cloud_run_revision/service_name/rove-api/revision_name/rove-api-00001-njv&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22rove-api%22%0Aresource.labels.revision_name%3D%22rove-api-00001-njv%22 
-For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start
-Traceback (most recent call last):
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/calliope/cli.py", line 941, in Execute
-    resources = calliope_command.Run(cli=self, args=args)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/calliope/backend.py", line 968, in Run
-    resources = command_instance.Run(args)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/surface/run/deploy.py", line 1168, in Run
-    service, records = _ReleaseService(changes)
-                       ~~~~~~~~~~~~~~~^^^^^^^^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/surface/run/deploy.py", line 1109, in _ReleaseService
-    released_service = operations.ReleaseService(
-        service_ref,
-    ...<33 lines>...
-        **kwargs
-    )
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/serverless_operations.py", line 1155, in ReleaseService
-    self.WaitForCondition(poller)
-    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/serverless_operations.py", line 281, in WaitForCondition
-    return waiter.PollUntilDone(poller, None, wait_ceiling_ms=1000)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/api_lib/util/waiter.py", line 319, in PollUntilDone
-    operation = retryer.RetryOnResult(
-        func=poller.Poll,
-        args=(operation_ref,),
-        should_retry_if=_IsNotDone,
-        sleep_ms=sleep_ms)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/core/util/retry.py", line 236, in RetryOnResult
-    result = func(*args, **kwargs)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/op_pollers.py", line 175, in Poll
-    self._PollTerminalSubconditions(conditions, conditions_message)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/op_pollers.py", line 155, in _PollTerminalSubconditions
-    self._PossiblyFailStage(condition, message)
-    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/op_pollers.py", line 277, in _PossiblyFailStage
-    self._tracker.FailStage(
-    ~~~~~~~~~~~~~~~~~~~~~~~^
-        condition, self._resource_fail_type(message), message
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/core/console/progress_tracker.py", line 937, in FailStage
-    raise failure_exception  # pylint: disable=raising-bad-type
-    ^^^^^^^^^^^^^^^^^^^^^^^
-googlecloudsdk.command_lib.run.exceptions.DeploymentFailedError: The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
 
-Logs URL: https://console.cloud.google.com/logs/viewer?project=tactical-innovation-f2b97b&resource=cloud_run_revision/service_name/rove-api/revision_name/rove-api-00001-njv&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22rove-api%22%0Aresource.labels.revision_name%3D%22rove-api-00001-njv%22 
-For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start
-ERROR: (gcloud.run.deploy) The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+SERVICE="rove-api"
 
-Logs URL: https://console.cloud.google.com/logs/viewer?project=tactical-innovation-f2b97b&resource=cloud_run_revision/service_name/rove-api/revision_name/rove-api-00001-njv&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22rove-api%22%0Aresource.labels.revision_name%3D%22rove-api-00001-njv%22 
-For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start
+DB_INSTANCE="rove-postgres"
+DB_NAME="rove"
+DB_USER="postgres"
+DB_PASSWORD='RovePov#2026Secure!'
 
-============================================================
- LAST 100 DEBUG LINES
-============================================================
-DEBUG: Running [gcloud.run.deploy] with arguments: [--image: "europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-api:20261029-142016", --no-invoker-iam-check: "False", --platform: "managed", --port: "8080", --project: "tactical-innovation-f2b97b", --quiet: "True", --region: "europe-west1", --verbosity: "debug", SERVICE: "rove-api"]
-DEBUG: On GCE from memory cache: False
-DEBUG: On GCE from memory cache: False
-DEBUG: Starting new HTTPS connection (1): serviceusage.googleapis.com:443
-DEBUG: https://serviceusage.googleapis.com:443 "GET /v1/projects/tactical-innovation-f2b97b/services/run.googleapis.com?alt=json HTTP/1.1" 200None
-DEBUG: On GCE from memory cache: False
-DEBUG: On GCE from memory cache: False
-DEBUG: On GCE from memory cache: False
-DEBUG: Starting new HTTPS connection (1): europe-west1-run.googleapis.com:443
-DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 404 None
-Deploying container to Cloud Run service [rove-api] in project [tactical-innovation-f2b97b] region [europe-west1]
-Deploying new service...
-DEBUG: https://europe-west1-run.googleapis.com:443 "POST /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services?alt=json HTTP/1.1" 200 None
-Creating Revision......DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-............DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-..done
-Routing traffic..............DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-............DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-..........DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-...........DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-...........DEBUG: https://europe-west1-run.googleapis.com:443 "GET /apis/serving.knative.dev/v1/namespaces/tactical-innovation-f2b97b/services/rove-api?alt=json HTTP/1.1" 200 None
-failed
-Deployment failed
-DEBUG: (gcloud.run.deploy) The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+IMAGE="europe-west1-docker.pkg.dev/tactical-innovation-f2b97b/cloud-run-source-deploy/rove-api:20261029-142016"
 
-Logs URL: https://console.cloud.google.com/logs/viewer?project=tactical-innovation-f2b97b&resource=cloud_run_revision/service_name/rove-api/revision_name/rove-api-00001-njv&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22rove-api%22%0Aresource.labels.revision_name%3D%22rove-api-00001-njv%22 
-For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start
-Traceback (most recent call last):
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/calliope/cli.py", line 941, in Execute
-    resources = calliope_command.Run(cli=self, args=args)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/calliope/backend.py", line 968, in Run
-    resources = command_instance.Run(args)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/surface/run/deploy.py", line 1168, in Run
-    service, records = _ReleaseService(changes)
-                       ~~~~~~~~~~~~~~~^^^^^^^^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/surface/run/deploy.py", line 1109, in _ReleaseService
-    released_service = operations.ReleaseService(
-        service_ref,
-    ...<33 lines>...
-        **kwargs
-    )
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/serverless_operations.py", line 1155, in ReleaseService
-    self.WaitForCondition(poller)
-    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/serverless_operations.py", line 281, in WaitForCondition
-    return waiter.PollUntilDone(poller, None, wait_ceiling_ms=1000)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/api_lib/util/waiter.py", line 319, in PollUntilDone
-    operation = retryer.RetryOnResult(
-        func=poller.Poll,
-        args=(operation_ref,),
-        should_retry_if=_IsNotDone,
-        sleep_ms=sleep_ms)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/core/util/retry.py", line 236, in RetryOnResult
-    result = func(*args, **kwargs)
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/op_pollers.py", line 175, in Poll
-    self._PollTerminalSubconditions(conditions, conditions_message)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/op_pollers.py", line 155, in _PollTerminalSubconditions
-    self._PossiblyFailStage(condition, message)
-    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/command_lib/run/op_pollers.py", line 277, in _PossiblyFailStage
-    self._tracker.FailStage(
-    ~~~~~~~~~~~~~~~~~~~~~~~^
-        condition, self._resource_fail_type(message), message
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/srujan.kumar/google-cloud-sdk/lib/googlecloudsdk/core/console/progress_tracker.py", line 937, in FailStage
-    raise failure_exception  # pylint: disable=raising-bad-type
-    ^^^^^^^^^^^^^^^^^^^^^^^
-googlecloudsdk.command_lib.run.exceptions.DeploymentFailedError: The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
 
-Logs URL: https://console.cloud.google.com/logs/viewer?project=tactical-innovation-f2b97b&resource=cloud_run_revision/service_name/rove-api/revision_name/rove-api-00001-njv&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22rove-api%22%0Aresource.labels.revision_name%3D%22rove-api-00001-njv%22 
-For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start
-ERROR: (gcloud.run.deploy) The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+echo "============================================================"
+echo "1. GET CLOUD SQL CONNECTION"
+echo "============================================================"
 
-Logs URL: https://console.cloud.google.com/logs/viewer?project=tactical-innovation-f2b97b&resource=cloud_run_revision/service_name/rove-api/revision_name/rove-api-00001-njv&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22rove-api%22%0Aresource.labels.revision_name%3D%22rove-api-00001-njv%22 
-For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start
+CONNECTION_NAME="$(gcloud sql instances describe "$DB_INSTANCE" \
+  --project="$PROJECT" \
+  --format='value(connectionName)')"
+
+echo "$CONNECTION_NAME"
+
+
+echo
+echo "============================================================"
+echo "2. URL-ENCODE PASSWORD"
+echo "============================================================"
+
+DB_PASSWORD_URL="$(
+  DB_PASSWORD="$DB_PASSWORD" python3 <<'PY'
+import os
+from urllib.parse import quote
+print(quote(os.environ["DB_PASSWORD"], safe=""))
+PY
+)"
+
+DATABASE_URL="postgresql+psycopg://${DB_USER}:${DB_PASSWORD_URL}@/${DB_NAME}?host=/cloudsql/${CONNECTION_NAME}"
+
+
+echo
+echo "============================================================"
+echo "3. GET SERVICE ACCOUNT"
+echo "============================================================"
+
+PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" \
+  --format='value(projectNumber)')"
+
+SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+
+echo "$SERVICE_ACCOUNT"
+
+
+echo
+echo "============================================================"
+echo "4. DEPLOY API WITH DATABASE"
+echo "============================================================"
+
+gcloud run deploy "$SERVICE" \
+  --project="$PROJECT" \
+  --region="$REGION" \
+  --platform=managed \
+  --image="$IMAGE" \
+  --port=8080 \
+  --add-cloudsql-instances="$CONNECTION_NAME" \
+  --service-account="$SERVICE_ACCOUNT" \
+  --set-env-vars="DATABASE_URL=${DATABASE_URL},APP_ENV=production" \
+  --no-invoker-iam-check \
+  --quiet \
+  --verbosity=debug
+
+
+echo
+echo "============================================================"
+echo "5. TEST API"
+echo "============================================================"
+
+API_URL="$(gcloud run services describe "$SERVICE" \
+  --project="$PROJECT" \
+  --region="$REGION" \
+  --format='value(status.url)')"
+
+echo "API URL:"
+echo "$API_URL"
+
+echo
+echo "Docs:"
+curl -s -o /dev/null \
+  -w "HTTP %{http_code}\n" \
+  "$API_URL/docs"
+
+echo
+echo "Database health:"
+curl -s "$API_URL/api/health"
+
+echo
