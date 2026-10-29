@@ -1,13 +1,30 @@
-============================================================
-[7/10] DEPLOY API
-============================================================
-Deploying container to Cloud Run service [rove-api] in project [tactical-innovation-f2b97b] region [europe-west1]
-X Deploying new service...                                                     
-  - Creating Revision...                                                       
-  . Routing traffic...                                                         
-Deployment failed                                                              
-ERROR: (gcloud.run.deploy) The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
+SERVICE="rove-api"
+REVISION="rove-api-00001-46g"
 
-Logs URL: https://console.cloud.google.com/logs/viewer?project=tactical-innovation-f2b97b&resource=cloud_run_revision/service_name/rove-api/revision_name/rove-api-00001-46g&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22rove-api%22%0Aresource.labels.revision_name%3D%22rove-api-00001-46g%22 
-For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start
-srujan.kumar@DEV-H59N27LXKY rove % 
+echo "============================================================"
+echo " ROVE API STARTUP LOGS"
+echo "============================================================"
+
+gcloud logging read \
+  "resource.type=cloud_run_revision AND \
+resource.labels.service_name=${SERVICE} AND \
+resource.labels.revision_name=${REVISION}" \
+  --project="$PROJECT" \
+  --freshness=1h \
+  --limit=200 \
+  --order=asc \
+  --format="value(timestamp,severity,textPayload)"
+
+
+
+gcloud logging read \
+  "resource.type=cloud_run_revision AND \
+resource.labels.service_name=rove-api AND \
+resource.labels.revision_name=rove-api-00001-46g" \
+  --project="tactical-innovation-f2b97b" \
+  --freshness=1h \
+  --limit=200 \
+  --order=asc \
+  --format=json
