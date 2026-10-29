@@ -1,50 +1,41 @@
-cd /Users/srujan.kumar/Documents/git/rove
+============================================================
+1. CHECK ALEMBIC FIX
+============================================================
+12-database_url = os.getenv("DATABASE_URL")
+13-if database_url:
+14:    config.set_main_option(
+15-    "sqlalchemy.url",
+16-    database_url.replace("%", "%%")
+17-)
+18-
 
-echo "============================================================"
-echo "1. CHECK ALEMBIC FIX"
-echo "============================================================"
+============================================================
+2. CHECK CLEANUP SCRIPT
+============================================================
+ls: cleanup-rove-gcp.sh: No such file or directory
 
-grep -n -A4 -B2 "set_main_option" server/alembic/env.py || true
+============================================================
+3. CHECK INSTALL SCRIPT
+============================================================
+ls: install-rove-gcp.sh: No such file or directory
 
-echo
-echo "============================================================"
-echo "2. CHECK CLEANUP SCRIPT"
-echo "============================================================"
+============================================================
+4. CHECK CLOUD RUN
+============================================================
+NAME      URL
+rove-api
 
-ls -l cleanup-rove-gcp.sh || true
+============================================================
+5. CHECK CLOUD SQL
+============================================================
+NAME           STATUS    REGION
+rove-postgres  RUNNABLE  europe-west1
 
-echo
-echo "============================================================"
-echo "3. CHECK INSTALL SCRIPT"
-echo "============================================================"
+============================================================
+6. CHECK ARTIFACT REGISTRY
+============================================================
+Listing items under project tactical-innovation-f2b97b, location europe-west1.
 
-ls -l install-rove-gcp.sh || true
-
-echo
-echo "============================================================"
-echo "4. CHECK CLOUD RUN"
-echo "============================================================"
-
-gcloud run services list \
-  --project=tactical-innovation-f2b97b \
-  --region=europe-west1 \
-  --format="table(metadata.name,status.url)" || true
-
-echo
-echo "============================================================"
-echo "5. CHECK CLOUD SQL"
-echo "============================================================"
-
-gcloud sql instances list \
-  --project=tactical-innovation-f2b97b \
-  --format="table(name,state,region)" || true
-
-echo
-echo "============================================================"
-echo "6. CHECK ARTIFACT REGISTRY"
-echo "============================================================"
-
-gcloud artifacts repositories list \
-  --project=tactical-innovation-f2b97b \
-  --location=europe-west1 \
-  --format="table(name,format)" || true
+REPOSITORY               FORMAT
+cloud-run-source-deploy  DOCKER
+srujan.kumar@DEV-H59N27LXKY rove % 
