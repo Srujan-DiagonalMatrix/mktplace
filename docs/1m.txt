@@ -163,4 +163,3 @@ ERROR: (gcloud.run.deploy) The user-provided container failed to start and liste
 
 Logs URL: https://console.cloud.google.com/logs/viewer?project=tactical-innovation-f2b97b&resource=cloud_run_revision/service_name/rove-api/revision_name/rove-api-00001-njv&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22rove-api%22%0Aresource.labels.revision_name%3D%22rove-api-00001-njv%22 
 For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start
-srujan.kumar@DEV-H59N27LXKY rove % 
