@@ -2,20 +2,20 @@
 set -euo pipefail
 
 # ==========================================================
-# ROVE - FULL RESET + GCP DEPLOYMENT
+# ROVE - GCP DEPLOYMENT
 #
-# PoV behaviour:
-#   1. Delete existing ROVE Cloud Run services
-#   2. Delete existing ROVE PostgreSQL instance
-#   3. Create fresh PostgreSQL
-#   4. Create database
-#   5. Deploy API
-#   6. Run Alembic migrations automatically
-#   7. Build React
-#   8. Deploy Web
+# Behaviour:
+#   1. Keep existing PostgreSQL data
+#   2. Create PostgreSQL only if it does not exist
+#   3. Ensure ROVE database exists
+#   4. Build + deploy API
+#   5. Run Alembic migrations automatically
+#   6. Build React
+#   7. Build + deploy Web
+#   8. Test API, DB and Web
 #
-# WARNING:
-#   THIS SCRIPT DELETES ALL EXISTING ROVE DATABASE DATA.
+# NOTE:
+#   Existing database is NEVER deleted by this script.
 # ==========================================================
 
 
@@ -39,7 +39,7 @@ DB_INSTANCE="rove-postgres"
 DB_NAME="rove"
 DB_USER="postgres"
 
-# 19 characters, upper/lower/numeric/special
+# PoV password - >12 chars, uppercase/lowercase/numeric/special
 DB_PASSWORD="RovePov#2026Secure!"
 
 DEPLOYMENT_ID="$(date +%Y%m%d-%H%M%S)"
@@ -49,12 +49,12 @@ cd "$PROJECT_DIR"
 
 echo
 echo "=========================================================="
-echo " ROVE FULL RESET + DEPLOYMENT"
+echo " ROVE GCP DEPLOYMENT"
 echo "=========================================================="
 echo "Deployment ID : $DEPLOYMENT_ID"
 echo "Project       : $GCP_PROJECT"
 echo "Region        : $REGION"
-echo "Database      : $DB_INSTANCE"
+echo "DB Instance   : $DB_INSTANCE"
 echo "=========================================================="
 
 
@@ -63,17 +63,17 @@ echo "=========================================================="
 # ==========================================================
 
 command -v gcloud >/dev/null 2>&1 || {
-    echo "ERROR: gcloud CLI not installed."
+    echo "ERROR: gcloud CLI is not installed."
     exit 1
 }
 
 command -v docker >/dev/null 2>&1 || {
-    echo "ERROR: Docker not installed."
+    echo "ERROR: Docker is not installed."
     exit 1
 }
 
 command -v npm >/dev/null 2>&1 || {
-    echo "ERROR: npm not installed."
+    echo "ERROR: npm is not installed."
     exit 1
 }
 
@@ -89,7 +89,7 @@ docker info >/dev/null 2>&1 || {
 
 echo
 echo "=========================================================="
-echo "[0/10] GCP AUTHENTICATION"
+echo "[0/9] GCP AUTHENTICATION"
 echo "=========================================================="
 
 if ! gcloud auth print-access-token >/dev/null 2>&1; then
@@ -98,7 +98,7 @@ fi
 
 gcloud config set project "$GCP_PROJECT" >/dev/null
 
-echo "Enabling required GCP APIs..."
+echo "Enabling required APIs..."
 
 gcloud services enable \
     run.googleapis.com \
@@ -113,53 +113,12 @@ gcloud auth configure-docker \
 
 
 # ==========================================================
-# 1. DELETE EXISTING ROVE SERVICES
+# 1. CHECK / CREATE POSTGRESQL
 # ==========================================================
 
 echo
 echo "=========================================================="
-echo "[1/10] DELETE EXISTING ROVE SERVICES"
-echo "=========================================================="
-
-if gcloud run services describe "$WEB_SERVICE" \
-    --project="$GCP_PROJECT" \
-    --region="$REGION" \
-    >/dev/null 2>&1
-then
-    echo "Deleting existing web service: $WEB_SERVICE"
-
-    gcloud run services delete "$WEB_SERVICE" \
-        --project="$GCP_PROJECT" \
-        --region="$REGION" \
-        --quiet
-else
-    echo "No existing $WEB_SERVICE service found."
-fi
-
-
-if gcloud run services describe "$API_SERVICE" \
-    --project="$GCP_PROJECT" \
-    --region="$REGION" \
-    >/dev/null 2>&1
-then
-    echo "Deleting existing API service: $API_SERVICE"
-
-    gcloud run services delete "$API_SERVICE" \
-        --project="$GCP_PROJECT" \
-        --region="$REGION" \
-        --quiet
-else
-    echo "No existing $API_SERVICE service found."
-fi
-
-
-# ==========================================================
-# 2. DELETE EXISTING POSTGRESQL
-# ==========================================================
-
-echo
-echo "=========================================================="
-echo "[2/10] DELETE EXISTING POSTGRESQL"
+echo "[1/9] CHECK POSTGRESQL"
 echo "=========================================================="
 
 if gcloud sql instances describe "$DB_INSTANCE" \
@@ -167,77 +126,69 @@ if gcloud sql instances describe "$DB_INSTANCE" \
     >/dev/null 2>&1
 then
 
-    echo "Existing database found: $DB_INSTANCE"
-
-    echo "Disabling deletion protection..."
-
-    gcloud sql instances patch "$DB_INSTANCE" \
-        --project="$GCP_PROJECT" \
-        --no-deletion-protection \
-        --quiet \
-        >/dev/null 2>&1 || true
-
-    echo "Deleting Cloud SQL instance..."
-
-    gcloud sql instances delete "$DB_INSTANCE" \
-        --project="$GCP_PROJECT" \
-        --no-enable-final-backup \
-        --quiet
-
-    echo "Existing database deleted."
+    echo "Existing PostgreSQL instance found:"
+    echo "$DB_INSTANCE"
+    echo
+    echo "Database will be preserved."
 
 else
-    echo "No existing PostgreSQL instance found."
+
+    echo "PostgreSQL instance not found."
+    echo "Creating bank-compliant PostgreSQL..."
+
+    gcloud sql instances create "$DB_INSTANCE" \
+        --project="$GCP_PROJECT" \
+        --database-version=POSTGRES_16 \
+        --edition=ENTERPRISE \
+        --tier=db-f1-micro \
+        --region="$REGION" \
+        --storage-size=10GB \
+        --storage-type=SSD \
+        --availability-type=zonal \
+        --ssl-mode=ENCRYPTED_ONLY \
+        --database-flags=cloudsql.iam_authentication=on,cloudsql.enable_pgaudit=on,pgaudit.log=all \
+        --enable-password-policy \
+        --password-policy-min-length=12 \
+        --password-policy-complexity=COMPLEXITY_DEFAULT \
+        --password-policy-disallow-username-substring \
+        --root-password="$DB_PASSWORD" \
+        --no-deletion-protection
+
+    echo
+    echo "PostgreSQL created successfully."
+
 fi
 
 
 # ==========================================================
-# 3. CREATE BANK-COMPLIANT POSTGRESQL
+# 2. CHECK / CREATE ROVE DATABASE
 # ==========================================================
 
 echo
 echo "=========================================================="
-echo "[3/10] CREATE POSTGRESQL"
+echo "[2/9] CHECK ROVE DATABASE"
 echo "=========================================================="
 
-echo "Creating bank-compliant Cloud SQL PostgreSQL instance..."
-
-gcloud sql instances create "$DB_INSTANCE" \
-    --project="$GCP_PROJECT" \
-    --database-version=POSTGRES_16 \
-    --edition=ENTERPRISE \
-    --tier=db-f1-micro \
-    --region="$REGION" \
-    --storage-size=10GB \
-    --storage-type=SSD \
-    --availability-type=zonal \
-    --ssl-mode=ENCRYPTED_ONLY \
-    --database-flags=cloudsql.iam_authentication=on,cloudsql.enable_pgaudit=on,pgaudit.log=all \
-    --enable-password-policy \
-    --password-policy-min-length=12 \
-    --password-policy-complexity=COMPLEXITY_DEFAULT \
-    --password-policy-disallow-username-substring \
-    --root-password="$DB_PASSWORD" \
-    --no-deletion-protection
-
-echo
-echo "PostgreSQL instance created successfully."
-
-
-# ==========================================================
-# 4. CREATE ROVE DATABASE
-# ==========================================================
-
-echo
-echo "=========================================================="
-echo "[4/10] CREATE ROVE DATABASE"
-echo "=========================================================="
-
-echo "Creating database: $DB_NAME"
-
-gcloud sql databases create "$DB_NAME" \
+if gcloud sql databases describe "$DB_NAME" \
     --instance="$DB_INSTANCE" \
-    --project="$GCP_PROJECT"
+    --project="$GCP_PROJECT" \
+    >/dev/null 2>&1
+then
+
+    echo "Database '$DB_NAME' already exists."
+    echo "Existing data will be preserved."
+
+else
+
+    echo "Database '$DB_NAME' not found."
+    echo "Creating database..."
+
+    gcloud sql databases create "$DB_NAME" \
+        --instance="$DB_INSTANCE" \
+        --project="$GCP_PROJECT"
+
+fi
+
 
 CONNECTION_NAME="$(gcloud sql instances describe "$DB_INSTANCE" \
     --project="$GCP_PROJECT" \
@@ -249,12 +200,12 @@ echo "$CONNECTION_NAME"
 
 
 # ==========================================================
-# 5. CONFIGURE CLOUD RUN ACCESS
+# 3. CONFIGURE CLOUD RUN DATABASE ACCESS
 # ==========================================================
 
 echo
 echo "=========================================================="
-echo "[5/10] CONFIGURE CLOUD SQL ACCESS"
+echo "[3/9] CONFIGURE CLOUD SQL ACCESS"
 echo "=========================================================="
 
 PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT" \
@@ -265,23 +216,22 @@ CLOUD_RUN_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 echo "Cloud Run service account:"
 echo "$CLOUD_RUN_SA"
 
-echo "Granting Cloud SQL Client role..."
-
+# Safe to run repeatedly.
 gcloud projects add-iam-policy-binding "$GCP_PROJECT" \
     --member="serviceAccount:${CLOUD_RUN_SA}" \
     --role="roles/cloudsql.client" \
     --condition=None \
     --quiet \
-    >/dev/null || true
+    >/dev/null 2>&1 || true
 
 
 # ==========================================================
-# 6. BUILD API
+# 4. BUILD API IMAGE
 # ==========================================================
 
 echo
 echo "=========================================================="
-echo "[6/10] BUILD API"
+echo "[4/9] BUILD API"
 echo "=========================================================="
 
 cat > server/Dockerfile.gcp <<'EOF'
@@ -308,14 +258,18 @@ COPY alembic.ini ./alembic.ini
 
 EXPOSE 8080
 
+# Every deployment:
+#   1. Upgrade DB schema
+#   2. Start API
+#
+# Existing data remains intact.
 CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
 EOF
 
 
 API_VERSION_IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/${API_IMAGE}:${DEPLOYMENT_ID}"
 
-echo
-echo "Building API image:"
+echo "Building:"
 echo "$API_VERSION_IMAGE"
 
 docker buildx build \
@@ -327,12 +281,12 @@ docker buildx build \
 
 
 # ==========================================================
-# 7. DEPLOY API
+# 5. DEPLOY / RESTART API
 # ==========================================================
 
 echo
 echo "=========================================================="
-echo "[7/10] DEPLOY API"
+echo "[5/9] DEPLOY API"
 echo "=========================================================="
 
 DATABASE_URL="postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@/${DB_NAME}?host=/cloudsql/${CONNECTION_NAME}"
@@ -355,17 +309,20 @@ API_URL="$(gcloud run services describe "$API_SERVICE" \
     --region="$REGION" \
     --format='value(status.url)')"
 
+
 echo
-echo "API URL:"
+echo "API deployed:"
 echo "$API_URL"
 
 echo
 echo "Testing FastAPI..."
 
+
 API_HTTP="$(curl -s \
     -o /tmp/rove-api-docs.txt \
     -w "%{http_code}" \
     "$API_URL/docs" || true)"
+
 
 echo "FastAPI /docs HTTP status: $API_HTTP"
 
@@ -373,9 +330,9 @@ echo "FastAPI /docs HTTP status: $API_HTTP"
 if [ "$API_HTTP" != "200" ]; then
 
     echo
-    echo "ERROR: API did not start successfully."
+    echo "ERROR: API deployment failed."
     echo
-    echo "Recent Cloud Run logs:"
+    echo "Recent logs:"
     echo
 
     gcloud logging read \
@@ -386,27 +343,25 @@ if [ "$API_HTTP" != "200" ]; then
         --format="value(timestamp,severity,textPayload)"
 
     exit 1
+
 fi
 
 
 echo
-echo "API running successfully."
+echo "Testing PostgreSQL..."
 
-echo
-echo "Testing database connectivity..."
+DB_HEALTH="$(curl -s "$API_URL/api/health" || true)"
 
-curl -s "$API_URL/api/health" || true
-
-echo
+echo "$DB_HEALTH"
 
 
 # ==========================================================
-# 8. BUILD REACT
+# 6. BUILD REACT
 # ==========================================================
 
 echo
 echo "=========================================================="
-echo "[8/10] BUILD REACT"
+echo "[6/9] BUILD REACT"
 echo "=========================================================="
 
 rm -rf dist
@@ -415,15 +370,25 @@ NODE_USE_SYSTEM_CA=1 npm ci
 NODE_USE_SYSTEM_CA=1 npm run build
 
 if [ ! -d "dist" ]; then
+
     echo "ERROR: React dist directory was not created."
     exit 1
+
 fi
 
-echo
 echo "React build successful."
 
 
-# Remove dist exclusions from .dockerignore
+# ==========================================================
+# 7. PREPARE WEB / NGINX
+# ==========================================================
+
+echo
+echo "=========================================================="
+echo "[7/9] PREPARE WEB"
+echo "=========================================================="
+
+# Make sure dist is available to Docker.
 if [ -f ".dockerignore" ]; then
 
 python3 <<'PY'
@@ -443,6 +408,7 @@ blocked = {
 clean = []
 
 for line in lines:
+
     value = line.strip().rstrip("/")
 
     if value in blocked:
@@ -457,16 +423,10 @@ PY
 fi
 
 
-# ==========================================================
-# 9. BUILD WEB
-# ==========================================================
+API_HOST="$(echo "$API_URL" \
+    | sed 's#https://##' \
+    | sed 's#/$##')"
 
-echo
-echo "=========================================================="
-echo "[9/10] BUILD WEB"
-echo "=========================================================="
-
-API_HOST="$(echo "$API_URL" | sed 's#https://##' | sed 's#/$##')"
 
 cat > nginx.conf.gcp <<EOF
 server {
@@ -479,7 +439,7 @@ server {
 
 
     # ------------------------------------------------------
-    # ROVE API
+    # ROVE BACKEND API
     # ------------------------------------------------------
 
     location /api/ {
@@ -494,6 +454,7 @@ server {
         proxy_set_header X-Forwarded-Proto https;
 
         proxy_pass ${API_URL}/api/;
+
     }
 
 
@@ -523,10 +484,18 @@ CMD ["nginx", "-g", "daemon off;"]
 EOF
 
 
-WEB_VERSION_IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/${WEB_IMAGE}:${DEPLOYMENT_ID}"
+# ==========================================================
+# 8. BUILD + DEPLOY WEB
+# ==========================================================
 
 echo
-echo "Building web image:"
+echo "=========================================================="
+echo "[8/9] BUILD + DEPLOY WEB"
+echo "=========================================================="
+
+WEB_VERSION_IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/${WEB_IMAGE}:${DEPLOYMENT_ID}"
+
+echo "Building:"
 echo "$WEB_VERSION_IMAGE"
 
 docker buildx build \
@@ -536,15 +505,6 @@ docker buildx build \
     --push \
     .
 
-
-# ==========================================================
-# 10. DEPLOY WEB
-# ==========================================================
-
-echo
-echo "=========================================================="
-echo "[10/10] DEPLOY WEB"
-echo "=========================================================="
 
 gcloud run deploy "$WEB_SERVICE" \
     --project="$GCP_PROJECT" \
@@ -564,30 +524,38 @@ WEB_URL="$(gcloud run services describe "$WEB_SERVICE" \
 
 
 # ==========================================================
-# FINAL TESTS
+# 9. FINAL TESTS
 # ==========================================================
 
 echo
 echo "=========================================================="
-echo " FINAL TESTS"
+echo "[9/9] FINAL TESTS"
 echo "=========================================================="
 
 echo
 echo "API:"
 curl -s -o /dev/null \
-    -w "HTTP %{http_code}\n" \
+    -w "FastAPI: HTTP %{http_code}\n" \
     "$API_URL/docs" || true
+
 
 echo
 echo "Database:"
 curl -s "$API_URL/api/health" || true
 
+
 echo
 echo
-echo "Web:"
+echo "Website:"
 curl -s -o /dev/null \
-    -w "HTTP %{http_code}\n" \
+    -w "Web: HTTP %{http_code}\n" \
     "$WEB_URL/" || true
+
+
+echo
+echo
+echo "API through Web proxy:"
+curl -s "$WEB_URL/api/health" || true
 
 
 # ==========================================================
@@ -605,8 +573,12 @@ echo "Deployment ID:"
 echo "$DEPLOYMENT_ID"
 
 echo
-echo "Cloud SQL:"
+echo "PostgreSQL:"
 echo "$DB_INSTANCE"
+
+echo
+echo "Database:"
+echo "$DB_NAME"
 
 echo
 echo "Cloud SQL connection:"
@@ -630,7 +602,7 @@ echo "$WEB_VERSION_IMAGE"
 
 echo
 echo "=========================================================="
-echo " WARNING: PREVIOUS ROVE DATABASE DATA WAS DELETED"
+echo " DATABASE DATA PRESERVED"
 echo "=========================================================="
 
 open "$WEB_URL" 2>/dev/null || true
