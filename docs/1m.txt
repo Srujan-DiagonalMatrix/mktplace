@@ -1,15 +1,3 @@
-======================================
-CURRENT ROVE API DATABASE CONFIG
-======================================
-
-  null
-
-======================================
-AVAILABLE CLOUD SQL INSTANCES
-======================================
-API [sqladmin.googleapis.com] not enabled on project 
-[tactical-innovation-f2b97b]. Would you like to enable and retry (this will take
- a few minutes)? (y/N)?  y
-
-Enabling service [sqladmin.googleapis.com] on project [tactical-innovation-f2b97b]...
-Operation "operations/acat.p2-446065888450-8e851d97-1916-4a35-a70c-768b375978ac" finished successfully.
+gcloud sql instances list \
+  --project=tactical-innovation-f2b97b \
+  --format="table(name,databaseVersion,region,connectionName,ipAddresses.ipAddress)"
