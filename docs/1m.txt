@@ -1,20 +1,15 @@
-GCP_PROJECT="tactical-innovation-f2b97b"
-REGION="europe-west1"
+======================================
+CURRENT ROVE API DATABASE CONFIG
+======================================
 
-echo "======================================"
-echo "CURRENT ROVE API DATABASE CONFIG"
-echo "======================================"
+  null
 
-gcloud run services describe rove-api \
-  --project="$GCP_PROJECT" \
-  --region="$REGION" \
-  --format="yaml(spec.template.spec.containers[0].env)"
+======================================
+AVAILABLE CLOUD SQL INSTANCES
+======================================
+API [sqladmin.googleapis.com] not enabled on project 
+[tactical-innovation-f2b97b]. Would you like to enable and retry (this will take
+ a few minutes)? (y/N)?  y
 
-echo
-echo "======================================"
-echo "AVAILABLE CLOUD SQL INSTANCES"
-echo "======================================"
-
-gcloud sql instances list \
-  --project="$GCP_PROJECT" \
-  --format="table(name,databaseVersion,region,connectionName,ipAddresses.ipAddress)"
+Enabling service [sqladmin.googleapis.com] on project [tactical-innovation-f2b97b]...
+Operation "operations/acat.p2-446065888450-8e851d97-1916-4a35-a70c-768b375978ac" finished successfully.
