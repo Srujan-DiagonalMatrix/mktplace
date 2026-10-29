@@ -1,30 +1,96 @@
-============================================================
-[1/8] CHECK EXISTING GCP SERVICES
-============================================================
-[environment: untagged] Read more to tag: g.co/cloud/project-env-tag.
-Updated property [core/project].
-PostgreSQL state: RUNNABLE
+cd /Users/srujan.kumar/Documents/git/rove
 
-Current API:
-https://rove-api-b6v6r2j77a-ew.a.run.app
+python3 <<'PY'
+from pathlib import Path
 
-Current Web:
-https://rove-web-b6v6r2j77a-ew.a.run.app
+path = Path("update-rove.sh")
+text = path.read_text()
 
-Reading existing Cloud SQL DATABASE_URL...
-Traceback (most recent call last):
-  File "<stdin>", line 4, in <module>
-  File "/opt/homebrew/Cellar/python@3.14/3.14.4_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/__init__.py", line 298, in load
-    return loads(fp.read(),
-        cls=cls, object_hook=object_hook,
-        parse_float=parse_float, parse_int=parse_int,
-        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
-  File "/opt/homebrew/Cellar/python@3.14/3.14.4_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/__init__.py", line 352, in loads
-    return _default_decoder.decode(s)
-           ~~~~~~~~~~~~~~~~~~~~~~~^^^
-  File "/opt/homebrew/Cellar/python@3.14/3.14.4_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/decoder.py", line 345, in decode
-    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
-               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/homebrew/Cellar/python@3.14/3.14.4_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/decoder.py", line 363, in raw_decode
-    raise JSONDecodeError("Expecting value", s, err.value) from None
-json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+start_marker = '# ============================================================\n# PRESERVE EXISTING DATABASE_URL\n# ============================================================'
+end_marker = '# ============================================================\n# 2. VERIFY ALEMBIC\n# ============================================================'
+
+start = text.find(start_marker)
+end = text.find(end_marker)
+
+if start == -1 or end == -1:
+    raise SystemExit("ERROR: Could not locate DATABASE_URL section in update-rove.sh")
+
+new_section = r'''# ============================================================
+# PRESERVE EXISTING DATABASE_URL
+# ============================================================
+
+echo
+echo "Reading existing Cloud SQL DATABASE_URL..."
+
+API_SERVICE_JSON="$(gcloud run services describe "$API_SERVICE" \
+  --project="$PROJECT" \
+  --region="$REGION" \
+  --format=json)"
+
+DATABASE_URL="$(
+  printf '%s' "$API_SERVICE_JSON" | python3 -c '
+import json
+import sys
+
+data = json.load(sys.stdin)
+
+containers = (
+    data.get("spec", {})
+        .get("template", {})
+        .get("spec", {})
+        .get("containers", [])
+)
+
+if not containers:
+    raise SystemExit("ERROR: rove-api container configuration not found")
+
+for item in containers[0].get("env", []):
+    if item.get("name") == "DATABASE_URL":
+        value = item.get("value", "")
+        if not value:
+            raise SystemExit("ERROR: DATABASE_URL is empty")
+        print(value)
+        break
+else:
+    raise SystemExit("ERROR: DATABASE_URL not found on existing rove-api service")
+'
+)"
+
+if [ -z "$DATABASE_URL" ]; then
+  echo "ERROR: Existing DATABASE_URL is empty."
+  exit 1
+fi
+
+echo "Existing DATABASE_URL found successfully."
+
+CONNECTION_NAME="$(gcloud sql instances describe "$DB_INSTANCE" \
+  --project="$PROJECT" \
+  --format='value(connectionName)')"
+
+echo "Cloud SQL connection:"
+echo "$CONNECTION_NAME"
+
+
+'''
+
+updated = text[:start] + new_section + text[end:]
+path.write_text(updated)
+
+print("update-rove.sh fixed successfully.")
+PY
+
+chmod +x update-rove.sh
+
+echo
+echo "============================================================"
+echo " VERIFY FIX"
+echo "============================================================"
+
+grep -n -A55 "PRESERVE EXISTING DATABASE_URL" update-rove.sh
+
+echo
+echo "============================================================"
+echo " RUN UPDATE"
+echo "============================================================"
+
+./update-rove.sh
