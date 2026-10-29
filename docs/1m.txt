@@ -1,91 +1,28 @@
-cd /Users/srujan.kumar/Documents/git/rove
+git branch: feature/rove-sync-20261028-123526
 
-GCP_PROJECT="tactical-innovation-f2b97b"
-REGION="europe-west1"
-REPOSITORY="cloud-run-source-deploy"
-API_SERVICE="rove-api"
+error:
+srujan.kumar@DEV-H59N27LXKY rove % git pull
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+srujan.kumar@DEV-H59N27LXKY rove % git status
+On branch feature/rove-sync-20261028-123526
+Your branch is up to date with 'company/feature/rove-sync-20261028-123526'.
 
-TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   .dockerignore
+        modified:   Dockerfile
+        modified:   deploy/deploy-rove-updates-gcp.sh
 
-API_IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/rove-api:${TIMESTAMP}"
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        .dockerignore.backup
+        Dockerfile.gcp
+        nginx.conf.gcp
+        server/Dockerfile.gcp
 
-echo "=== CREATE CLOUD RUN API DOCKERFILE ====="
+no changes added to commit (use "git add" and/or "git commit -a")
+srujan.kumar@DEV-H59N27LXKY rove % 
 
-cat > server/Dockerfile.gcp <<'EOF'
-FROM python:3.12-slim
 
-WORKDIR /app
-
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-COPY requirements.txt .
-
-RUN pip install \
-    --no-cache-dir \
-    --trusted-host pypi.org \
-    --trusted-host files.pythonhosted.org \
-    --trusted-host pypi.python.org \
-    -r requirements.txt
-
-COPY app ./app
-COPY scripts ./scripts
-COPY alembic ./alembic
-COPY alembic.ini ./alembic.ini
-
-EXPOSE 8080
-
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
-EOF
-
-echo
-echo "=== BUILD API IMAGE ==="
-
-gcloud config set project "$GCP_PROJECT"
-
-gcloud auth configure-docker \
-  "${REGION}-docker.pkg.dev" \
-  --quiet
-
-docker buildx build \
-  --platform linux/amd64 \
-  -f server/Dockerfile.gcp \
-  -t "$API_IMAGE" \
-  --push \
-  server
-
-echo
-echo "=== DEPLOY API ==="
-
-gcloud run deploy "$API_SERVICE" \
-  --image "$API_IMAGE" \
-  --region "$REGION" \
-  --platform managed \
-  --port 8080 \
-  --allow-unauthenticated \
-  --quiet
-
-echo
-echo "=== GET API URL ==="
-
-API_URL="$(gcloud run services describe "$API_SERVICE" \
-  --region "$REGION" \
-  --format='value(status.url)')"
-
-echo
-echo "API URL:"
-echo "$API_URL"
-
-echo
-echo "=== TEST API STARTUP ==="
-
-curl -i "$API_URL/docs" | head -20
-
-echo
-echo "=== RECENT API LOGS ==="
-
-gcloud logging read \
-  "resource.type=cloud_run_revision AND resource.labels.service_name=rove-api" \
-  --limit=30 \
-  --freshness=10m \
-  --format="value(timestamp,severity,textPayload)"
