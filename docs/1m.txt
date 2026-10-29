@@ -1,28 +1,6 @@
-git branch: feature/rove-sync-20261028-123526
-
-error:
-srujan.kumar@DEV-H59N27LXKY rove % git pull
-error: cannot pull with rebase: You have unstaged changes.
-error: Please commit or stash them.
-srujan.kumar@DEV-H59N27LXKY rove % git status
-On branch feature/rove-sync-20261028-123526
-Your branch is up to date with 'company/feature/rove-sync-20261028-123526'.
-
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
-  (use "git restore <file>..." to discard changes in working directory)
-        modified:   .dockerignore
-        modified:   Dockerfile
-        modified:   deploy/deploy-rove-updates-gcp.sh
-
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-        .dockerignore.backup
-        Dockerfile.gcp
-        nginx.conf.gcp
-        server/Dockerfile.gcp
-
-no changes added to commit (use "git add" and/or "git commit -a")
-srujan.kumar@DEV-H59N27LXKY rove % 
-
-
+.dockerignore
+Dockerfile
+deploy/deploy-rove-updates-gcp.sh
+Dockerfile.gcp
+nginx.conf.gcp
+server/Dockerfile.gcp
