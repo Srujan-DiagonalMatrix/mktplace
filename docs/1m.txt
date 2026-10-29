@@ -1,100 +1,68 @@
-BANK CLOUD SQL POLICY CHECK
-============================================================
+PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
 
-1. ACTIVE ACCOUNT
-srujan.kumar@lloydsbanking.dev
+DB_INSTANCE="rove-postgres"
 
-2. PROJECT
-tactical-innovation-f2b97b
+# Complex password for bank policy
+ROOT_PASSWORD='Rove#Pov2026!Db9'
 
-3. TARGETED EFFECTIVE POLICIES
+echo "=================================================="
+echo " DELETE PREVIOUS TEST INSTANCE IF PRESENT"
+echo "=================================================="
 
-------------------------------------------------------------
-customConstraints/custom.sqlSSLConfigured
-------------------------------------------------------------
-ERROR: (gcloud.org-policies.describe) HTTPError 404: <!DOCTYPE html>
-<html lang=en>
-  <meta charset=utf-8>
-  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
-  <title>Error 404 (Not Found)!!1</title>
-  <style>
-    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
-  </style>
-  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
-  <p><b>404.</b> <ins>That’s an error.</ins>
-  <p>The requested URL <code>/v2/projects/tactical-innovation-f2b97b/policies/customConstraints/custom.sqlSSLConfigured:getEffectivePolicy?alt=json</code> was not found on this server.  <ins>That’s all we know.</ins>
+if gcloud sql instances describe "$DB_INSTANCE" \
+  --project="$PROJECT" >/dev/null 2>&1
+then
 
+  gcloud sql instances patch "$DB_INSTANCE" \
+    --project="$PROJECT" \
+    --no-deletion-protection \
+    --quiet || true
 
-------------------------------------------------------------
-customConstraints/custom.sqlIAMAuthenticationFlagsv2
-------------------------------------------------------------
-ERROR: (gcloud.org-policies.describe) HTTPError 404: <!DOCTYPE html>
-<html lang=en>
-  <meta charset=utf-8>
-  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
-  <title>Error 404 (Not Found)!!1</title>
-  <style>
-    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
-  </style>
-  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
-  <p><b>404.</b> <ins>That’s an error.</ins>
-  <p>The requested URL <code>/v2/projects/tactical-innovation-f2b97b/policies/customConstraints/custom.sqlIAMAuthenticationFlagsv2:getEffectivePolicy?alt=json</code> was not found on this server.  <ins>That’s all we know.</ins>
+  gcloud sql instances delete "$DB_INSTANCE" \
+    --project="$PROJECT" \
+    --no-enable-final-backup \
+    --quiet
+fi
 
 
-------------------------------------------------------------
-customConstraints/custom.sqlRootPasswordComplexity
-------------------------------------------------------------
-ERROR: (gcloud.org-policies.describe) HTTPError 404: <!DOCTYPE html>
-<html lang=en>
-  <meta charset=utf-8>
-  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
-  <title>Error 404 (Not Found)!!1</title>
-  <style>
-    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
-  </style>
-  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
-  <p><b>404.</b> <ins>That’s an error.</ins>
-  <p>The requested URL <code>/v2/projects/tactical-innovation-f2b97b/policies/customConstraints/custom.sqlRootPasswordComplexity:getEffectivePolicy?alt=json</code> was not found on this server.  <ins>That’s all we know.</ins>
+echo
+echo "=================================================="
+echo " CREATE BANK-COMPLIANT POSTGRESQL"
+echo "=================================================="
 
+gcloud sql instances create "$DB_INSTANCE" \
+  --project="$PROJECT" \
+  --database-version=POSTGRES_16 \
+  --edition=ENTERPRISE \
+  --tier=db-f1-micro \
+  --region="$REGION" \
+  --storage-size=10GB \
+  --storage-type=SSD \
+  --availability-type=zonal \
+  --ssl-mode=ENCRYPTED_ONLY \
+  --database-flags=cloudsql.iam_authentication=on,pgaudit.log=all \
+  --enable-password-policy \
+  --password-policy-min-length=12 \
+  --password-policy-complexity=COMPLEXITY_DEFAULT \
+  --password-policy-disallow-username-substring \
+  --root-password="$ROOT_PASSWORD" \
+  --no-deletion-protection
 
-------------------------------------------------------------
-customConstraints/custom.sqlEnsureAuditlogsconfiguredv1
-------------------------------------------------------------
-ERROR: (gcloud.org-policies.describe) HTTPError 404: <!DOCTYPE html>
-<html lang=en>
-  <meta charset=utf-8>
-  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
-  <title>Error 404 (Not Found)!!1</title>
-  <style>
-    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
-  </style>
-  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
-  <p><b>404.</b> <ins>That’s an error.</ins>
-  <p>The requested URL <code>/v2/projects/tactical-innovation-f2b97b/policies/customConstraints/custom.sqlEnsureAuditlogsconfiguredv1:getEffectivePolicy?alt=json</code> was not found on this server.  <ins>That’s all we know.</ins>
+echo
+echo "=================================================="
+echo " INSTANCE CREATED"
+echo "=================================================="
 
-
-4. POSTGRES 16 FLAGS
-WARNING: --filter : operator evaluation is changing for consistency across Google APIs.  name:pgaudit.log currently matches but will not match in the near future.  Run `gcloud topic filters` for details.
-NAME                         TYPE             ALLOWED_VALUES
-cloudsql.iam_authentication  BOOLEAN
-pgaudit.log_catalog          BOOLEAN
-pgaudit.log_client           BOOLEAN
-pgaudit.log_level            STRING           debug,debug5,debug4,debug3,debug2,debug1,info,notice,warning,log
-pgaudit.log_parameter        BOOLEAN
-pgaudit.log_relation         BOOLEAN
-pgaudit.log_rows             BOOLEAN
-pgaudit.log_statement_once   BOOLEAN
-pgaudit.log                  REPEATED_STRING  read,write,function,role,ddl,misc,all,none,-read,-write,-function,-role,-ddl,-misc,-all,-none,misc_set,-misc_set
-
-5. CLOUD SQL CREATE OPTIONS
-grep: unrecognized option `--edition|--tier|--ssl-mode|--require-ssl|--database-flags|--enable-password-policy|--password-policy|--root-password|--audit'
-usage: grep [-abcdDEFGHhIiJLlMmnOopqRSsUVvwXxZz] [-A num] [-B num] [-C[num]]
-        [-e pattern] [-f file] [--binary-files=value] [--color=when]
-        [--context[=num]] [--directories=action] [--label] [--line-buffered]
-        [--null] [pattern] [file ...]
-
-6. CURRENT SQL INSTANCES
-
-============================================================
- DONE
-============================================================
+gcloud sql instances describe "$DB_INSTANCE" \
+  --project="$PROJECT" \
+  --format="yaml(
+    name,
+    databaseVersion,
+    region,
+    settings.edition,
+    settings.tier,
+    settings.ipConfiguration.sslMode,
+    settings.databaseFlags,
+    settings.passwordValidationPolicy
+  )"
