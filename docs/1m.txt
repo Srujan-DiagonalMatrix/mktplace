@@ -1,392 +1,60 @@
-#!/usr/bin/env bash
-set -euo pipefail
+error in UI:
+Unable to save your application.
 
-PROJECT_DIR="/Users/srujan.kumar/Documents/git/rove"
-
-GCP_PROJECT="tactical-innovation-f2b97b"
-REGION="europe-west1"
-REPOSITORY="cloud-run-source-deploy"
-
-WEB_SERVICE="rove-web"
-API_SERVICE="rove-api"
-
-WEB_IMAGE="rove-web"
-API_IMAGE="rove-api"
-
-cd "$PROJECT_DIR"
-
-echo "=================================================="
-echo " ROVE - GCP DEPLOYMENT"
-echo " API + WEB"
-echo "=================================================="
-
-# --------------------------------------------------
-# GCP AUTH
-# --------------------------------------------------
-
-gcloud config set project "$GCP_PROJECT" >/dev/null
-
-if ! gcloud auth print-access-token >/dev/null 2>&1; then
-    gcloud auth login
-fi
-
-gcloud auth configure-docker \
-    "${REGION}-docker.pkg.dev" \
-    --quiet >/dev/null
-
-TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
-
-API_VERSION_IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/${API_IMAGE}:${TIMESTAMP}"
-
-WEB_VERSION_IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/${WEB_IMAGE}:${TIMESTAMP}"
+logs:
+ERROR 2026-10-29T10:11:53.939445Z Traceback (most recent call last): File "/usr/local/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 409, in run_asgi result = await app( # type: ignore[func-returns-value] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ File "/usr/local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__ return await self.app(scope, receive, send) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ File "/usr/local/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__ await super().__call__(scope, receive, send) File "/usr/local/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__ await self.middleware_stack(scope, receive, send) File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__ raise exc File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__ await self.app(scope, receive, _send) File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 93, in __call__ await self.simple_response(scope, receive, send, request_headers=headers) File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 144, in simple_response await self.app(scope, receive, send) File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__ await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send) File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app raise exc File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app await app(scope, receive, sender) File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__ await self.middleware_stack(scope, receive, send) File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 736, in app await route.handle(scope, receive, send) File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle await self.app(scope, receive, send) File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 78, in app await wrap_app_handling_exceptions(app, request)(scope, receive, send) File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app raise exc …
+  {
+    "textPayload": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py\", line 409, in run_asgi\n    result = await app(  # type: ignore[func-returns-value]\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py\", line 60, in __call__\n    return await self.app(scope, receive, send)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/fastapi/applications.py\", line 1054, in __call__\n    await super().__call__(scope, receive, send)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/applications.py\", line 113, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py\", line 186, in __call__\n    raise exc\n  File \"/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py\", line 164, in __call__\n    await self.app(scope, receive, _send)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py\", line 93, in __call__\n    await self.simple_response(scope, receive, send, request_headers=headers)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py\", line 144, in simple_response\n    await self.app(scope, receive, send)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py\", line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in wrapped_app\n    raise exc\n  File \"/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/routing.py\", line 716, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/routing.py\", line 736, in app\n    await route.handle(scope, receive, send)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/routing.py\", line 290, in handle\n    await self.app(scope, receive, send)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/routing.py\", line 78, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 53, in wrapped_app\n    raise exc\n  File \"/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py\", line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/usr/local/lib/python3.12/site-packages/starlette/routing.py\", line 75, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/fastapi/routing.py\", line 302, in app\n    raw_response = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/fastapi/routing.py\", line 215, in run_endpoint_function\n    return await run_in_threadpool(dependant.call, **values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/starlette/concurrency.py\", line 38, in run_in_threadpool\n    return await anyio.to_thread.run_sync(func)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/anyio/to_thread.py\", line 65, in run_sync\n    return await get_async_backend().run_sync_in_worker_thread(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py\", line 2706, in run_sync_in_worker_thread\n    return await future\n           ^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py\", line 1100, in run\n    result = context.run(func, *args)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/app/routers/applications.py\", line 117, in create_application\n    application = service.create_application(guest_token=guest_token)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/app/services.py\", line 183, in create_application\n    self._commit_and_refresh(application)\n  File \"/app/app/services.py\", line 1084, in _commit_and_refresh\n    self.session.commit()\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py\", line 2032, in commit\n    trans.commit(_to_root=True)\n  File \"<string>\", line 2, in commit\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py\", line 137, in _go\n    ret_value = fn(self, *arg, **kw)\n                ^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py\", line 1313, in commit\n    self._prepare_impl()\n  File \"<string>\", line 2, in _prepare_impl\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py\", line 137, in _go\n    ret_value = fn(self, *arg, **kw)\n                ^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py\", line 1288, in _prepare_impl\n    self.session.flush()\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py\", line 4345, in flush\n    self._flush(objects)\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py\", line 4480, in _flush\n    with util.safe_reraise():\n         ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py\", line 224, in __exit__\n    raise exc_value.with_traceback(exc_tb)\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py\", line 4441, in _flush\n    flush_context.execute()\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py\", line 466, in execute\n    rec.execute(self)\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py\", line 642, in execute\n    util.preloaded.orm_persistence.save_obj(\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py\", line 68, in save_obj\n    ) in _organize_states_for_save(base_mapper, states, uowtransaction):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py\", line 223, in _organize_states_for_save\n    for state, dict_, mapper, connection in _connections_for_states(\n                                            ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py\", line 1759, in _connections_for_states\n    connection = uowtransaction.transaction.connection(base_mapper)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<string>\", line 2, in connection\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py\", line 137, in _go\n    ret_value = fn(self, *arg, **kw)\n                ^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py\", line 1039, in connection\n    return self._connection_for_bind(bind, execution_options)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<string>\", line 2, in _connection_for_bind\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py\", line 137, in _go\n    ret_value = fn(self, *arg, **kw)\n                ^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py\", line 1175, in _connection_for_bind\n    conn = self._parent._connection_for_bind(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<string>\", line 2, in _connection_for_bind\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py\", line 137, in _go\n    ret_value = fn(self, *arg, **kw)\n                ^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py\", line 1189, in _connection_for_bind\n    conn = bind.connect()\n           ^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py\", line 3277, in connect\n    return self._connection_cls(self)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py\", line 145, in __init__\n    Connection._handle_dbapi_exception_noconnection(\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py\", line 2440, in _handle_dbapi_exception_noconnection\n    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py\", line 143, in __init__\n    self._dbapi_connection = engine.raw_connection()\n                             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py\", line 3301, in raw_connection\n    return self.pool.connect()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 447, in connect\n    return _ConnectionFairy._checkout(self)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 1264, in _checkout\n    fairy = _ConnectionRecord.checkout(pool)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 711, in checkout\n    rec = pool._do_get()\n          ^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py\", line 177, in _do_get\n    with util.safe_reraise():\n         ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py\", line 224, in __exit__\n    raise exc_value.with_traceback(exc_tb)\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py\", line 175, in _do_get\n    return self._create_connection()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 388, in _create_connection\n    return _ConnectionRecord(self)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 673, in __init__\n    self.__connect()\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 899, in __connect\n    with util.safe_reraise():\n         ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py\", line 224, in __exit__\n    raise exc_value.with_traceback(exc_tb)\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 895, in __connect\n    self.dbapi_connection = connection = pool._invoke_creator(self)\n                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/create.py\", line 661, in connect\n    return dialect.connect(*cargs, **cparams)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py\", line 629, in connect\n    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/psycopg/connection.py\", line 96, in connect\n    attempts = conninfo_attempts(params)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/psycopg/_conninfo_attempts.py\", line 53, in conninfo_attempts\n    raise e.OperationalError(str(last_exc))\nsqlalchemy.exc.OperationalError: (psycopg.OperationalError) [Errno -3] Temporary failure in name resolution",
+    "insertId": "6ae31be9000e55b54e7d7ed2",
+    "resource": {
+      "type": "cloud_run_revision",
+      "labels": {
+        "service_name": "rove-api",
+        "configuration_name": "rove-api",
+        "location": "europe-west1",
+        "revision_name": "rove-api-00005-7tk",
+        "project_id": "tactical-innovation-f2b97b"
+      }
+    },
+    "timestamp": "2026-10-29T10:11:53.939445Z",
+    "severity": "ERROR",
+    "labels": {
+      "instanceId": "00e8a408bd579da6eba02721f9e27d2366777ebcb5f40d2c03f3a49b6d5ff63a5cb945fba0875007d62294f6293edfd0fbe768f0cebedc860ccf5f1f60e83dd8f5a264a06a0109f723f6a3654dafad70d8c34c82ba5d9032b9"
+    },
+    "logName": "projects/tactical-innovation-f2b97b/logs/run.googleapis.com%2Fstderr",
+    "receiveTimestamp": "2026-10-29T10:11:54.281287503Z",
+    "errorGroups": [
+      {
+        "id": "CPqr9KbuounJ9gE"
+      }
+    ]
+  }
 
 
-# ==================================================
-# 1. CREATE CLOUD RUN API DOCKERFILE
-# ==================================================
 
-echo
-echo "=================================================="
-echo "[1/8] PREPARE + BUILD API"
-echo "=================================================="
-
-cat > server/Dockerfile.gcp <<'EOF'
-FROM python:3.12-slim
-
-WORKDIR /app
-
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-COPY requirements.txt .
-
-RUN pip install \
-    --no-cache-dir \
-    --trusted-host pypi.org \
-    --trusted-host files.pythonhosted.org \
-    --trusted-host pypi.python.org \
-    -r requirements.txt
-
-COPY app ./app
-COPY scripts ./scripts
-COPY alembic ./alembic
-COPY alembic.ini ./alembic.ini
-
-EXPOSE 8080
-
-# IMPORTANT:
-# Do NOT run Alembic here.
-# Cloud Run must start Uvicorn immediately.
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
-EOF
-
-
-echo "Building API image:"
-
-echo "$API_VERSION_IMAGE"
-
-docker buildx build \
-    --platform linux/amd64 \
-    -f server/Dockerfile.gcp \
-    -t "$API_VERSION_IMAGE" \
-    --push \
-    server
-
-
-# ==================================================
-# 2. DEPLOY API
-# ==================================================
-
-echo
-echo "=================================================="
-echo "[2/8] DEPLOY API TO CLOUD RUN"
-echo "=================================================="
-
-gcloud run deploy "$API_SERVICE" \
-    --image "$API_VERSION_IMAGE" \
-    --region "$REGION" \
-    --platform managed \
-    --port 8080 \
-    --no-invoker-iam-check \
-    --quiet
-
-
-# ==================================================
-# 3. GET + TEST API
-# ==================================================
-
-echo
-echo "=================================================="
-echo "[3/8] TEST API"
-echo "=================================================="
-
-API_URL="$(gcloud run services describe "$API_SERVICE" \
-    --region "$REGION" \
-    --format='value(status.url)')"
-
-echo
-echo "API URL:"
-echo "$API_URL"
-
-echo
-echo "Testing FastAPI startup..."
-
-HTTP_CODE="$(curl -s \
-    -o /tmp/rove-api-test.html \
-    -w "%{http_code}" \
-    "$API_URL/docs" || true)"
-
-echo "API /docs HTTP status: $HTTP_CODE"
-
-if [ "$HTTP_CODE" != "200" ]; then
-
-    echo
-    echo "ERROR: API did not respond successfully."
-    echo
-    echo "Recent API logs:"
-    echo
-
-    gcloud logging read \
-      "resource.type=cloud_run_revision AND resource.labels.service_name=${API_SERVICE}" \
-      --limit=40 \
-      --freshness=10m \
-      --format="value(timestamp,severity,textPayload)"
-
-    exit 1
-fi
-
-echo "API started successfully."
-
-
-# ==================================================
-# 4. BUILD REACT
-# ==================================================
-
-echo
-echo "=================================================="
-echo "[4/8] BUILD REACT"
-echo "=================================================="
-
-rm -rf dist
-
-NODE_USE_SYSTEM_CA=1 npm ci
-
-NODE_USE_SYSTEM_CA=1 npm run build
-
-if [ ! -d "dist" ]; then
-    echo "ERROR: React dist directory not created."
-    exit 1
-fi
-
-echo
-echo "React build successful."
-
-
-# ==================================================
-# 5. FIX DOCKERIGNORE
-# ==================================================
-
-echo
-echo "=================================================="
-echo "[5/8] PREPARE WEB BUILD CONTEXT"
-echo "=================================================="
-
-if [ -f ".dockerignore" ]; then
-
-python3 <<'PY'
-from pathlib import Path
-
-p = Path(".dockerignore")
-
-lines = p.read_text().splitlines()
-
-blocked = {
-    "dist",
-    "./dist",
-    "**/dist",
-    "*/dist"
+{
+  "textPayload": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py\", line 143, in __init__\n    self._dbapi_connection = engine.raw_connection()\n                             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py\", line 3301, in raw_connection\n    return self.pool.connect()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 447, in connect\n    return _ConnectionFairy._checkout(self)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 1264, in _checkout\n    fairy = _ConnectionRecord.checkout(pool)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 711, in checkout\n    rec = pool._do_get()\n          ^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py\", line 177, in _do_get\n    with util.safe_reraise():\n         ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py\", line 224, in __exit__\n    raise exc_value.with_traceback(exc_tb)\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py\", line 175, in _do_get\n    return self._create_connection()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 388, in _create_connection\n    return _ConnectionRecord(self)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 673, in __init__\n    self.__connect()\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 899, in __connect\n    with util.safe_reraise():\n         ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py\", line 224, in __exit__\n    raise exc_value.with_traceback(exc_tb)\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py\", line 895, in __connect\n    self.dbapi_connection = connection = pool._invoke_creator(self)\n                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/create.py\", line 661, in connect\n    return dialect.connect(*cargs, **cparams)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py\", line 629, in connect\n    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/psycopg/connection.py\", line 96, in connect\n    attempts = conninfo_attempts(params)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/psycopg/_conninfo_attempts.py\", line 53, in conninfo_attempts\n    raise e.OperationalError(str(last_exc))\npsycopg.OperationalError: [Errno -3] Temporary failure in name resolution",
+  "insertId": "6ae31bea000a17b0c9e6a54b",
+  "resource": {
+    "type": "cloud_run_revision",
+    "labels": {
+      "configuration_name": "rove-api",
+      "revision_name": "rove-api-00005-7tk",
+      "location": "europe-west1",
+      "service_name": "rove-api",
+      "project_id": "tactical-innovation-f2b97b"
+    }
+  },
+  "timestamp": "2026-10-29T10:11:54.661424Z",
+  "severity": "ERROR",
+  "labels": {
+    "instanceId": "00e8a408bd579da6eba02721f9e27d2366777ebcb5f40d2c03f3a49b6d5ff63a5cb945fba0875007d62294f6293edfd0fbe768f0cebedc860ccf5f1f60e83dd8f5a264a06a0109f723f6a3654dafad70d8c34c82ba5d9032b9"
+  },
+  "logName": "projects/tactical-innovation-f2b97b/logs/run.googleapis.com%2Fstderr",
+  "receiveTimestamp": "2026-10-29T10:11:54.946835718Z",
+  "errorGroups": [
+    {
+      "id": "CKaE1-zQnIXHFA"
+    }
+  ]
 }
-
-clean = []
-
-for line in lines:
-
-    value = line.strip().rstrip("/")
-
-    if value in blocked:
-        print("Removing .dockerignore rule:", line)
-        continue
-
-    clean.append(line)
-
-p.write_text("\n".join(clean) + "\n")
-
-PY
-
-fi
-
-
-# ==================================================
-# 6. CREATE NGINX PROXY
-# ==================================================
-
-echo
-echo "=================================================="
-echo "[6/8] CONFIGURE API PROXY"
-echo "=================================================="
-
-API_HOST="$(echo "$API_URL" | sed 's#https://##' | sed 's#/$##')"
-
-cat > nginx.conf.gcp <<EOF
-server {
-
-    listen 8080;
-    server_name _;
-
-    root /usr/share/nginx/html;
-    index index.html;
-
-
-    # -----------------------------------------
-    # BACKEND API
-    # -----------------------------------------
-
-    location /api/ {
-
-        proxy_ssl_server_name on;
-        proxy_ssl_name ${API_HOST};
-
-        proxy_set_header Host ${API_HOST};
-
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto https;
-
-        proxy_pass ${API_URL}/api/;
-
-    }
-
-
-    # -----------------------------------------
-    # HEALTH CHECK
-    # -----------------------------------------
-
-    location = /health {
-
-        proxy_ssl_server_name on;
-        proxy_ssl_name ${API_HOST};
-
-        proxy_set_header Host ${API_HOST};
-
-        proxy_pass ${API_URL}/api/health;
-
-    }
-
-
-    # -----------------------------------------
-    # REACT SPA
-    # -----------------------------------------
-
-    location / {
-
-        try_files \$uri \$uri/ /index.html;
-
-    }
-
-}
-EOF
-
-
-cat > Dockerfile.gcp <<'EOF'
-FROM nginx:alpine
-
-COPY nginx.conf.gcp /etc/nginx/conf.d/default.conf
-
-COPY dist /usr/share/nginx/html
-
-EXPOSE 8080
-
-CMD ["nginx", "-g", "daemon off;"]
-EOF
-
-
-# ==================================================
-# 7. BUILD WEB IMAGE
-# ==================================================
-
-echo
-echo "=================================================="
-echo "[7/8] BUILD + PUSH WEB"
-echo "=================================================="
-
-docker buildx build \
-    --platform linux/amd64 \
-    -f Dockerfile.gcp \
-    -t "$WEB_VERSION_IMAGE" \
-    --push \
-    .
-
-
-# ==================================================
-# 8. DEPLOY WEB
-# ==================================================
-
-echo
-echo "=================================================="
-echo "[8/8] DEPLOY WEB"
-echo "=================================================="
-
-gcloud run deploy "$WEB_SERVICE" \
-    --image "$WEB_VERSION_IMAGE" \
-    --region "$REGION" \
-    --platform managed \
-    --port 8080 \
-    --no-invoker-iam-check \
-    --quiet
-
-
-WEB_URL="$(gcloud run services describe "$WEB_SERVICE" \
-    --region "$REGION" \
-    --format='value(status.url)')"
-
-
-echo
-echo "=================================================="
-echo " ROVE DEPLOYMENT SUCCESSFUL"
-echo "=================================================="
-
-echo
-echo "API:"
-echo "$API_URL"
-
-echo
-echo "WEB:"
-echo "$WEB_URL"
-
-echo
-echo "Images:"
-echo "API : $API_VERSION_IMAGE"
-echo "WEB : $WEB_VERSION_IMAGE"
-
-echo
-echo "=================================================="
-echo " API TEST"
-echo "=================================================="
-
-curl -s -o /dev/null \
-    -w "FastAPI docs: HTTP %{http_code}\n" \
-    "$API_URL/docs" || true
-
-echo
-echo "=================================================="
-echo " WEB TEST"
-echo "=================================================="
-
-curl -s -o /dev/null \
-    -w "ROVE website: HTTP %{http_code}\n" \
-    "$WEB_URL/" || true
-
-echo
-echo "=================================================="
-
-open "$WEB_URL" 2>/dev/null || true
