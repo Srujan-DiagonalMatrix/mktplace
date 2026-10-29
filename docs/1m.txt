@@ -1,9 +1,280 @@
-==========================================================
-[3/10] CREATE POSTGRESQL
-==========================================================
-Creating Cloud SQL PostgreSQL Enterprise instance...
-ERROR: (gcloud.sql.instances.create) HTTPError 400: Invalid request: Operation denied by org policy on resource 'projects/tactical-innovation-f2b97b': ["customConstraints/custom.sqlSSLConfigured": "  Ensure that SSL is configured for any cloud sql instances to communicate securely
-", "customConstraints/custom.sqlIAMAuthenticationFlagsv2": "  Ensure GCP IAM Authentication flags are present to connect to MySQL & PostgreSQL databases
-", "customConstraints/custom.sqlRootPasswordComplexity": "  Ensure that all Cloud SQL instances are configured with a complex password policy
-", "customConstraints/custom.sqlEnsureAuditlogsconfiguredv1": "  Ensure Audit Logs are configured for SQL Server and PostgreSQL Server
-"]..
+PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
+
+echo
+echo "============================================================"
+echo " ROVE - BANK GCP READ-ONLY CAPABILITY / POLICY ANALYSIS"
+echo "============================================================"
+echo
+
+echo "============================================================"
+echo "1. ACTIVE ACCOUNT + PROJECT"
+echo "============================================================"
+
+echo "Active account:"
+gcloud auth list \
+  --filter=status:ACTIVE \
+  --format="value(account)"
+
+echo
+echo "Active gcloud project:"
+gcloud config get-value project
+
+echo
+echo "Target project:"
+echo "$PROJECT"
+
+echo
+echo "Project details:"
+gcloud projects describe "$PROJECT" \
+  --format="yaml(projectId,projectNumber,name,parent)" \
+  2>/dev/null || true
+
+
+echo
+echo "============================================================"
+echo "2. ENABLED APIs"
+echo "============================================================"
+
+gcloud services list \
+  --project="$PROJECT" \
+  --enabled \
+  --filter="config.name:(sqladmin.googleapis.com OR run.googleapis.com OR artifactregistry.googleapis.com OR iam.googleapis.com OR orgpolicy.googleapis.com)" \
+  --format="table(config.name)" \
+  2>/dev/null || true
+
+
+echo
+echo "============================================================"
+echo "3. ORGANIZATION POLICIES APPLIED TO PROJECT"
+echo "============================================================"
+
+gcloud org-policies list \
+  --project="$PROJECT" \
+  --format="table(constraint)" \
+  2>/dev/null || {
+    echo "NOTE: Your account cannot list project organization policies."
+}
+
+
+echo
+echo "============================================================"
+echo "4. EXACT CLOUD SQL POLICIES THAT BLOCKED CREATION"
+echo "============================================================"
+
+CONSTRAINTS=(
+  "customConstraints/custom.sqlSSLConfigured"
+  "customConstraints/custom.sqlIAMAuthenticationFlagsv2"
+  "customConstraints/custom.sqlRootPasswordComplexity"
+  "customConstraints/custom.sqlEnsureAuditlogsconfiguredv1"
+)
+
+for C in "${CONSTRAINTS[@]}"
+do
+    echo
+    echo "------------------------------------------------------------"
+    echo "$C"
+    echo "------------------------------------------------------------"
+
+    echo "Effective project policy:"
+    gcloud org-policies describe "$C" \
+      --project="$PROJECT" \
+      --effective \
+      --format=yaml \
+      2>/dev/null || \
+      echo "Unable to read effective policy."
+
+done
+
+
+echo
+echo "============================================================"
+echo "5. FIND ORGANIZATION ID"
+echo "============================================================"
+
+ORG_ID="$(gcloud projects get-ancestors "$PROJECT" \
+  --format="value(id,type)" 2>/dev/null | \
+  awk '$2=="organization" {print $1; exit}')"
+
+if [ -n "$ORG_ID" ]; then
+    echo "Organization ID: $ORG_ID"
+else
+    echo "Organization ID not visible to current user."
+fi
+
+
+echo
+echo "============================================================"
+echo "6. READ CUSTOM CONSTRAINT DEFINITIONS"
+echo "============================================================"
+
+if [ -n "$ORG_ID" ]; then
+
+    CUSTOM_NAMES=(
+      "custom.sqlSSLConfigured"
+      "custom.sqlIAMAuthenticationFlagsv2"
+      "custom.sqlRootPasswordComplexity"
+      "custom.sqlEnsureAuditlogsconfiguredv1"
+    )
+
+    for C in "${CUSTOM_NAMES[@]}"
+    do
+        echo
+        echo "------------------------------------------------------------"
+        echo "$C"
+        echo "------------------------------------------------------------"
+
+        gcloud org-policies describe-custom-constraint "$C" \
+          --organization="$ORG_ID" \
+          --format=yaml \
+          2>/dev/null || \
+          echo "Unable to read this custom constraint definition."
+    done
+
+else
+    echo "Skipping custom constraint definitions because organization ID is not visible."
+fi
+
+
+echo
+echo "============================================================"
+echo "7. OTHER CLOUD SQL RESTRICTIONS"
+echo "============================================================"
+
+SQL_POLICIES=(
+  "constraints/sql.restrictPublicIp"
+  "constraints/sql.restrictAuthorizedNetworks"
+  "constraints/sql.restrictNoncompliantDiagnosticDataAccess"
+  "constraints/gcp.resourceLocations"
+)
+
+for C in "${SQL_POLICIES[@]}"
+do
+    echo
+    echo "------------------------------------------------------------"
+    echo "$C"
+    echo "------------------------------------------------------------"
+
+    gcloud org-policies describe "$C" \
+      --project="$PROJECT" \
+      --effective \
+      --format=yaml \
+      2>/dev/null || \
+      echo "Not visible, not configured, or unsupported for this project."
+done
+
+
+echo
+echo "============================================================"
+echo "8. CURRENT CLOUD SQL INSTANCES"
+echo "============================================================"
+
+gcloud sql instances list \
+  --project="$PROJECT" \
+  --format="table(name,databaseVersion,region,settings.edition,settings.tier,ipAddresses.ipAddress)" \
+  2>/dev/null || true
+
+
+echo
+echo "============================================================"
+echo "9. POSTGRESQL FLAGS AVAILABLE"
+echo "============================================================"
+
+gcloud sql flags list \
+  --database-version=POSTGRES_16 \
+  --filter="name:(cloudsql.iam_authentication OR pgaudit.log OR pgaudit.log_catalog)" \
+  --format="table(name,type,allowedStringValues)" \
+  2>/dev/null || true
+
+
+echo
+echo "============================================================"
+echo "10. CLOUD SQL CREATE OPTIONS AVAILABLE IN INSTALLED GCLOUD"
+echo "============================================================"
+
+gcloud sql instances create --help 2>/dev/null | \
+  grep -E \
+  -- "--edition|--tier|--ssl-mode|--require-ssl|--database-flags|--enable-password-policy|--password-policy|--root-password|--audit|--network|--assign-ip" \
+  | head -100 || true
+
+
+echo
+echo "============================================================"
+echo "11. IAM ROLES ASSIGNED TO CURRENT USER"
+echo "============================================================"
+
+ACCOUNT="$(gcloud auth list \
+  --filter=status:ACTIVE \
+  --format='value(account)')"
+
+echo "Current user:"
+echo "$ACCOUNT"
+
+echo
+echo "Project roles granted directly to current user:"
+
+gcloud projects get-iam-policy "$PROJECT" \
+  --flatten="bindings[].members" \
+  --filter="bindings.members:user:${ACCOUNT}" \
+  --format="table(bindings.role)" \
+  2>/dev/null || \
+  echo "Unable to read project IAM policy."
+
+
+echo
+echo "============================================================"
+echo "12. CLOUD RUN SERVICE ACCOUNT"
+echo "============================================================"
+
+PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" \
+  --format='value(projectNumber)' 2>/dev/null || true)"
+
+if [ -n "$PROJECT_NUMBER" ]; then
+
+    DEFAULT_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+
+    echo "Default compute / Cloud Run service account:"
+    echo "$DEFAULT_SA"
+
+    echo
+    echo "Roles granted to service account:"
+
+    gcloud projects get-iam-policy "$PROJECT" \
+      --flatten="bindings[].members" \
+      --filter="bindings.members:serviceAccount:${DEFAULT_SA}" \
+      --format="table(bindings.role)" \
+      2>/dev/null || true
+
+fi
+
+
+echo
+echo "============================================================"
+echo "13. CURRENT CLOUD RUN SERVICES"
+echo "============================================================"
+
+gcloud run services list \
+  --project="$PROJECT" \
+  --region="$REGION" \
+  --format="table(metadata.name,status.url,status.latestReadyRevisionName)" \
+  2>/dev/null || true
+
+
+echo
+echo "============================================================"
+echo "14. SUMMARY OF REQUIREMENTS ALREADY KNOWN"
+echo "============================================================"
+
+echo "From the bank policy rejection:"
+echo
+echo "[REQUIRED] SSL/TLS must be configured"
+echo "[REQUIRED] PostgreSQL IAM database authentication flag"
+echo "           cloudsql.iam_authentication=on"
+echo "[REQUIRED] Complex Cloud SQL password policy"
+echo "[REQUIRED] PostgreSQL audit logging"
+echo
+echo "The exact required values should appear in sections 4 and 6 above."
+echo
+echo "============================================================"
+echo " ANALYSIS COMPLETE"
+echo "============================================================"
