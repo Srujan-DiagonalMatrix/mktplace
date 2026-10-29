@@ -1,66 +1,50 @@
 cd /Users/srujan.kumar/Documents/git/rove
 
-set -euo pipefail
-
 echo "============================================================"
-echo " FIX ALEMBIC DATABASE URL INTERPOLATION"
+echo "1. CHECK ALEMBIC FIX"
 echo "============================================================"
 
-python3 <<'PY'
-from pathlib import Path
-
-path = Path("server/alembic/env.py")
-
-if not path.exists():
-    raise SystemExit("ERROR: server/alembic/env.py not found")
-
-text = path.read_text()
-
-old = 'config.set_main_option("sqlalchemy.url", database_url)'
-
-new = '''config.set_main_option(
-    "sqlalchemy.url",
-    database_url.replace("%", "%%")
-)'''
-
-if old in text:
-    path.write_text(text.replace(old, new))
-    print("Alembic env.py updated successfully.")
-
-elif 'database_url.replace("%", "%%")' in text:
-    print("Alembic env.py is already fixed.")
-
-else:
-    print("ERROR: Expected Alembic configuration line was not found.")
-    print()
-    print("Current server/alembic/env.py:")
-    print("------------------------------------------------------------")
-    print(text)
-    raise SystemExit(1)
-PY
-
+grep -n -A4 -B2 "set_main_option" server/alembic/env.py || true
 
 echo
 echo "============================================================"
-echo " VERIFY ALEMBIC FIX"
+echo "2. CHECK CLEANUP SCRIPT"
 echo "============================================================"
 
-grep -n -A4 -B2 "set_main_option" server/alembic/env.py
-
+ls -l cleanup-rove-gcp.sh || true
 
 echo
 echo "============================================================"
-echo " CLEAN EXISTING ROVE GCP RESOURCES"
+echo "3. CHECK INSTALL SCRIPT"
 echo "============================================================"
 
-chmod +x cleanup-rove-gcp.sh
-./cleanup-rove-gcp.sh
-
+ls -l install-rove-gcp.sh || true
 
 echo
 echo "============================================================"
-echo " START BRAND NEW ROVE INSTALLATION"
+echo "4. CHECK CLOUD RUN"
 echo "============================================================"
 
-chmod +x install-rove-gcp.sh
-./install-rove-gcp.sh
+gcloud run services list \
+  --project=tactical-innovation-f2b97b \
+  --region=europe-west1 \
+  --format="table(metadata.name,status.url)" || true
+
+echo
+echo "============================================================"
+echo "5. CHECK CLOUD SQL"
+echo "============================================================"
+
+gcloud sql instances list \
+  --project=tactical-innovation-f2b97b \
+  --format="table(name,state,region)" || true
+
+echo
+echo "============================================================"
+echo "6. CHECK ARTIFACT REGISTRY"
+echo "============================================================"
+
+gcloud artifacts repositories list \
+  --project=tactical-innovation-f2b97b \
+  --location=europe-west1 \
+  --format="table(name,format)" || true
