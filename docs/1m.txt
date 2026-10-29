@@ -1,25 +1,3 @@
-#### error ####
-
-==================================================
-[2/8] DEPLOY API TO CLOUD RUN
-==================================================
-Deploying container to Cloud Run service [rove-api] in project [tactical-innovation-f2b97b] region [europe-west1]
-X Deploying...                                                                 
-  - Creating Revision...                                                       
-  . Routing traffic...                                                         
-    Setting IAM Policy...                                                      
-Deployment failed                                                              
-  Setting IAM policy failed, try "gcloud beta run services add-iam-policy-binding --region=europe-west1 --member=allUsers --role=roles/run.invoker rove-api"
-ERROR: (gcloud.run.deploy) The user-provided container failed to start and listen on the port defined provided by the PORT=8000 environment variable within theallocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
-
-Logs URL: https://console.cloud.google.com/logs/viewer?project=tactical-innovation-f2b97b&resource=cloud_run_revision/service_name/rove-api/revision_name/rove-api-00004-zq9&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22rove-api%22%0Aresource.labels.revision_name%3D%22rove-api-00004-zq9%22 
-For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start
-zsh: command not found: Dockerfile.gcp
-zsh: command not found: nginx.conf.gcp
-zsh: permission denied: server/Dockerfile.gcp
-
-
-#### code ####
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -38,9 +16,13 @@ API_IMAGE="rove-api"
 cd "$PROJECT_DIR"
 
 echo "=================================================="
-echo " ROVE - FULL GCP DEPLOYMENT"
-echo " FRONTEND + API"
+echo " ROVE - GCP DEPLOYMENT"
+echo " API + WEB"
 echo "=================================================="
+
+# --------------------------------------------------
+# GCP AUTH
+# --------------------------------------------------
 
 gcloud config set project "$GCP_PROJECT" >/dev/null
 
@@ -52,7 +34,6 @@ gcloud auth configure-docker \
     "${REGION}-docker.pkg.dev" \
     --quiet >/dev/null
 
-
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 
 API_VERSION_IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/${API_IMAGE}:${TIMESTAMP}"
@@ -60,23 +41,61 @@ API_VERSION_IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/${API_I
 WEB_VERSION_IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/${WEB_IMAGE}:${TIMESTAMP}"
 
 
+# ==================================================
+# 1. CREATE CLOUD RUN API DOCKERFILE
+# ==================================================
+
 echo
 echo "=================================================="
-echo "[1/8] BUILD API"
+echo "[1/8] PREPARE + BUILD API"
 echo "=================================================="
 
-if [ ! -f "server/Dockerfile" ]; then
-    echo "ERROR: server/Dockerfile not found."
-    exit 1
-fi
+cat > server/Dockerfile.gcp <<'EOF'
+FROM python:3.12-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+COPY requirements.txt .
+
+RUN pip install \
+    --no-cache-dir \
+    --trusted-host pypi.org \
+    --trusted-host files.pythonhosted.org \
+    --trusted-host pypi.python.org \
+    -r requirements.txt
+
+COPY app ./app
+COPY scripts ./scripts
+COPY alembic ./alembic
+COPY alembic.ini ./alembic.ini
+
+EXPOSE 8080
+
+# IMPORTANT:
+# Do NOT run Alembic here.
+# Cloud Run must start Uvicorn immediately.
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
+EOF
+
+
+echo "Building API image:"
+
+echo "$API_VERSION_IMAGE"
 
 docker buildx build \
     --platform linux/amd64 \
-    -f server/Dockerfile \
+    -f server/Dockerfile.gcp \
     -t "$API_VERSION_IMAGE" \
     --push \
     server
 
+
+# ==================================================
+# 2. DEPLOY API
+# ==================================================
 
 echo
 echo "=================================================="
@@ -87,33 +106,61 @@ gcloud run deploy "$API_SERVICE" \
     --image "$API_VERSION_IMAGE" \
     --region "$REGION" \
     --platform managed \
-    --port 8000 \
-    --allow-unauthenticated \
+    --port 8080 \
+    --no-invoker-iam-check \
     --quiet
 
 
+# ==================================================
+# 3. GET + TEST API
+# ==================================================
+
 echo
 echo "=================================================="
-echo "[3/8] GET API URL"
+echo "[3/8] TEST API"
 echo "=================================================="
 
 API_URL="$(gcloud run services describe "$API_SERVICE" \
     --region "$REGION" \
     --format='value(status.url)')"
 
-echo "API URL: $API_URL"
-
+echo
+echo "API URL:"
+echo "$API_URL"
 
 echo
-echo "Testing API..."
+echo "Testing FastAPI startup..."
 
-curl -i "$API_URL/" | head -20 || true
+HTTP_CODE="$(curl -s \
+    -o /tmp/rove-api-test.html \
+    -w "%{http_code}" \
+    "$API_URL/docs" || true)"
 
-echo
-echo "Testing health endpoints..."
+echo "API /docs HTTP status: $HTTP_CODE"
 
-curl -i "$API_URL/health" | head -20 || true
+if [ "$HTTP_CODE" != "200" ]; then
 
+    echo
+    echo "ERROR: API did not respond successfully."
+    echo
+    echo "Recent API logs:"
+    echo
+
+    gcloud logging read \
+      "resource.type=cloud_run_revision AND resource.labels.service_name=${API_SERVICE}" \
+      --limit=40 \
+      --freshness=10m \
+      --format="value(timestamp,severity,textPayload)"
+
+    exit 1
+fi
+
+echo "API started successfully."
+
+
+# ==================================================
+# 4. BUILD REACT
+# ==================================================
 
 echo
 echo "=================================================="
@@ -123,6 +170,7 @@ echo "=================================================="
 rm -rf dist
 
 NODE_USE_SYSTEM_CA=1 npm ci
+
 NODE_USE_SYSTEM_CA=1 npm run build
 
 if [ ! -d "dist" ]; then
@@ -130,10 +178,17 @@ if [ ! -d "dist" ]; then
     exit 1
 fi
 
+echo
+echo "React build successful."
+
+
+# ==================================================
+# 5. FIX DOCKERIGNORE
+# ==================================================
 
 echo
 echo "=================================================="
-echo "[5/8] FIX DOCKERIGNORE"
+echo "[5/8] PREPARE WEB BUILD CONTEXT"
 echo "=================================================="
 
 if [ -f ".dockerignore" ]; then
@@ -145,7 +200,7 @@ p = Path(".dockerignore")
 
 lines = p.read_text().splitlines()
 
-ignore = {
+blocked = {
     "dist",
     "./dist",
     "**/dist",
@@ -158,8 +213,8 @@ for line in lines:
 
     value = line.strip().rstrip("/")
 
-    if value in ignore:
-        print("Removing:", line)
+    if value in blocked:
+        print("Removing .dockerignore rule:", line)
         continue
 
     clean.append(line)
@@ -171,14 +226,18 @@ PY
 fi
 
 
+# ==================================================
+# 6. CREATE NGINX PROXY
+# ==================================================
+
 echo
 echo "=================================================="
-echo "[6/8] CREATE NGINX API PROXY"
+echo "[6/8] CONFIGURE API PROXY"
 echo "=================================================="
 
 API_HOST="$(echo "$API_URL" | sed 's#https://##' | sed 's#/$##')"
 
-cat > nginx.gcp.conf <<EOF
+cat > nginx.conf.gcp <<EOF
 server {
 
     listen 8080;
@@ -188,41 +247,45 @@ server {
     index index.html;
 
 
-    # -------------------------------
-    # ROVE BACKEND API
-    # -------------------------------
+    # -----------------------------------------
+    # BACKEND API
+    # -----------------------------------------
 
     location /api/ {
 
         proxy_ssl_server_name on;
+        proxy_ssl_name ${API_HOST};
 
         proxy_set_header Host ${API_HOST};
 
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Proto https;
 
         proxy_pass ${API_URL}/api/;
+
     }
 
 
-    # -------------------------------
-    # API HEALTH
-    # -------------------------------
+    # -----------------------------------------
+    # HEALTH CHECK
+    # -----------------------------------------
 
     location = /health {
 
         proxy_ssl_server_name on;
+        proxy_ssl_name ${API_HOST};
 
         proxy_set_header Host ${API_HOST};
 
-        proxy_pass ${API_URL}/health;
+        proxy_pass ${API_URL}/api/health;
+
     }
 
 
-    # -------------------------------
+    # -----------------------------------------
     # REACT SPA
-    # -------------------------------
+    # -----------------------------------------
 
     location / {
 
@@ -237,7 +300,7 @@ EOF
 cat > Dockerfile.gcp <<'EOF'
 FROM nginx:alpine
 
-COPY nginx.gcp.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf.gcp /etc/nginx/conf.d/default.conf
 
 COPY dist /usr/share/nginx/html
 
@@ -247,11 +310,9 @@ CMD ["nginx", "-g", "daemon off;"]
 EOF
 
 
-echo
-echo "Nginx configured:"
-echo
-cat nginx.gcp.conf
-
+# ==================================================
+# 7. BUILD WEB IMAGE
+# ==================================================
 
 echo
 echo "=================================================="
@@ -266,6 +327,10 @@ docker buildx build \
     .
 
 
+# ==================================================
+# 8. DEPLOY WEB
+# ==================================================
+
 echo
 echo "=================================================="
 echo "[8/8] DEPLOY WEB"
@@ -276,7 +341,7 @@ gcloud run deploy "$WEB_SERVICE" \
     --region "$REGION" \
     --platform managed \
     --port 8080 \
-    --allow-unauthenticated \
+    --no-invoker-iam-check \
     --quiet
 
 
@@ -287,7 +352,7 @@ WEB_URL="$(gcloud run services describe "$WEB_SERVICE" \
 
 echo
 echo "=================================================="
-echo " ROVE DEPLOYMENT COMPLETE"
+echo " ROVE DEPLOYMENT SUCCESSFUL"
 echo "=================================================="
 
 echo
@@ -295,17 +360,33 @@ echo "API:"
 echo "$API_URL"
 
 echo
-echo "Website:"
+echo "WEB:"
 echo "$WEB_URL"
 
 echo
-echo "Testing API through website:"
-echo
+echo "Images:"
+echo "API : $API_VERSION_IMAGE"
+echo "WEB : $WEB_VERSION_IMAGE"
 
-curl -i "$WEB_URL/health" | head -20 || true
+echo
+echo "=================================================="
+echo " API TEST"
+echo "=================================================="
+
+curl -s -o /dev/null \
+    -w "FastAPI docs: HTTP %{http_code}\n" \
+    "$API_URL/docs" || true
+
+echo
+echo "=================================================="
+echo " WEB TEST"
+echo "=================================================="
+
+curl -s -o /dev/null \
+    -w "ROVE website: HTTP %{http_code}\n" \
+    "$WEB_URL/" || true
 
 echo
 echo "=================================================="
 
 open "$WEB_URL" 2>/dev/null || true
-
