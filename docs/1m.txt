@@ -1,1 +1,4 @@
-https://rove-web-446065888450.europe-west1.run.app
+# AutosOnShow (AOS) Media Player
+VITE_AOS_TOKEN=17b3353bb1892c02e3646296d6a3486e4f792ea5
+AOS_CLIENT_ID=bcarove
+AOS_CLIENT_SECRET=p4vaij32tcszpshhi7g4m7voqlcfnuor
