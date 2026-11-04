@@ -1,6 +1,2 @@
-<<<<<<< HEAD
-test
-=======
 srujan.kumar@DEV-H59N27LXKY rove % git pull
 fatal: Cannot rebase onto multiple branches..
->>>>>>> b3c841f (e)
