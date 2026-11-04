@@ -1,2 +1,2 @@
 srujan.kumar@DEV-H59N27LXKY rove % git pull
-fatal: Cannot rebase onto multiple branches..
+fatal: Cannot rebase onto multiple branches.........
