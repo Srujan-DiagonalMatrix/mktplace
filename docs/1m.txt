@@ -1,12 +1,6 @@
-View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/tm6k39pzgvojwplkx2kkaoh6o
-=== 5. Stage API revision and apply normal migrations ===
-Deploying container to Cloud Run service [rove-api] in project [tactical-innovation-f2b97b] region [europe-west1]
-X Deploying...                                                                 
-  - Creating Revision...                                                       
-  . Routing traffic...                                                         
-Deployment failed                                                              
-ERROR: (gcloud.run.deploy) The user-provided container failed to start and listen on the port defined provided by the PORT=8000 environment variable within theallocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
-
-Logs URL: https://console.cloud.google.com/logs/viewer?project=tactical-innovation-f2b97b&resource=cloud_run_revision/service_name/rove-api/revision_name/rove-api-00003-leh&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22rove-api%22%0Aresource.labels.revision_name%3D%22rove-api-00003-leh%22 
-For more troubleshooting guidance, see https://docs.cloud.google.com/run/docs/troubleshooting#container-failed-to-start
-Deployment stopped at line 25. Do not reset or recreate the database. Check the error above.
+gcloud logging read \
+'resource.type="cloud_run_revision" AND resource.labels.service_name="rove-api" AND resource.labels.revision_name="rove-api-00003-leh"' \
+--project=tactical-innovation-f2b97b \
+--limit=100 \
+--order=asc \
+--format="value(textPayload,jsonPayload.message)"
