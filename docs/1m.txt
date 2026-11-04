@@ -1,18 +1,41 @@
-python3 <<'PY'
-from pathlib import Path
+##### .env.docker ####
+POSTGRES_DB=rove
+POSTGRES_USER=rove
+POSTGRES_PASSWORD=rove_local_dev_password
+POSTGRES_PORT=5432
 
-p = Path("server/alembic/env.py")
-s = p.read_text()
-old = 'config.set_main_option("sqlalchemy.url", database_url)'
-new = 'config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))'
+API_PORT=8000
+WEB_PORT=8081
 
-if old not in s:
-    raise SystemExit("Expected line not found. No changes made.")
+CORS_ORIGIN=http://localhost:8081
+VITE_API_URL=http://localhost:8000
 
-p.write_text(s.replace(old, new, 1))
-print("Alembic URL parsing fixed.")
-PY
+# Local admin dashboard
+APP_ENV=development
+ADMIN_USERNAME=rove-ops-admin
+ADMIN_PASSWORD='P$wd202610N#'
 
-git add server/alembic/env.py
-git commit -m "Fix Alembic parsing of percent-encoded database URLs"
-git push origin main
+AUTH_SESSION_DAYS=7
+# Set to true when the API is served over HTTPS in production.
+AUTH_COOKIE_SECURE=false
+
+# SMTP Configuration (Gmail)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=kumar83.reach@gmail.com
+SMTP_PASSWORD=zkva swsc znkm zukp
+SMTP_FROM_EMAIL=kumar83.reach@gmail.com
+SMTP_FROM_NAME=ROVE
+SMTP_USE_TLS=true
+SMTP_DELIVERY_MODE=smtp
+
+# Stable key for journey credential encryption
+CREDENTIAL_DELIVERY_KEY=2d6odjQtVkAB-7SqXCQZgwiVikq3wSmoJEL2h1NLko8
+
+# Admin reservation email recipient
+ADMIN_NOTIFICATION_EMAIL=srujan.kumar@lloydsbanking.com
+
+# AutosOnShow (AOS) Media Player
+VITE_AOS_TOKEN=17b3353bb1892c02e3646296d6a3486e4f792ea5
+AOS_CLIENT_ID=bcarove
+AOS_CLIENT_SECRET=p4vaij32tcszpshhi7g4m7voqlcfnuor
