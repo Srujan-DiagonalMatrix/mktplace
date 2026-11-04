@@ -1,55 +1,100 @@
-python3 <<'PY'
-from pathlib import Path
-import shutil
-import subprocess
+cd /Users/srujan.kumar/Documents/git/rove
 
-p = Path("src/main.jsx")
-s = p.read_text()
+BRANCH="feature/rove-sync-20261028-123526"
+GCP_PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
+REPOSITORY="cloud-run-source-deploy"
+SERVICE="rove-web"
 
-blob = subprocess.check_output(
-    ["git", "hash-object", str(p)], text=True
-).strip()
-if blob != "4dc7c0ba3a5af5860e1997eb17873e74e87873ea":
-    raise SystemExit("File differs from the inspected version. Stop and share it.")
+echo "=== 1. GET BANK FEATURE BRANCH ==="
 
-def read(ref):
-    return subprocess.check_output(
-        ["git", "show", ref + ":src/main.jsx"], text=True
-    )
+git fetch company "$BRANCH" && \
+git switch "$BRANCH" 2>/dev/null || git switch -c "$BRANCH" --track "company/$BRANCH"
 
-design = read("a3f0c3f")
-previous = read("21c365f795301d3a77acd665b17b88d914f323c1")
+git reset --hard "company/$BRANCH"
 
-start = s.index("          const requestedJourneyStep",
-                s.index("  const saveSharedChanges"))
-end = s.index("\n  return (", start)
-navigation = s[start:s.index("\n    }\n  };", start)]
-s = s[:start] + s[end:]
+echo ""
+echo "Deploying:"
+git log -1 --oneline
 
-anchor = """            finance_options: 3, build_bundle: 3, summary: 4, reservation: 4 };
-        if (shared.id) id = shared.id;
-        else if (referenceApplicationId) id = referenceApplicationId;"""
-assert s.count(anchor) == 1, "Unexpected initialization code"
-s = s.replace(anchor, anchor.split("\n")[0] + "\n" + navigation, 1)
+echo ""
+echo "=== 2. BUILD ROVE ==="
 
-start = design.index("  const journeyPdfData = {")
-pdf = design[start:design.index("  const exportSelection =", start)]
+NODE_USE_SYSTEM_CA=1 npm ci && \
+NODE_USE_SYSTEM_CA=1 npm run build
 
-start = previous.index("  const copyApplicationLink =")
-export = previous[start:previous.index("\n  return (", start)]
-bundle = "        if (activeStep === 4 && !(await persistBundle())) throw new Error('Save your bundle before exporting.');\n"
-assert export.count(bundle) == 1
-export = export.replace(bundle, "", 1)
-export = export.replace(
-    "      window.print();",
-    "      await downloadJourneyPdf({ ...journeyPdfData, applicationId: id, referenceUrl: link });",
-    1
-)
+echo ""
+echo "=== 3. PREPARE CLOUD RUN IMAGE ==="
 
-position = s.index("\n  return (", s.index("  const saveSharedChanges"))
-s = s[:position] + "\n" + pdf + export + "\n" + s[position:]
+cat > Dockerfile.gcp <<'EOF'
+FROM nginx:alpine
 
-shutil.copy2(p, "src/main.jsx.before-repair")
-p.write_text(s)
-print("src/main.jsx repaired; backup saved.")
-PY
+COPY nginx.conf.gcp /etc/nginx/conf.d/default.conf
+COPY dist /usr/share/nginx/html
+
+EXPOSE 8080
+
+CMD ["nginx", "-g", "daemon off;"]
+EOF
+
+cat > nginx.conf.gcp <<'EOF'
+server {
+    listen 8080;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+EOF
+
+echo ""
+echo "=== 4. LOGIN TO GCP ==="
+
+gcloud config set project "$GCP_PROJECT"
+
+gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
+IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}/rove-web:${TIMESTAMP}"
+
+echo ""
+echo "=== 5. BUILD + PUSH IMAGE ==="
+
+docker buildx build \
+  --platform linux/amd64 \
+  -f Dockerfile.gcp \
+  -t "$IMAGE" \
+  --push \
+  .
+
+echo ""
+echo "=== 6. DEPLOY TO CLOUD RUN ==="
+
+gcloud run deploy "$SERVICE" \
+  --image "$IMAGE" \
+  --region "$REGION" \
+  --platform managed \
+  --port 8080 \
+  --allow-unauthenticated \
+  --quiet
+
+echo ""
+echo "=============================================="
+echo "ROVE DEPLOYED SUCCESSFULLY"
+echo "==============================================="
+
+URL=$(gcloud run services describe "$SERVICE" \
+  --region "$REGION" \
+  --format='value(status.url)')
+
+echo "Branch : $BRANCH"
+echo "Image  : $IMAGE"
+echo "URL    : $URL"
+
+echo ""
+open "$URL" 2>/dev/null || true
