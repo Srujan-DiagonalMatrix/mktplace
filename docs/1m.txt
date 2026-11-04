@@ -1,2 +1,2 @@
-srujan.kumar@DEV-H59N27LXKY rove % ./deploy/ui-rebuild.sh --restart-web
-Place ui-rebuild.sh beside package.json and package-lock.json.
+cp deploy/ui-rebuild.sh ./ui-rebuild.sh
+bash ui-rebuild.sh --restart-web
