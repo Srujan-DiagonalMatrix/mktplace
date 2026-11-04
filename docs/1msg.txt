@@ -1,9 +1,1 @@
 git status --short
-git branch --show-current
-
-git config --replace-all branch.main.remote origin
-git config --replace-all branch.main.merge refs/heads/main
-
-git fetch origin
-git switch main
-git pull --ff-only origin main
