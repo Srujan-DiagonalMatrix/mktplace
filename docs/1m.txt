@@ -1,1 +1,8 @@
-ffmpeg -i "/path/to/your recording.mov" -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p -c:a aac -b:a 192k -movflags +faststart "$HOME/Desktop/recording-small.mp4"
+path of the video Users/srujan.kumar/Desktop/Page11.mov
+
+command:
+ffmpeg -i "Users/srujan.kumar/Desktop/Page1.mov" -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p -c:a aac -b:a 192k -movflags +faststart "Users/srujan.kumar/Desktop/Page11.mov"
+
+[in#0 @ 0xc5f01c000] Error opening input: No such file or directory
+Error opening input file Users/srujan.kumar/Desktop/Page1.mov.
+Error opening input files: No such file or directory
