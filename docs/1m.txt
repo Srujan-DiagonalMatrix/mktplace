@@ -1,7 +1,0 @@
-Use the Figma MCP tools to inspect the currently selected frame in Figma Desktop.
-Return its frame name, dimensions, layout, spacing, colors, typography, components,
-and linked image assets. Do not modify any code yet.
-
-Save the inspected design specification as design-reference/rove-figma-spec.yaml.
-Export any available original images, logos, and icons into design-reference/assets/.
-Do not change application source code.
