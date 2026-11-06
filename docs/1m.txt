@@ -1,9 +1,521 @@
-Checking resources in tactical-innovation-f2b97b
-NAME           REGION        DATABASE_VERSION  STATUS    CONNECTION_NAME
-rove-postgres  europe-west1  POSTGRES_16       RUNNABLE  tactical-innovation-f2b97b:europe-west1:rove-postgres
-Listing items under project tactical-innovation-f2b97b, location europe-west1.
+#!/usr/bin/env bash
+# ROVE Cloud Run recovery deployment.
+#
+# Check resources:
+#   bash new-deploy.sh --check
+#
+# Deploy:
+#   bash new-deploy.sh --deploy
+#
+# Requires: Git, Node/npm, Docker/buildx, Python 3, curl, Google Cloud CLI.
+# Run from the ROVE repository using an authenticated Google Cloud account.
+#
+# Preserves the existing database. Normal Alembic migrations run on API startup.
+# Creates public Cloud Run services to support the current Nginx proxy.
+# Does not restore deleted database contents or import inventory.
 
-REPOSITORY               FORMAT
-cloud-run-source-deploy  DOCKER
-Only secret names were listed; no secret values were read.
-If Cloud SQL is missing, investigate backups/recovery before deploying.
+set -Eeuo pipefail
+set +x
+
+GCP_PROJECT="${GCP_PROJECT:-tactical-innovation-f2b97b}"
+REGION="${REGION:-europe-west1}"
+REPOSITORY="${REPOSITORY:-cloud-run-source-deploy}"
+
+WEB_SERVICE="${WEB_SERVICE:-rove}"
+API_SERVICE="${API_SERVICE:-rove-api}"
+
+CLOUD_SQL_CONNECTION="${CLOUD_SQL_CONNECTION:-tactical-innovation-f2b97b:europe-west1:rove-postgres}"
+
+BRANCH="${BRANCH:-fix/frontend-build-source-cleanup}"
+REMOTE="${REMOTE:-origin}"
+
+DATABASE_URL_SECRET="${DATABASE_URL_SECRET:-rove-database-url:latest}"
+ADMIN_USERNAME_SECRET="${ADMIN_USERNAME_SECRET:-rove-admin-username:latest}"
+ADMIN_PASSWORD_SECRET="${ADMIN_PASSWORD_SECRET:-rove-admin-password:latest}"
+
+# Optional:
+# API_ENV_FILE=/absolute/path/api-env.json
+# EXTRA_SECRETS='SMTP_PASSWORD=my-smtp-secret:latest,AOS_CLIENT_SECRET=my-aos-secret:latest'
+# CORPORATE_CA_FILE=/absolute/path/company-ca.pem
+# REPO_DIR=/absolute/path/rove
+
+fail() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+gc() {
+  gcloud --project="$GCP_PROJECT" "$@"
+}
+
+command -v gcloud >/dev/null || fail 'Install Google Cloud CLI first.'
+
+mode="${1:---check}"
+
+if [[ "$mode" == --check ]]; then
+  echo "=== Cloud Run services ==="
+  gc run services list --region="$REGION" \
+    --format='table(metadata.name,status.url)'
+
+  echo "=== Cloud SQL instances ==="
+  gc sql instances list \
+    --format='table(name,region,databaseVersion,state,connectionName)'
+
+  echo "=== Image repositories ==="
+  gc artifacts repositories list --location="$REGION" \
+    --format='table(name,format)'
+
+  echo "=== Secret names only ==="
+  gc secrets list --format='table(name)'
+
+  echo
+  echo 'Read-only check complete.'
+  echo 'An API-disabled or permission error does not mean resources were deleted.'
+  exit 0
+fi
+
+[[ "$mode" == --deploy ]] || fail 'Use --check or --deploy.'
+
+for tool in git node npm docker python3 curl tar; do
+  command -v "$tool" >/dev/null || fail "Missing command: $tool"
+done
+
+docker info >/dev/null
+docker buildx version >/dev/null
+
+repo_root=$(git -C "${REPO_DIR:-$PWD}" rev-parse --show-toplevel)
+work=$(mktemp -d)
+chmod 700 "$work"
+
+trap 'rm -rf "$work"' EXIT
+trap 'echo "Stopped at line $LINENO. Earlier cloud changes may remain. No database reset or automatic rollback was attempted." >&2' ERR
+
+export CLOUD_SQL_CONNECTION DATABASE_URL_SECRET
+export ADMIN_USERNAME_SECRET ADMIN_PASSWORD_SECRET
+export EXTRA_SECRETS="${EXTRA_SECRETS:-}"
+
+echo "=== Validate configuration ==="
+
+python3 - "$GCP_PROJECT" "$work" <<'PY'
+import os
+import re
+import sys
+from pathlib import Path
+
+parts = os.environ["CLOUD_SQL_CONNECTION"].split(":")
+if (
+    len(parts) != 3
+    or parts[0] != sys.argv[1]
+    or not all(re.fullmatch(r"[a-z][a-z0-9-]*", p) for p in parts)
+):
+    raise SystemExit(
+        "Use PROJECT:REGION:INSTANCE for an existing instance in GCP_PROJECT."
+    )
+
+refs = {
+    key: os.environ[key + "_SECRET"]
+    for key in ("DATABASE_URL", "ADMIN_USERNAME", "ADMIN_PASSWORD")
+}
+
+for item in filter(None, os.environ["EXTRA_SECRETS"].split(",")):
+    key, separator, value = item.partition("=")
+    if not separator or key in refs:
+        raise SystemExit("Invalid or duplicate EXTRA_SECRETS entry.")
+    refs[key] = value
+
+for key, value in refs.items():
+    if (
+        not re.fullmatch(r"[A-Z][A-Z0-9_]*", key)
+        or not re.fullmatch(r"[A-Za-z0-9_-]+:(latest|[0-9]+)", value)
+    ):
+        raise SystemExit("Secret references must use SECRET_NAME:VERSION.")
+
+work = Path(sys.argv[2])
+(work / "secret-refs").write_text(
+    "".join(value + "\n" for value in sorted(set(refs.values())))
+)
+(work / "secret-args").write_text(
+    ",".join(key + "=" + value for key, value in refs.items())
+)
+PY
+
+echo "=== Verify existing database instance ==="
+
+sql_instance="${CLOUD_SQL_CONNECTION##*:}"
+
+gc sql instances describe "$sql_instance" \
+  --format=json > "$work/sql.json"
+
+python3 - "$work/sql.json" "$CLOUD_SQL_CONNECTION" <<'PY'
+import json
+import sys
+
+instance = json.load(open(sys.argv[1]))
+
+if (
+    instance.get("connectionName") != sys.argv[2]
+    or instance.get("state") != "RUNNABLE"
+    or not instance.get("databaseVersion", "").startswith("POSTGRES")
+):
+    raise SystemExit("Existing Cloud SQL instance must be runnable PostgreSQL.")
+
+if not any(
+    address.get("type") == "PRIMARY"
+    for address in instance.get("ipAddresses", [])
+):
+    raise SystemExit(
+        "Private-IP-only Cloud SQL needs the original VPC configuration. "
+        "Stopped without changing the database."
+    )
+PY
+
+echo "=== Fetch and build remote source in isolation ==="
+
+git -C "$repo_root" check-ref-format --branch "$BRANCH" >/dev/null
+git -C "$repo_root" fetch "$REMOTE" "refs/heads/$BRANCH"
+
+commit=$(git -C "$repo_root" rev-parse FETCH_HEAD)
+
+mkdir "$work/source"
+git -C "$repo_root" archive "$commit" |
+  tar -x -C "$work/source"
+
+cd "$work/source"
+
+[[ -f package-lock.json && -f server/Dockerfile ]] ||
+  fail 'Expected ROVE source files are missing.'
+
+NODE_USE_SYSTEM_CA=1 npm ci --include=dev
+
+mkdir -p "$work/web/dist"
+
+NODE_USE_SYSTEM_CA=1 VITE_API_URL='' npm run build \
+  -- --outDir "$work/web/dist" --emptyOutDir
+
+test -s "$work/web/dist/index.html"
+
+echo "=== Enable required GCP APIs ==="
+
+gc services enable \
+  run.googleapis.com \
+  artifactregistry.googleapis.com \
+  secretmanager.googleapis.com \
+  sqladmin.googleapis.com \
+  iam.googleapis.com \
+  --quiet
+
+# Create a missing secret using hidden terminal input.
+# Existing secret values are never read or overwritten.
+create_secret_if_missing() (
+  set +x
+
+  local reference="$1"
+  local prompt="$2"
+  local name="${reference%:*}"
+  local version="${reference##*:}"
+  local value
+  local secret_file
+
+  if gc secrets describe "$name" >/dev/null 2>&1; then
+    echo "Keeping existing secret: $name"
+    return
+  fi
+
+  [[ "$version" == latest || "$version" == 1 ]] ||
+    fail "A new secret must reference latest or version 1: $name"
+
+  [[ -r /dev/tty ]] ||
+    fail "Missing secret $name; run interactively to enter its value."
+
+  printf '%s' "$prompt" > /dev/tty
+  IFS= read -r -s value < /dev/tty
+  printf '\n' > /dev/tty
+
+  [[ -n "$value" ]] || fail "Empty value for $name"
+
+  secret_file=$(mktemp)
+  chmod 600 "$secret_file"
+  trap 'rm -f "$secret_file"' EXIT
+
+  printf '%s' "$value" > "$secret_file"
+  unset value
+
+  if [[ "$reference" == "$DATABASE_URL_SECRET" ]]; then
+    python3 - "$secret_file" "$CLOUD_SQL_CONNECTION" <<'PY'
+import sys
+from urllib.parse import parse_qs, urlsplit
+
+try:
+    value = open(sys.argv[1]).read()
+    url = urlsplit(value)
+    socket_host = parse_qs(url.query).get("host", [])
+    valid = (
+        url.scheme in ("postgresql+psycopg", "postgresql")
+        and bool(url.username)
+        and bool(url.password)
+        and bool(url.path.strip("/"))
+        and not url.hostname
+        and socket_host == ["/cloudsql/" + sys.argv[2]]
+    )
+except Exception:
+    valid = False
+
+if not valid:
+    raise SystemExit(
+        "Use a Cloud SQL socket URL: "
+        "postgresql+psycopg://USER:URL_ENCODED_PASSWORD@/DATABASE"
+        "?host=/cloudsql/PROJECT:REGION:INSTANCE"
+    )
+PY
+  fi
+
+  gc secrets create "$name" \
+    --replication-policy=automatic \
+    --data-file="$secret_file" \
+    --quiet
+)
+
+echo "=== Restore missing credential secrets ==="
+echo 'Use existing Cloud SQL credentials, which may differ from local Docker credentials.'
+echo 'Database URL format:'
+echo "postgresql+psycopg://USER:URL_ENCODED_PASSWORD@/DATABASE?host=/cloudsql/$CLOUD_SQL_CONNECTION"
+
+create_secret_if_missing \
+  "$DATABASE_URL_SECRET" \
+  'Enter existing Cloud SQL DATABASE_URL (hidden): '
+
+create_secret_if_missing \
+  "$ADMIN_USERNAME_SECRET" \
+  'Enter ADMIN_USERNAME from your local configuration (hidden): '
+
+create_secret_if_missing \
+  "$ADMIN_PASSWORD_SECRET" \
+  'Enter ADMIN_PASSWORD from your local configuration (hidden): '
+
+# Additional secrets must already exist.
+while IFS=: read -r secret version; do
+  state=$(gc secrets versions describe "$version" \
+    --secret="$secret" --format='value(state)')
+
+  [[ "$state" == ENABLED ]] ||
+    fail "Secret version is not enabled: $secret:$version"
+done < "$work/secret-refs"
+
+# Merge optional environment settings with production requirements.
+python3 - "${API_ENV_FILE:-}" "$work/env.json" "$work/secret-args" <<'PY'
+import json
+import sys
+
+values = json.load(open(sys.argv[1])) if sys.argv[1] else {}
+
+if not isinstance(values, dict) or any(
+    not isinstance(value, str) for value in values.values()
+):
+    raise SystemExit("API_ENV_FILE must contain a JSON object of string values.")
+
+secret_keys = {
+    item.split("=", 1)[0]
+    for item in open(sys.argv[3]).read().split(",")
+}
+if secret_keys.intersection(values):
+    raise SystemExit("Do not duplicate secret keys in API_ENV_FILE.")
+
+values.update(
+    APP_ENV="production",
+    AUTH_COOKIE_SECURE="true",
+    SESSION_COOKIE_SECURE="true",
+)
+json.dump(values, open(sys.argv[2], "w"))
+PY
+
+echo "=== Create image repository and runtime accounts ==="
+
+if ! gc artifacts repositories describe "$REPOSITORY" \
+  --location="$REGION" >/dev/null 2>&1; then
+  gc artifacts repositories create "$REPOSITORY" \
+    --location="$REGION" \
+    --repository-format=docker \
+    --quiet
+fi
+
+[[ "$(gc artifacts repositories describe "$REPOSITORY" \
+  --location="$REGION" --format='value(format)')" == DOCKER ]] ||
+  fail 'Artifact repository must use Docker format.'
+
+api_account="rove-api-runtime@$GCP_PROJECT.iam.gserviceaccount.com"
+web_account="rove-web-runtime@$GCP_PROJECT.iam.gserviceaccount.com"
+
+for name in rove-api-runtime rove-web-runtime; do
+  if ! gc iam service-accounts describe \
+    "$name@$GCP_PROJECT.iam.gserviceaccount.com" >/dev/null 2>&1; then
+    gc iam service-accounts create "$name" \
+      --display-name="$name" --quiet
+  fi
+done
+
+gc projects add-iam-policy-binding "$GCP_PROJECT" \
+  --member="serviceAccount:$api_account" \
+  --role=roles/cloudsql.client \
+  --condition=None --quiet >/dev/null
+
+while IFS=: read -r secret version; do
+  gc secrets add-iam-policy-binding "$secret" \
+    --member="serviceAccount:$api_account" \
+    --role=roles/secretmanager.secretAccessor \
+    --condition=None --quiet >/dev/null
+done < "$work/secret-refs"
+
+gc auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+tag="recovery-$(date -u +%Y%m%d%H%M%S)-${commit:0:12}"
+registry="${REGION}-docker.pkg.dev/$GCP_PROJECT/$REPOSITORY"
+
+api_image="$registry/rove-api:$tag"
+web_image="$registry/rove-web:$tag"
+
+echo "=== Build and push API image ==="
+
+build_api() {
+  docker buildx build --platform linux/amd64 --pull \
+    "$@" --load -t "$api_image" \
+    -f server/Dockerfile server
+}
+
+if [[ -n "${CORPORATE_CA_FILE:-}" ]]; then
+  test -s "$CORPORATE_CA_FILE"
+  build_api --secret "id=corporate_ca,src=$CORPORATE_CA_FILE"
+else
+  build_api
+fi
+
+docker run --rm --entrypoint python "$api_image" -c \
+  'from alembic.config import Config; from alembic.script import ScriptDirectory; s=ScriptDirectory.from_config(Config("alembic.ini")); assert len(s.get_heads()) == 1, "Resolve migration heads before deployment"'
+
+docker push "$api_image"
+
+echo "=== Create or update API service ==="
+
+# Public access supports Nginx proxy requests without Google IAM tokens.
+# One instance accommodates the current in-memory admin session implementation.
+gc run deploy "$API_SERVICE" \
+  --region="$REGION" \
+  --image="$api_image" \
+  --service-account="$api_account" \
+  --port=8000 \
+  --ingress=all \
+  --allow-unauthenticated \
+  --add-cloudsql-instances="$CLOUD_SQL_CONNECTION" \
+  --env-vars-file="$work/env.json" \
+  --update-secrets="$(cat "$work/secret-args")" \
+  --max-instances=1 \
+  --command=sh \
+  --args='-c,alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000' \
+  --quiet
+
+gc run services update-traffic "$API_SERVICE" \
+  --region="$REGION" --to-latest --quiet
+
+api_url=$(gc run services describe "$API_SERVICE" \
+  --region="$REGION" --format='value(status.url)')
+
+curl --fail --silent --show-error \
+  --retry 5 --retry-all-errors --max-time 60 \
+  "$api_url/api/health" >/dev/null
+
+echo "=== Build frontend proxy image ==="
+
+cat > "$work/web/nginx.conf" <<EOF
+server {
+  listen 8080;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  location /api/ {
+    proxy_pass ${api_url};
+    proxy_ssl_server_name on;
+    proxy_set_header Host ${api_url#https://};
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_http_version 1.1;
+    proxy_read_timeout 120s;
+  }
+
+  location = /index.html {
+    add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+  }
+
+  location / {
+    try_files \$uri \$uri/ /index.html;
+  }
+}
+EOF
+
+cat > "$work/web/Dockerfile" <<'EOF'
+FROM nginx:alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY dist /usr/share/nginx/html
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]
+EOF
+
+docker buildx build --platform linux/amd64 --pull \
+  --push -t "$web_image" "$work/web"
+
+echo "=== Create or update frontend service ==="
+
+gc run deploy "$WEB_SERVICE" \
+  --region="$REGION" \
+  --image="$web_image" \
+  --service-account="$web_account" \
+  --port=8080 \
+  --ingress=all \
+  --allow-unauthenticated \
+  --quiet
+
+web_url=$(gc run services describe "$WEB_SERVICE" \
+  --region="$REGION" --format='value(status.url)')
+
+gc run services update "$API_SERVICE" \
+  --region="$REGION" \
+  --update-env-vars="CORS_ORIGIN=$web_url" \
+  --quiet
+
+gc run services update-traffic "$API_SERVICE" \
+  --region="$REGION" --to-latest --quiet
+
+gc run services update-traffic "$WEB_SERVICE" \
+  --region="$REGION" --to-latest --quiet
+
+echo "=== Verify deployment ==="
+
+curl --fail --silent --show-error \
+  --retry 5 --retry-all-errors --max-time 60 \
+  "$web_url/" >/dev/null
+
+curl --fail --silent --show-error \
+  --retry 5 --retry-all-errors --max-time 60 \
+  "$web_url/api/health" >/dev/null
+
+curl --fail --silent --show-error --max-time 60 \
+  "$web_url/api/catalogue/vehicles" > "$work/catalogue.json"
+
+python3 - "$work/catalogue.json" <<'PY'
+import json
+import sys
+
+vehicles = json.load(open(sys.argv[1]))
+if not isinstance(vehicles, list):
+    raise SystemExit("Unexpected catalogue response.")
+
+print("Public catalogue vehicle count:", len(vehicles))
+if not vehicles:
+    print("WARNING: Inventory is empty; dropdowns will have no values.")
+PY
+
+echo
+echo "Deployment complete: $web_url"
+echo "API: $api_url"
+echo "Branch: $BRANCH"
+echo "Commit: $commit"
+echo 'Existing database retained.'
+echo 'Test admin login, reservation actions and catalogue dropdowns.'
