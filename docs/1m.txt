@@ -1,1 +1,164 @@
-ffmpeg -i "$HOME/Desktop/Page1.mov" -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p -c:a aac -b:a 192k -movflags +faststart "$HOME/Desktop/Page1-small.mp4"
+#!/usr/bin/env bash
+# Update existing ROVE Cloud Run services. Never creates/deletes a database.
+# Run from the repository root or deploy/ directory on macOS or Linux.
+set -Eeuo pipefail
+
+GCP_PROJECT="${GCP_PROJECT:-tactical-innovation-f2b97b}"
+REGION="${REGION:-europe-west1}"
+REPOSITORY="${REPOSITORY:-cloud-run-source-deploy}"
+API_SERVICE="${API_SERVICE:-rove-api}"
+WEB_SERVICE="${WEB_SERVICE:-rove-web}"
+REMOTE="${REMOTE:-origin}"
+BRANCH="${BRANCH:-main}"
+
+script_dir=$(cd "$(dirname "$0")" && pwd)
+cd "$(git -C "$script_dir" rev-parse --show-toplevel)"
+for tool in git node npm docker gcloud python3 curl; do
+  command -v "$tool" >/dev/null || { echo "Missing command: $tool"; exit 1; }
+done
+docker info >/dev/null
+docker buildx version >/dev/null
+
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+trap 'echo "Deployment stopped at line $LINENO. Do not reset or recreate the database. Check the error above." >&2' ERR
+gc() { gcloud --project="$GCP_PROJECT" "$@"; }
+
+echo "=== 1. Update the selected branch ==="
+test "$(git branch --show-current)" = "$BRANCH" || {
+  echo "Switch to $BRANCH first. No branch reset was performed."; exit 1;
+}
+git fetch "$REMOTE" "$BRANCH"
+git merge --ff-only "$REMOTE/$BRANCH"
+test "$(git rev-parse HEAD)" = "$(git rev-parse "$REMOTE/$BRANCH")" || {
+  echo "Local commits differ from GitHub. Push/reconcile them before deploying."; exit 1;
+}
+git diff --quiet HEAD -- src server public package.json package-lock.json || {
+  echo "Commit application source changes before deploying."; exit 1;
+}
+commit=$(git rev-parse --short=12 HEAD)
+tag="update-$(date -u +%Y%m%d%H%M%S)-$commit"
+registry="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}"
+api_image="$registry/rove-api:$tag"
+web_image="$registry/rove-web:$tag"
+echo "Deploying $BRANCH at $commit to $GCP_PROJECT / $REGION"
+
+echo "=== 2. Verify existing services and database configuration ==="
+gc run services describe "$API_SERVICE" --region="$REGION" --format=json > "$work/api.json"
+gc run services describe "$WEB_SERVICE" --region="$REGION" --format=json > "$work/web.json"
+api_url=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["status"]["url"])' "$work/api.json")
+web_url=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["status"]["url"])' "$work/web.json")
+python3 - "$work/api.json" <<'PY'
+import json, sys
+service = json.load(open(sys.argv[1]))
+containers = service['spec']['template']['spec']['containers']
+if len(containers) != 1:
+    raise SystemExit('Multi-container API configuration needs a tailored deployment script.')
+env = containers[0].get('env', [])
+if not any(e.get('name') == 'DATABASE_URL' and
+           (e.get('value') or e.get('valueFrom')) for e in env):
+    raise SystemExit('Existing API has no DATABASE_URL configuration. Stopped without database changes.')
+PY
+# The Nginx frontend proxies API requests without an IAM identity token.
+# Verify that this existing access arrangement works; never change IAM here.
+curl --fail --silent --show-error --max-time 30 "$api_url/api/health" > /dev/null || {
+  echo "Existing API is unhealthy or requires IAM authentication. Resolve this before deployment."
+  exit 1
+}
+gc artifacts repositories describe "$REPOSITORY" --location="$REGION" >/dev/null
+gc auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+echo "=== 3. Fresh frontend build ==="
+NODE_USE_SYSTEM_CA=1 npm ci --include=dev
+mkdir -p "$work/web/dist"
+# An empty API URL keeps browser requests on the frontend origin.
+NODE_USE_SYSTEM_CA=1 VITE_API_URL='' npm run build -- --outDir "$work/web/dist" --emptyOutDir
+test -s "$work/web/dist/index.html"
+
+cat > "$work/web/nginx.conf" <<EOF
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    location /api/ {
+        proxy_pass ${api_url};
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${api_url#https://};
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_http_version 1.1;
+        proxy_read_timeout 120s;
+    }
+    location = /index.html {
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+    }
+    location / { try_files \$uri \$uri/ /index.html; }
+}
+EOF
+cat > "$work/web/Dockerfile" <<'EOF'
+FROM nginx:alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY dist /usr/share/nginx/html
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]
+EOF
+
+echo "=== 4. Fresh API and frontend Docker images ==="
+build_api() {
+  docker buildx build --platform linux/amd64 --pull --no-cache \
+    "$@" --load -t "$api_image" -f server/Dockerfile server
+}
+if [ -n "${CORPORATE_CA_FILE:-}" ]; then
+  test -s "$CORPORATE_CA_FILE"
+  build_api --secret "id=corporate_ca,src=$CORPORATE_CA_FILE"
+elif [ -s company-ca.pem ]; then
+  build_api --secret "id=corporate_ca,src=$PWD/company-ca.pem"
+else
+  build_api
+fi
+# Check graph consistency without connecting to or changing the database.
+docker run --rm --entrypoint python "$api_image" -c \
+  'from alembic.config import Config; from alembic.script import ScriptDirectory; s=ScriptDirectory.from_config(Config("alembic.ini")); heads=s.get_heads(); print("Migration heads:", heads); assert len(heads)==1, "Resolve migration heads before deploying"'
+docker push "$api_image"
+docker buildx build --platform linux/amd64 --pull --no-cache \
+  --push -t "$web_image" "$work/web"
+
+echo "=== 5. Stage API revision and apply normal migrations ==="
+# Existing service environment variables, secret references, service account,
+# Cloud SQL attachments, network settings and IAM are retained.
+# Migrations must succeed before Uvicorn listens and startup can succeed.
+# Migrations must be backward compatible with the currently serving revision.
+gc run deploy "$API_SERVICE" --region="$REGION" --image="$api_image" \
+  --port=8000 --command=sh \
+  --args='-c,alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000' \
+  --no-traffic --tag="$tag" --quiet
+api_revision=$(gc run services describe "$API_SERVICE" --region="$REGION" \
+  --format='value(status.latestReadyRevisionName)')
+gc run services describe "$API_SERVICE" --region="$REGION" --format=json > "$work/staged-api.json"
+staged_url=$(python3 -c 'import json,sys; s=json.load(open(sys.argv[1])); print(next(t["url"] for t in s["status"]["traffic"] if t.get("tag")==sys.argv[2]))' "$work/staged-api.json" "$tag")
+curl --fail --silent --show-error --retry 3 --max-time 60 "$staged_url/api/health" > /dev/null
+curl --fail --silent --show-error --max-time 60 "$staged_url/api/catalogue/featured" > /dev/null
+
+echo "=== 6. Stage frontend revision ==="
+gc run deploy "$WEB_SERVICE" --region="$REGION" --image="$web_image" \
+  --port=8080 --no-traffic --tag="$tag" --quiet
+web_revision=$(gc run services describe "$WEB_SERVICE" --region="$REGION" \
+  --format='value(status.latestReadyRevisionName)')
+gc run services describe "$WEB_SERVICE" --region="$REGION" --format=json > "$work/staged-web.json"
+staged_web_url=$(python3 -c 'import json,sys; s=json.load(open(sys.argv[1])); print(next(t["url"] for t in s["status"]["traffic"] if t.get("tag")==sys.argv[2]))' "$work/staged-web.json" "$tag")
+curl --fail --silent --show-error --retry 3 --max-time 60 "$staged_web_url/" > /dev/null
+
+echo "=== 7. Route traffic to the new revisions ==="
+gc run services update-traffic "$API_SERVICE" --region="$REGION" \
+  --to-revisions="$api_revision=100" --quiet
+gc run services update-traffic "$WEB_SERVICE" --region="$REGION" \
+  --to-revisions="$web_revision=100" --quiet
+curl --fail --silent --show-error --retry 3 --max-time 60 "$web_url/api/health"
+curl --fail --silent --show-error --max-time 60 "$web_url/api/catalogue/featured" > /dev/null
+
+echo
+echo "Deployment complete: $web_url"
+echo "Commit: $commit"
+echo "API revision: $api_revision"
+echo "Web revision: $web_revision"
+echo "Existing database retained. Hard-refresh the browser with Cmd+Shift+R."
