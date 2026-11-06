@@ -1,2 +1,7 @@
 cd ~/Documents/repo/rove
 REMOTE=company BRANCH=feature/rove-sync-20261106-122302 bash deploy/ROVE_GCP_Fresh_Deploy.sh --deploy
+
+
+https://github.com/lbg-cloud-platform/tactical-innovation-f2b97b/tree/feature/rove-sync-20261106-122302
+
+new-deploy.sh
