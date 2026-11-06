@@ -1,42 +1,32 @@
-# 1. Make sure PERSONAL main is current
-git checkout main
-git pull --ff-only origin main
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        new file:   .github/checkov-config.yml
+        new file:   .github/workflows/core-actions-manager.yml
+        new file:   .github/workflows/core-checkov-action.yml
+        new file:   .github/workflows/core-linter.yml
+        new file:   .github/workflows/core-semantic-pr.yml
 
-# 2. Get latest LBG main
-git fetch company main
+ .github/checkov-config.yml                 |   5 ++++
+ .github/workflows/core-actions-manager.yml |  49 ++++++++++++++++++++++++++++++++
+ .github/workflows/core-checkov-action.yml  |  33 ++++++++++++++++++++++
+ .github/workflows/core-linter.yml          | 166 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ .github/workflows/core-semantic-pr.yml     |  39 ++++++++++++++++++++++++++
+ 5 files changed, 292 insertions(+)
+zsh: command not found: #
+[main deb430d] Sync ROVE application from personal main
+ 5 files changed, 292 insertions(+)
+ create mode 100644 .github/checkov-config.yml
+ create mode 100644 .github/workflows/core-actions-manager.yml
+ create mode 100644 .github/workflows/core-checkov-action.yml
+ create mode 100644 .github/workflows/core-linter.yml
+ create mode 100644 .github/workflows/core-semantic-pr.yml
+zsh: command not found: #
+error: src refspec rove-sync-20261106-121036 does not match any
+error: failed to push some refs to 'github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git'
+zsh: command not found: #
+Already on 'main'
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
 
-# 3. Create a fresh LBG sync branch based on LBG main
-SYNC_BRANCH="rove-sync-$(date +%Y%m%d-%H%M%S)"
-git switch -c "$SYNC_BRANCH" company/main
-
-# 4. Replace the application code with PERSONAL main
-git read-tree --reset -u origin/main
-
-# 5. IMPORTANT:
-# Restore LBG-protected GitHub files so company rules are not violated
-git checkout company/main -- \
-  .github/checkov-config.yml \
-  .github/workflows/core-actions-manager.yml \
-  .github/workflows/core-checkov-action.yml \
-  .github/workflows/core-linter.yml \
-  .github/workflows/core-semantic-pr.yml
-
-# 6. Stage everything
-git add -A
-
-# 7. Check exactly what will go to LBG
-git status
-git diff --cached --stat
-
-# 8. Commit the sync
-git commit -m "Sync ROVE application from personal main"
-
-# 9. Push the new branch to LBG
-git push -u company "$SYNC_BRANCH"
-
-# 10. Return your local repo to PERSONAL main
-git switch main
-
-echo
-echo "LBG branch created: $SYNC_BRANCH"
-echo "Create PR: $SYNC_BRANCH -> main"
+LBG branch created: rove-sync-20261106-121036
+Create PR: rove-sync-20261106-121036 -> main
