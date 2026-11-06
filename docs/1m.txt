@@ -1,3 +1,8 @@
-git fetch origin company
+srujan.kumar@DEV-H59N27LXKY rove % git fetch origin company
 git switch -C feature/sample company/feature/sample
 git merge origin/main && git push company feature/sample
+fatal: couldn't find remote ref company
+fatal: invalid reference: company/feature/sample
+Already up to date.
+error: src refspec feature/sample does not match any
+error: failed to push some refs to 'github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git'
