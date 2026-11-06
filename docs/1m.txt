@@ -1,1 +1,17 @@
-feature/rove-sync-20261106-122302
+Feature branch: feature/rove-sync-20261106-122302
+
+####error when running new-deploy.sh script#####
+=== Cloud Run services ===
+=== Cloud SQL instances ===
+NAME           REGION        DATABASE_VERSION  STATUS    CONNECTION_NAME
+rove-postgres  europe-west1  POSTGRES_16       RUNNABLE  tactical-innovation-f2b97b:europe-west1:rove-postgres
+=== Image repositories ===
+Listing items under project tactical-innovation-f2b97b, location europe-west1.
+
+REPOSITORY               FORMAT
+cloud-run-source-deploy  DOCKER
+rove-v1                  DOCKER
+=== Secret names only ===
+
+Read-only check complete.
+An API-disabled or permission error does not mean resources were deleted.
