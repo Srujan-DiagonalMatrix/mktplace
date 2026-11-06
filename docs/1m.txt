@@ -1,30 +1,39 @@
-set -e
+bash <<'SCRIPT'
 
-echo "=== FETCH BOTH REPOS ==="
-git fetch origin
-git fetch company
+echo "=== SETUP REMOTES ==="
+git remote set-url origin git@github.com:Srujan-DiagonalMatrix/rove.git
 
-echo
-echo "=== SAVE LOCAL BANK-ONLY CHANGES ==="
-git stash push -u -m "bank-local-only" || true
+if git remote get-url company >/dev/null 2>&1; then
+  git remote set-url company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
+else
+  git remote add company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
+fi
 
-echo
-echo "=== CREATE FEATURE BRANCH FROM BANK MAIN ==="
+echo "=== FETCH LATEST ==="
+git fetch origin main || exit 1
+git fetch company main || exit 1
+
+echo "=== SAVE LOCAL CHANGES IF ANY ==="
+STASHED=0
+
+if [ -n "$(git status --porcelain)" ]; then
+  git stash push -u -m "bank-local-only-$(date +%Y%m%d-%H%M%S)"
+  STASHED=1
+fi
+
+echo "=== CREATE NEW LBG FEATURE BRANCH ==="
 FEATURE_BRANCH="feature/rove-sync-$(date +%Y%m%d-%H%M%S)"
 
-git switch --detach company/main
-git switch -c "$FEATURE_BRANCH"
+git switch -c "$FEATURE_BRANCH" company/main || exit 1
 
-echo
-echo "=== COPY PERSONAL ROVE CODE ==="
-git checkout origin/main -- .
+echo "=== COPY PERSONAL ROVE MAIN ==="
+git read-tree --reset -u origin/main
 
-echo
-echo "=== RESTORE BANK-MANAGED GITHUB FILES ==="
+echo "=== KEEP ONLY BANK .github CONFIGURATION ==="
+rm -rf .github
 git checkout company/main -- .github 2>/dev/null || true
 
-echo
-echo "=== REMOVE LOCAL SSL / BACKUP FILES ==="
+echo "=== REMOVE LOCAL-ONLY FILES ==="
 rm -f \
   Dockerfile.backup \
   Dockerfile.backup.bak \
@@ -38,36 +47,40 @@ rm -f \
   company-ca.pem \
   docker-compose.corporate.yml
 
-echo
-echo "=== REVIEW ==="
-git status --short
-
-echo
 echo "=== COMMIT ==="
 git add -A
+git status --short
 
-git commit -m "Sync latest ROVE changes from personal repository" || true
+if git diff --cached --quiet; then
+  echo "No new changes to commit."
+else
+  git commit -m "Sync latest ROVE changes from personal repository" || exit 1
+fi
 
-echo
-echo "=== PUSH FEATURE BRANCH TO BANK GITHUB ==="
-git push -u company "$FEATURE_BRANCH"
+echo "=== PUSH TO LBG ==="
+git push -u company "$FEATURE_BRANCH" || exit 1
 
 echo
 echo "========================================"
-echo "PUSH COMPLETE"
+echo "SUCCESS"
 echo "========================================"
-echo "Feature branch: $FEATURE_BRANCH"
+echo "LBG branch:"
+echo "$FEATURE_BRANCH"
+echo
 echo "Create PR:"
 echo "$FEATURE_BRANCH -> main"
-
 echo
-echo "=== RETURN TO LOCAL MAIN ==="
+
+echo "=== RETURN TO PERSONAL MAIN ==="
 git switch main
 
-echo
-echo "=== RESTORE BANK-LAPTOP LOCAL CHANGES ==="
-git stash pop || true
+if [ "$STASHED" -eq 1 ]; then
+  echo "=== RESTORE LOCAL BANK-LAPTOP CHANGES ==="
+  git stash pop || true
+fi
 
 echo
-echo "=== DONE ==="
+echo "=== FINAL STATUS ==="
 git status
+
+SCRIPT
