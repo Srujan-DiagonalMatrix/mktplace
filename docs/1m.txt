@@ -1,1 +1,3 @@
-git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git
+git remote set-url company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git && git fetch origin main && git fetch company feature/sample
+git switch -C feature/sample company/feature/sample && git merge --no-commit --no-ff origin/main
+git restore --source=company/feature/sample --staged --worktree .github && git commit -m "Sync ROVE main" && git push company feature/sample
