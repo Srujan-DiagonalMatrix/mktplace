@@ -1,3 +1,4 @@
-git remote set-url company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git && git fetch origin main && git fetch company feature/sample
-git switch -C feature/sample company/feature/sample && git merge --no-commit --no-ff origin/main
-git restore --source=company/feature/sample --staged --worktree .github && git commit -m "Sync ROVE main" && git push company feature/sample
+ * branch            main       -> FETCH_HEAD
+fatal: couldn't find remote ref feature/sample
+fatal: invalid reference: company/feature/sample
+fatal: could not resolve 'company/feature/sample'
