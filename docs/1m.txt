@@ -1,288 +1,36 @@
-#!/usr/bin/env bash
-# Rebuild and deploy the existing remote ROVE branch to existing Cloud Run services.
-# Reuses the existing database and applies Alembic migrations; never resets it.
-# Run from a file in the bank's repository (repository root or deploy/ directory).
-# Prerequisites: git, tar, node, npm, Docker with buildx, gcloud, python3, curl.
-# Ensure the intended changes are committed and pushed to REMOTE/BRANCH first.
-# Verify a recent database backup and backward-compatible migrations before use.
-# Do not run concurrent deployments against the same database.
-set -Eeuo pipefail
-umask 077
+✗ Build failed in 138ms
+error during build:
+Build failed with 2 errors:
 
-GCP_PROJECT="${GCP_PROJECT:-tactical-innovation-f2b97b}"
-REGION="${REGION:-europe-west1}"
-REPOSITORY="${REPOSITORY:-cloud-run-source-deploy}"
-API_SERVICE="${API_SERVICE:-rove-api}"
-WEB_SERVICE="${WEB_SERVICE:-rove-web}"
-REMOTE="${REMOTE:-origin}"
-BRANCH="${BRANCH:-main}"
+[builtin:vite-transform] Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[ src/components/VehicleResults.jsx:1:3 ]
+   │
+ 1 │ cd ~/Documents/repo/rove || exit 1
+   │   │ 
+   │   ╰─ 
+   │ 
+   │ Help: Try inserting a semicolon here
+───╯
 
-for tool in git tar node npm docker gcloud python3 curl; do
-  command -v "$tool" >/dev/null || { echo "Missing command: $tool" >&2; exit 1; }
-done
-script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-repo_root=$(git -C "$script_dir" rev-parse --show-toplevel)
-cd "$repo_root"
+[builtin:vite-transform] Encountered diff marker
+    ╭─[ src/components/AdminVehicles.jsx:16:1 ]
+    │
+ 16 │ <<<<<<< HEAD
+    │ ───┬───  
+    │    ╰───── between this marker and `=======` is the code that we're merging into
+    │ 
+    │ Help: This conflict marker appears to be incomplete (missing `=======` or `>>>>>>>`).
+    │       Check if the conflict markers were accidentally modified or partially deleted.
+────╯
 
-ca_file=""
-if [ -n "${CORPORATE_CA_FILE:-}" ]; then
-  test -s "$CORPORATE_CA_FILE" || { echo "Corporate CA file is missing or empty." >&2; exit 1; }
-  ca_file=$(python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$CORPORATE_CA_FILE")
-elif [ -s "$repo_root/company-ca.pem" ]; then
-  ca_file="$repo_root/company-ca.pem"
-fi
-
-docker info >/dev/null
-docker buildx version >/dev/null
-deploy_work=$(mktemp -d)
-source_dir="$deploy_work/source"
-mkdir -p "$source_dir"
-api_attempted=0
-web_attempted=0
-api_previous=""
-web_previous=""
-gc() { gcloud --project="$GCP_PROJECT" "$@"; }
-cleanup() { rm -rf -- "$deploy_work"; }
-failed() {
-  local status="$1" line="$2"
-  trap - ERR
-  set +e
-  echo "Deployment failed at line $line." >&2
-  if [ "$web_attempted" -eq 1 ]; then
-    gc run services update-traffic "$WEB_SERVICE" --region="$REGION" \
-      --to-revisions="$web_previous" --quiet || echo "Frontend traffic rollback failed; check Cloud Run." >&2
-  fi
-  if [ "$api_attempted" -eq 1 ]; then
-    gc run services update-traffic "$API_SERVICE" --region="$REGION" \
-      --to-revisions="$api_previous" --quiet || echo "API traffic rollback failed; check Cloud Run." >&2
-  fi
-  echo "Database migrations are not automatically reversed. Do not reset the database." >&2
-  exit "$status"
+    at aggregateBindingErrorsIntoJsError (file:///private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/tmp.Z3obanoSg8/source/node_modules/rolldown/dist/shared/error-BzLGqhSQ.mjs:48:18)
+    at unwrapBindingResult (file:///private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/tmp.Z3obanoSg8/source/node_modules/rolldown/dist/shared/error-BzLGqhSQ.mjs:18:128)
+    at #build (file:///private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/tmp.Z3obanoSg8/source/node_modules/rolldown/dist/shared/rolldown-I5b6h5Km.mjs:132:34)
+    at async buildEnvironment (file:///private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/tmp.Z3obanoSg8/source/node_modules/vite/dist/node/chunks/node.js:33669:66)
+    at async Object.build (file:///private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/tmp.Z3obanoSg8/source/node_modules/vite/dist/node/chunks/node.js:34091:19)
+    at async Object.buildApp (file:///private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/tmp.Z3obanoSg8/source/node_modules/vite/dist/node/chunks/node.js:34088:153)
+    at async CAC.<anonymous> (file:///private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/tmp.Z3obanoSg8/source/node_modules/vite/dist/node/cli.js:776:3) {
+  errors: [Getter/Setter]
 }
-trap cleanup EXIT
-trap 'failed "$?" "$LINENO"' ERR
-check_url() {
-  curl --fail --silent --show-error --connect-timeout 15 --max-time 60 \
-    --retry 3 --retry-delay 2 "$1" -o /dev/null
-}
-service_info() {
-  python3 - "$1" "$2" <<'PY'
-import json, sys
-service = json.load(open(sys.argv[1]))
-status = service['status']
-if sys.argv[2] == 'url':
-    url = status.get('url', '')
-    if not url.startswith('https://'):
-        raise SystemExit('Missing HTTPS service URL.')
-    print(url)
-else:
-    allocations = {}
-    for target in status.get('traffic', []):
-        percent = int(target.get('percent', 0))
-        if percent <= 0:
-            continue
-        revision = target.get('revisionName')
-        if not revision and target.get('latestRevision'):
-            revision = status.get('latestReadyRevisionName')
-        if not revision:
-            raise SystemExit('Cannot determine current traffic revision.')
-        allocations[revision] = allocations.get(revision, 0) + percent
-    if sum(allocations.values()) != 100:
-        raise SystemExit('Current traffic allocation must total 100%.')
-    print(','.join(f'{revision}={percent}' for revision, percent in allocations.items()))
-PY
-}
-get_tag() {
-  python3 - "$1" "$2" <<'PY'
-import json, sys
-service = json.load(open(sys.argv[1]))
-matches = [t for t in service['status'].get('traffic', []) if t.get('tag') == sys.argv[2]]
-if len(matches) != 1 or not matches[0].get('revisionName') or not matches[0].get('url'):
-    raise SystemExit('Cannot determine staged revision and URL.')
-print(matches[0]['revisionName'])
-print(matches[0]['url'])
-PY
-}
-
-echo "=== 1. Fetch remote deployment source ==="
-# The remote belongs to the repository containing this script.
-# No checkout, merge, reset, or application-source edits are performed.
-git fetch "$REMOTE" "refs/heads/$BRANCH"
-commit=$(git rev-parse --verify 'FETCH_HEAD^{commit}')
-short_commit=$(git rev-parse --short=12 "$commit")
-git archive --format=tar "$commit" > "$deploy_work/source.tar"
-tar -xf "$deploy_work/source.tar" -C "$source_dir"
-tag="update-$(date -u +%Y%m%d%H%M%S)-$short_commit"
-job="rove-migrate-$tag"
-registry="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}"
-api_image="$registry/rove-api:$tag"
-web_image="$registry/rove-web:$tag"
-echo "Deploying remote branch $BRANCH, commit $commit"
-echo "Target: $GCP_PROJECT / $REGION"
-echo "Local uncommitted application changes are excluded."
-
-echo "=== 2. Inspect existing services and database configuration ==="
-gc run services describe "$API_SERVICE" --region="$REGION" --format=json > "$deploy_work/api.json"
-gc run services describe "$WEB_SERVICE" --region="$REGION" --format=json > "$deploy_work/web.json"
-api_url=$(service_info "$deploy_work/api.json" url)
-web_url=$(service_info "$deploy_work/web.json" url)
-api_previous=$(service_info "$deploy_work/api.json" traffic)
-web_previous=$(service_info "$deploy_work/web.json" traffic)
-python3 - "$deploy_work/api.json" "$deploy_work/web.json" <<'PY'
-import json, sys
-for filename in sys.argv[1:]:
-    service = json.load(open(filename))
-    if len(service['spec']['template']['spec']['containers']) != 1:
-        raise SystemExit('Multi-container services need a tailored deployment script.')
-api = json.load(open(sys.argv[1]))
-env = api['spec']['template']['spec']['containers'][0].get('env', [])
-if not any(e.get('name') == 'DATABASE_URL' and (e.get('value') or e.get('valueFrom')) for e in env):
-    raise SystemExit('Existing API has no DATABASE_URL. No database changes performed.')
-PY
-# This script preserves the existing IAM arrangement. The frontend's Nginx
-# proxy requires an API endpoint reachable without an IAM identity token.
-check_url "$api_url/api/health"
-check_url "$web_url/"
-gc artifacts repositories describe "$REPOSITORY" --location="$REGION" >/dev/null
-gc auth configure-docker "${REGION}-docker.pkg.dev" --quiet
-
-echo "=== 3. Fresh frontend build ==="
-cd "$source_dir"
-NODE_USE_SYSTEM_CA=1 npm ci --include=dev
-mkdir -p "$deploy_work/web/dist"
-NODE_USE_SYSTEM_CA=1 VITE_API_URL='' npm run build -- --outDir "$deploy_work/web/dist" --emptyOutDir
-test -s "$deploy_work/web/dist/index.html"
-cat > "$deploy_work/web/nginx.conf" <<EOF
-server {
-    listen 8080;
-    server_name _;
-    root /usr/share/nginx/html;
-    index index.html;
-    client_max_body_size 10m;
-    location /api/ {
-        proxy_pass ${api_url};
-        proxy_ssl_server_name on;
-        proxy_set_header Host ${api_url#https://};
-        proxy_set_header X-Forwarded-Proto https;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_http_version 1.1;
-        proxy_read_timeout 120s;
-    }
-    location = /index.html {
-        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
-    }
-    location / { try_files \$uri \$uri/ /index.html; }
-}
-EOF
-cat > "$deploy_work/web/Dockerfile" <<'EOF'
-FROM nginx:alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY dist /usr/share/nginx/html
-EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
-EOF
-
-echo "=== 4. Fresh API/backend and frontend images ==="
-api_build_args=()
-if [ -n "$ca_file" ]; then
-  api_build_args+=(--secret "id=corporate_ca,src=$ca_file")
-fi
-docker buildx build --platform linux/amd64 --pull --no-cache \
-  "${api_build_args[@]}" --load -t "$api_image" -f server/Dockerfile server
-# Validate migration graph without production credentials or database access.
-docker run --rm --entrypoint python "$api_image" -c \
-  'from alembic.config import Config; from alembic.script import ScriptDirectory; s=ScriptDirectory.from_config(Config("alembic.ini")); heads=s.get_heads(); print("Migration heads:", heads); assert len(heads)==1, "Resolve migration heads before deployment"'
-docker push "$api_image"
-docker buildx build --platform linux/amd64 --pull --no-cache \
-  --push -t "$web_image" "$deploy_work/web"
-
-echo "=== 5. Configure one-off migration Job ==="
-# Private temporary JSON may contain existing environment values. Never print it.
-python3 - "$deploy_work/api.json" "$deploy_work/job.json" "$job" "$api_image" <<'PY'
-import copy, json, sys
-source, destination, name, image = sys.argv[1:]
-service = json.load(open(source))
-template = service['spec']['template']
-spec = template['spec']
-original = spec['containers'][0]
-allowed_annotations = {
-    'run.googleapis.com/cloudsql-instances',
-    'run.googleapis.com/vpc-access-connector',
-    'run.googleapis.com/vpc-access-egress',
-    'run.googleapis.com/network-interfaces',
-    'run.googleapis.com/secrets',
-    'run.googleapis.com/encryption-key',
-    'run.googleapis.com/execution-environment',
-}
-annotations = {k: v for k, v in template.get('metadata', {}).get('annotations', {}).items()
-               if k in allowed_annotations}
-container = {'image': image, 'command': ['sh'],
-             'args': ['-c', 'alembic current && alembic upgrade head && alembic current']}
-for key in ('env', 'volumeMounts', 'resources'):
-    if key in original:
-        container[key] = copy.deepcopy(original[key])
-task = {'containers': [container], 'maxRetries': 0, 'timeoutSeconds': '900'}
-for key in ('serviceAccountName', 'volumes'):
-    if key in spec:
-        task[key] = copy.deepcopy(spec[key])
-job = {'apiVersion': 'run.googleapis.com/v1', 'kind': 'Job',
-       'metadata': {'name': name},
-       'spec': {'template': {'metadata': {'annotations': annotations},
-               'spec': {'taskCount': 1, 'parallelism': 1, 'template': {'spec': task}}}}}
-with open(destination, 'w') as output:
-    json.dump(job, output)
-PY
-gc run jobs replace "$deploy_work/job.json" --region="$REGION" --quiet
-
-echo "=== 6. Migrate the existing database ==="
-# Runs once with the existing API's database secrets, service account,
-# Cloud SQL attachment, VPC settings and mounts. No database is recreated.
-# The currently serving API still accesses this same database.
-gc run jobs execute "$job" --region="$REGION" --wait --quiet
-
-echo "=== 7. Stage API/backend revision ==="
-# Migrations already completed; do not repeat them on every API cold start.
-# Existing environment, secrets, networking, scaling and IAM are retained.
-gc run deploy "$API_SERVICE" --region="$REGION" --image="$api_image" \
-  --port=8000 --command=uvicorn \
-  --args='app.main:app,--host,0.0.0.0,--port,8000,--workers,1' \
-  --no-traffic --tag="$tag" --quiet
-gc run services describe "$API_SERVICE" --region="$REGION" --format=json > "$deploy_work/staged-api.json"
-get_tag "$deploy_work/staged-api.json" "$tag" > "$deploy_work/api-tag.txt"
-api_revision=$(sed -n '1p' "$deploy_work/api-tag.txt")
-staged_api_url=$(sed -n '2p' "$deploy_work/api-tag.txt")
-check_url "$staged_api_url/api/health"
-check_url "$staged_api_url/api/catalogue/featured"
-
-echo "=== 8. Stage frontend revision ==="
-# Clear old command overrides so this image starts Nginx using its own CMD.
-gc run deploy "$WEB_SERVICE" --region="$REGION" --image="$web_image" \
-  --port=8080 --command="" --args="" --no-traffic --tag="$tag" --quiet
-gc run services describe "$WEB_SERVICE" --region="$REGION" --format=json > "$deploy_work/staged-web.json"
-get_tag "$deploy_work/staged-web.json" "$tag" > "$deploy_work/web-tag.txt"
-web_revision=$(sed -n '1p' "$deploy_work/web-tag.txt")
-staged_web_url=$(sed -n '2p' "$deploy_work/web-tag.txt")
-check_url "$staged_web_url/"
-check_url "$staged_web_url/api/health"
-
-echo "=== 9. Route traffic and verify ==="
-api_attempted=1
-gc run services update-traffic "$API_SERVICE" --region="$REGION" --to-revisions="$api_revision=100" --quiet
-web_attempted=1
-gc run services update-traffic "$WEB_SERVICE" --region="$REGION" --to-revisions="$web_revision=100" --quiet
-check_url "$web_url/"
-check_url "$web_url/api/health"
-check_url "$web_url/api/catalogue/featured"
-trap - ERR
-
-echo
-echo "Deployment complete; basic connectivity checks passed."
-echo "Frontend: $web_url"
-echo "Commit: $commit"
-echo "API revision: $api_revision"
-echo "Web revision: $web_revision"
-echo "Migration Job retained for audit: $job"
-echo "Existing database retained; pending migrations applied."
-echo "Previous API traffic: $api_previous"
-echo "Previous web traffic: $web_previous"
-echo "Database migrations are not reversed by application traffic rollback."
+Deployment failed at line 153.
+Database migrations are not automatically reversed. Do not reset the database.
