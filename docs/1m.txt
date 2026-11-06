@@ -1,32 +1,3 @@
-Changes to be committed:
-  (use "git restore --staged <file>..." to unstage)
-        new file:   .github/checkov-config.yml
-        new file:   .github/workflows/core-actions-manager.yml
-        new file:   .github/workflows/core-checkov-action.yml
-        new file:   .github/workflows/core-linter.yml
-        new file:   .github/workflows/core-semantic-pr.yml
-
- .github/checkov-config.yml                 |   5 ++++
- .github/workflows/core-actions-manager.yml |  49 ++++++++++++++++++++++++++++++++
- .github/workflows/core-checkov-action.yml  |  33 ++++++++++++++++++++++
- .github/workflows/core-linter.yml          | 166 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- .github/workflows/core-semantic-pr.yml     |  39 ++++++++++++++++++++++++++
- 5 files changed, 292 insertions(+)
-zsh: command not found: #
-[main deb430d] Sync ROVE application from personal main
- 5 files changed, 292 insertions(+)
- create mode 100644 .github/checkov-config.yml
- create mode 100644 .github/workflows/core-actions-manager.yml
- create mode 100644 .github/workflows/core-checkov-action.yml
- create mode 100644 .github/workflows/core-linter.yml
- create mode 100644 .github/workflows/core-semantic-pr.yml
-zsh: command not found: #
-error: src refspec rove-sync-20261106-121036 does not match any
-error: failed to push some refs to 'github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git'
-zsh: command not found: #
-Already on 'main'
-Your branch is ahead of 'origin/main' by 1 commit.
-  (use "git push" to publish your local commits)
-
-LBG branch created: rove-sync-20261106-121036
-Create PR: rove-sync-20261106-121036 -> main
+git fetch origin company
+git switch -C feature/sample company/feature/sample
+git merge origin/main && git push company feature/sample
