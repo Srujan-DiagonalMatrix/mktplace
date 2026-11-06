@@ -1,2 +1,9 @@
-cd ~/Documents/repo/rove
-REMOTE=company BRANCH=feature/rove-sync-20261106-122302 bash deploy/new-deploy.sh --deploy
+✓ built in 792ms
+=== Enable required GCP APIs ===
+Operation "operations/acat.p2-446065888450-6230ae97-0332-46c2-82ed-2a86ddea04a4" finished successfully.
+=== Restore missing credential secrets ===
+Use existing Cloud SQL credentials, which may differ from local Docker credentials.
+Database URL format:
+postgresql+psycopg://USER:URL_ENCODED_PASSWORD@/DATABASE?host=/cloudsql/tactical-innovation-f2b97b:europe-west1:rove-postgres
+Enter existing Cloud SQL DATABASE_URL (hidden): 
+ERROR: Empty value for rove-database-url
