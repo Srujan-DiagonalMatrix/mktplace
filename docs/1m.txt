@@ -1,15 +1,17 @@
- git remote -v
-company git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git (fetch)
-company git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git (push)
-origin  git@github.com:Srujan-DiagonalMatrix/rove.git (fetch)
-origin  git@github.com:Srujan-DiagonalMatrix/rove.git (push)
-srujan.kumar@DEV-H59N27LXKY rove % git remote set-url company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
-srujan.kumar@DEV-H59N27LXKY rove % ssh -T git@github-company
-git ls-remote --heads company refs/heads/feature/rove-sync-20261107-210113
-Hi srujan-lbg-dev! You've successfully authenticated, but GitHub does not provide shell access.
-386b4ad78cbf50958f30d793f27856fd891bdc1d        refs/heads/feature/rove-sync-20261107-210113
-srujan.kumar@DEV-H59N27LXKY rove % git remote -v                                                                                  
-company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git (fetch)
-company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git (push)
-origin  git@github.com:Srujan-DiagonalMatrix/rove.git (fetch)
-origin  git@github.com:Srujan-DiagonalMatrix/rove.git (push)
+echo "=== 1. Fetch remote deployment source ==="
+echo "Source: $REMOTE/$BRANCH"
+# The remote belongs to the repository containing this script.
+# No checkout, merge, reset, or application-source edits are performed.
+git fetch "$REMOTE" "refs/heads/$BRANCH"
+commit=$(git rev-parse --verify 'FETCH_HEAD^{commit}')
+short_commit=$(git rev-parse --short=12 "$commit")
+git archive --format=tar "$commit" > "$deploy_work/source.tar"
+tar -xf "$deploy_work/source.tar" -C "$source_dir"
+tag="update-$(date -u +%Y%m%d%H%M%S)-$short_commit"
+job="rove-migrate-$tag"
+registry="${REGION}-docker.pkg.dev/${GCP_PROJECT}/${REPOSITORY}"
+api_image="$registry/rove-api:$tag"
+web_image="$registry/rove-web:$tag"
+echo "Deploying remote branch $BRANCH, commit $commit"
+echo "Target: $GCP_PROJECT / $REGION"
+echo "Local uncommitted application changes are excluded."
