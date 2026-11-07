@@ -1,9 +1,14 @@
-if git remote get-url company >/dev/null 2>&1; then
-  git remote set-url company git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git
-else
-  git remote add company git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git
-fi
+ERROR: Repository not found.
+fatal: Could not read from remote repository.
 
-git ls-remote --heads company refs/heads/feature/rove-sync-20261107-210113
+Please make sure you have the correct access rights
+and the repository exists.
+=== 1. Fetch remote deployment source ===
+Source: company/feature/rove-sync-20261107-210113
+ERROR: Repository not found.
+fatal: Could not read from remote repository.
 
-REMOTE=company ./deploy/deploy-rove-updates-gcp.sh feature/rove-sync-20261107-210113
+Please make sure you have the correct access rights
+and the repository exists.
+Deployment failed at line 133.
+Database migrations are not automatically reversed. Do not reset the database.
