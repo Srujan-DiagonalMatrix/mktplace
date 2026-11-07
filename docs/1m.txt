@@ -1,5 +1,3 @@
-srujan.kumar@DEV-H59N27LXKY rove % git remote -v
-company git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git (fetch)
-company git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git (push)
-origin  git@github.com:Srujan-DiagonalMatrix/rove.git (fetch)
-origin  git@github.com:Srujan-DiagonalMatrix/rove.git (push)
+git remote set-url company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
+ssh -T git@github-company
+git ls-remote --heads company refs/heads/feature/rove-sync-20261107-210113
