@@ -1,8 +1,1 @@
-vv
-sk-proj-
-
-mI2vnIwF4Hgu9Uwo8mRayB36ygDvvhkXHotAaysRPEM8d3x_
-
-£££££ -- sample 333
-
-673s9KqawYtcGBJEhPVj8ddA0wT3BlbkFJSKG5shN_RyuMXlJVd5Bw7zd0aXaDWLJMTq8aChT7RdPwfeDq1Q8d54mdvHJ-NC0Cwzwu55wzAA
+curl -i --max-time 15 https://api.openai.com/v1/models
