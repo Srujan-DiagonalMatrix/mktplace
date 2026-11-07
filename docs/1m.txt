@@ -1,19 +1,25 @@
+REMOTE=company
+BRANCH=feature/rove-sync-20261107-210113
+REGION=europe-west1
+GCP_PROJECT=tactical-innovation-f2b97b
+REPOSITORY=cloud-run-source-deploy
+
+deploy_work=$(mktemp -d)
+source_dir="$deploy_work/source"
+mkdir -p "$source_dir"
+
 echo "=== 1. Fetch remote deployment source ==="
 echo "Source: $REMOTE/$BRANCH"
 
 git fetch --no-tags "$REMOTE" "refs/heads/$BRANCH" || {
-  echo "ERROR: Could not fetch $REMOTE/$BRANCH. Check the remote URL, access, and branch name." >&2
+  echo "Fetch failed. Check the remote URL, branch name, and access."
   exit 1
 }
 
-commit=$(git rev-parse --verify 'FETCH_HEAD^{commit}') || {
-  echo "ERROR: Fetch succeeded, but no commit was found in FETCH_HEAD." >&2
-  exit 1
-}
-
+commit=$(git rev-parse --verify 'FETCH_HEAD^{commit}') || exit 1
 short_commit=$(git rev-parse --short=12 "$commit")
-git archive --format=tar "$commit" > "$deploy_work/source.tar"
-tar -xf "$deploy_work/source.tar" -C "$source_dir"
+git archive --format=tar "$commit" > "$deploy_work/source.tar" || exit 1
+tar -xf "$deploy_work/source.tar" -C "$source_dir" || exit 1
 
 tag="update-$(date -u +%Y%m%d%H%M%S)-$short_commit"
 job="rove-migrate-$tag"
@@ -24,3 +30,6 @@ web_image="$registry/rove-web:$tag"
 echo "Deploying remote branch $BRANCH, commit $commit"
 echo "Target: $GCP_PROJECT / $REGION"
 echo "Local uncommitted application changes are excluded."
+echo "Source extracted to: $source_dir"
+echo "API image: $api_image"
+echo "Web image: $web_image"
