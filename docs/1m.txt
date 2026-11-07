@@ -1,86 +1,10 @@
-bash <<'SCRIPT'
+feature/rove-sync-20261107-210113
+git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git
 
-echo "=== SETUP REMOTES ==="
-git remote set-url origin git@github.com:Srujan-DiagonalMatrix/rove.git
-
-if git remote get-url company >/dev/null 2>&1; then
-  git remote set-url company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
-else
-  git remote add company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
-fi
-
-echo "=== FETCH LATEST ==="
-git fetch origin main || exit 1
-git fetch company main || exit 1
-
-echo "=== SAVE LOCAL CHANGES IF ANY ==="
-STASHED=0
-
-if [ -n "$(git status --porcelain)" ]; then
-  git stash push -u -m "bank-local-only-$(date +%Y%m%d-%H%M%S)"
-  STASHED=1
-fi
-
-echo "=== CREATE NEW LBG FEATURE BRANCH ==="
-FEATURE_BRANCH="feature/rove-sync-$(date +%Y%m%d-%H%M%S)"
-
-git switch -c "$FEATURE_BRANCH" company/main || exit 1
-
-echo "=== COPY PERSONAL ROVE MAIN ==="
-git read-tree --reset -u origin/main
-
-echo "=== KEEP ONLY BANK .github CONFIGURATION ==="
-rm -rf .github
-git checkout company/main -- .github 2>/dev/null || true
-
-echo "=== REMOVE LOCAL-ONLY FILES ==="
-rm -f \
-  Dockerfile.backup \
-  Dockerfile.backup.bak \
-  Dockerfile.bak \
-  Dockerfile.before-ca-fix \
-  Dockerfile.web.bak \
-  Dockerfile.web.backup.*.bak \
-  server/Dockerfile.backup.*.bak \
-  server/Dockerfile.bak \
-  server/Dockerfile.bank-backup \
-  company-ca.pem \
-  docker-compose.corporate.yml
-
-echo "=== COMMIT ==="
-git add -A
-git status --short
-
-if git diff --cached --quiet; then
-  echo "No new changes to commit."
-else
-  git commit -m "Sync latest ROVE changes from personal repository" || exit 1
-fi
-
-echo "=== PUSH TO LBG ==="
-git push -u company "$FEATURE_BRANCH" || exit 1
-
-echo
-echo "========================================"
-echo "SUCCESS"
-echo "========================================"
-echo "LBG branch:"
-echo "$FEATURE_BRANCH"
-echo
-echo "Create PR:"
-echo "$FEATURE_BRANCH -> main"
-echo
-
-echo "=== RETURN TO PERSONAL MAIN ==="
-git switch main
-
-if [ "$STASHED" -eq 1 ]; then
-  echo "=== RESTORE LOCAL BANK-LAPTOP CHANGES ==="
-  git stash pop || true
-fi
-
-echo
-echo "=== FINAL STATUS ==="
-git status
-
-SCRIPT
+./deploy/deploy-rove-updates-gcp.sh feature/rove-sync-20261107-210113
+=== 1. Fetch remote deployment source ===
+Source: origin/feature/rove-sync-20261107-210113
+fatal: couldn't find remote ref refs/heads/feature/rove-sync-20261107-210113
+Deployment failed at line 133.
+Database migrations are not automatically reversed. Do not reset the database.
+srujan.kumar@DEV-H59N27LXKY rove % 
