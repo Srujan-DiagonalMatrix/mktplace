@@ -1,14 +1,5 @@
-ERROR: Repository not found.
-fatal: Could not read from remote repository.
-
-Please make sure you have the correct access rights
-and the repository exists.
-=== 1. Fetch remote deployment source ===
-Source: company/feature/rove-sync-20261107-210113
-ERROR: Repository not found.
-fatal: Could not read from remote repository.
-
-Please make sure you have the correct access rights
-and the repository exists.
-Deployment failed at line 133.
-Database migrations are not automatically reversed. Do not reset the database.
+srujan.kumar@DEV-H59N27LXKY rove % git remote -v
+company git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git (fetch)
+company git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git (push)
+origin  git@github.com:Srujan-DiagonalMatrix/rove.git (fetch)
+origin  git@github.com:Srujan-DiagonalMatrix/rove.git (push)
