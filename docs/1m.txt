@@ -1,10 +1,9 @@
-feature/rove-sync-20261107-210113
-git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git
+if git remote get-url company >/dev/null 2>&1; then
+  git remote set-url company git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git
+else
+  git remote add company git@github.com:lbg-cloud-platform/tactical-innovation-f2b97b.git
+fi
 
-./deploy/deploy-rove-updates-gcp.sh feature/rove-sync-20261107-210113
-=== 1. Fetch remote deployment source ===
-Source: origin/feature/rove-sync-20261107-210113
-fatal: couldn't find remote ref refs/heads/feature/rove-sync-20261107-210113
-Deployment failed at line 133.
-Database migrations are not automatically reversed. Do not reset the database.
-srujan.kumar@DEV-H59N27LXKY rove % 
+git ls-remote --heads company refs/heads/feature/rove-sync-20261107-210113
+
+REMOTE=company ./deploy/deploy-rove-updates-gcp.sh feature/rove-sync-20261107-210113
