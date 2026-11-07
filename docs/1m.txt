@@ -1,191 +1,86 @@
-HTTP/2 403 
-cache-control: no-cache
-x-xss-protection: 1
-content-type: text/html; charset=utf-8
-content-length: 20877
-pragma: no-cache
+bash <<'SCRIPT'
 
-<HTML><HEAD>
-        <TITLE>LBG: Access Denied - App_Denylist: </TITLE>
-<style type="text/css" media="screen">
-            body {
-                padding: 0;
-                text-align: center;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0;
-                background: linear-gradient(45deg, #00864f,#62b34f,#00864f);
-                height: 100%;
-                font-family: Arial, Helvetica, sans-serif;
-            }
-            p {
-                font-size: large;
-                padding: 0 30px;
-            }
-            a {
-                text-decoration:none;
-                border:none;
-            }
-            a:hover {
-                text-decoration: underline;
-            }
-            #content {
-                width: 890px;
-                margin: 0px auto;
-                text-align: center;
-                font-family: Arial, Helvetica, sans-serif;
-                font-size: 14px;
-                padding: 15px;
-                border: 3px outset #8ac240;
-                background-color: #fff;
-            }
+echo "=== SETUP REMOTES ==="
+git remote set-url origin git@github.com:Srujan-DiagonalMatrix/rove.git
 
-            #header {
-                font-size: 32px; color: #00864f;
-                border-bottom: 2px solix #00864f;
-            }
+if git remote get-url company >/dev/null 2>&1; then
+  git remote set-url company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
+else
+  git remote add company git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
+fi
 
-            #buttoncontainer {
+echo "=== FETCH LATEST ==="
+git fetch origin main || exit 1
+git fetch company main || exit 1
 
-                margin-top: 20px;
-                display: flex;
-                justify-content: center;
-                gap: 100px;
-                border-radius: 15px;
-                }
-            #button1 {
-                border-radius: 15px;
-                 padding: 20px 30px 20px 30px;
-                background-color: #00864f;
-              /* border: 2px solid black; */
-              outline: none;
-              border: none;
-            }
+echo "=== SAVE LOCAL CHANGES IF ANY ==="
+STASHED=0
 
-            #button1:hover {
-                background:#62b34f;
-            }
-            #button2 {
-                cursor: pointer;
-                padding: 30px;
-                background-color: #8A1C69;
-                border: 2px solid black;
-            }
-            .button {
-                cursor:pointer;
-                color: white;
-                font-size: 20px;
-                width: 250px;
-                text-align: center;
-                     }
-            .button:hover {
-                text-decoration: underline;
-            }
+if [ -n "$(git status --porcelain)" ]; then
+  git stash push -u -m "bank-local-only-$(date +%Y%m%d-%H%M%S)"
+  STASHED=1
+fi
 
-            #signoff {
-                font-size: 11pt;
-            }
+echo "=== CREATE NEW LBG FEATURE BRANCH ==="
+FEATURE_BRANCH="feature/rove-sync-$(date +%Y%m%d-%H%M%S)"
 
-            #logo {
-width: 150px;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="content">
-<img id="logo" alt="lloyds banking group logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZoAAACmCAMAAADUF7kzAAADAFBMVEUBfEJsbW+71sVXnXMEe0Ofx62uzrr///8Ae0MjHx/X59zJ39GDtpbk7+kkICBHlGYAe0FlpX7+/v41jVskHx+fxa3y9/T8/PwxL
-y/o8ez9/f0jhE4nIyMEfUMFfkX6/PsdgkwLfkbu9PGrzbjQ5Nc/kWHD3MwqJydhontwq4Ywilcph1JyrIj0+PYJfUP8/fxcoHeAtJQSf0dzcXFMS0slIyMwLS0zMTGcxas2jFsTgEj5+/k7ODhrbG4uKivU5dmy0b5WnHNbW1xMSEhkZGbj7ueKupwmIiI1MjM8OTosKSltqYQ0i1oOf0eoy7Zta2uuzbpI
-RkcpJSVYnnT9/v4mhlDV5tvO4tWSkJDq8u45jVz29fXl5eWXwabo5+dBP0BgX2BPTk45NTZiYmMWgUlfoXlnpoBFlGav0LshhU5GQkJTm3Dt8++HuJk/PT5FREVWVVZJSElmZ2loaWt1rYpmZGRDkmSlybN6sY9Ol2t3r4vf7OMZgUpLlmldXFy+2ch+s5Lt7e339/c8j19TUVFEQULS0dHy8vL0+fcriVT
-6+/rM4dTd6+JYV1jI3tC/vr5YWFqnpaU+Ozxqa21QUFG31MKkyLFpp4G0s7NPmW3h7ubA2srh4OCKiIi+vb1UU1SRvqJaWFja2dkfg01IlWfc29uWlZW61cTC28vg7eRJlmiZl5d5sI6IuZu6ubm008CCtZZRmW+aw6hZVVXv9fGNvJ43NDXw7+9/fX3FxMTBwcG1tLRjpH2OvJ+PvaDKysrl7+nb6uBYnH
-PPzs7F3M0yilmhx6+CgYE+j2CWwaV7enqlpKSOjIyxsLCEtZb2+vjH3c/4+Pigxq7HxsaenZ0uiVapqKj3+/pan3W5t7fq6ur09PQ7jl6joqK41MKhn59qaGjL4NLe3t7Z6d671cXx9vPV1dV3dXWbmprn8OuAf3/Av7+Hhoasq6uFg4Oura2Sv6Pk7ujj4+PY6N68u7twbW3Y2NjDwsJ0rItSTk6UwKSEg
-oIuiFYkg07Y6N3j7un+DtgaAAAs6klEQVR42tV9B4AV1bn/XDjs/S4Ly7JKEXaXLrAUld4FVBCk2FABBQQsKCiCgiiK/kUplijB9rBiC2osMUoe+tRn16dGjfq3vkjUWGLeMyTRlPcv58ycM3PK952Zu3s3bibBvXfu1PM7Xy8ngEBu6gOAtUPbANvvOR6/gHYk9inamPVXOxCwE5i1B+KjIHklzzORLw7M
-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"/>
-<br>
-<h1 id="header">Sorry, we can't take you to that page.</h1>
-<!-- <p>URL: https:&#x2F;&#x2F;api.openai.com&#x2F;v1&#x2F;models</p> -->
-<p>If you have the <strong style="color: #11B67A;"> Secure Enterprise Browser </strong> installed, check there to see if you can access this site!</p>
-<div id="buttoncontainer">
-<button class="button" id="button1" onclick="window.location.href='https://lbg.service-now.com/it_lbg?id=lbg_kb_article&sysparm_article=KB0010267';" title="Click here to be taken to the Knowledge Base Article">
-        I have a business need to access this site
-<br>
-        <span style="font-size:14px;">(Knowledge Base Article)</span> </button>
-</div>
-<h2></h2>
-        <p>Please include the information below in the IT@LBG request.</p>
-        <p><b>Reason:</b> Requested website is blocked under <b>App_Denylist</b></p>
-        <p><b>Website URL:</b> https:&#x2F;&#x2F;api.openai.com&#x2F;v1&#x2F;models</p>
-    <p><b>Web Site Category:</b> Generative AI</p>
-        <p><b>Application Name:</b> OpenAI API</p>
-        <b>Note:</b> If the web site category above is listed as <b>'None or Uncategorised'</b>, this indicates the site is uncategorised and therefore blocked by the <a href ="https://lloydsbanking.sharepoint.com/sites/SecurityStandards/SitePages/Web-Filtering-Worksheet.aspx"><b>Web Filtering Standard</b></a>. If this website is required for business use, please visit the following <a href ="https://lbg.service-now.com/it_lbg?id=lbg_kb_article&sysparm_article=KB0010267"><b>Knowledge Base Article</b></a> for further guidance on which IT@LBG</a> request to raise.
-    <p id="signoff">To find out how to keep yourself and the Group safe, please visit the <a href="https://lloydsbanking.sharepoint.com/sites/cyber_security/SitePages/wrp.aspx"><b>Safe & Secure site</b></a>.
-    </p>
-</div>
-</body>
-</html>%                    
+git switch -c "$FEATURE_BRANCH" company/main || exit 1
+
+echo "=== COPY PERSONAL ROVE MAIN ==="
+git read-tree --reset -u origin/main
+
+echo "=== KEEP ONLY BANK .github CONFIGURATION ==="
+rm -rf .github
+git checkout company/main -- .github 2>/dev/null || true
+
+echo "=== REMOVE LOCAL-ONLY FILES ==="
+rm -f \
+  Dockerfile.backup \
+  Dockerfile.backup.bak \
+  Dockerfile.bak \
+  Dockerfile.before-ca-fix \
+  Dockerfile.web.bak \
+  Dockerfile.web.backup.*.bak \
+  server/Dockerfile.backup.*.bak \
+  server/Dockerfile.bak \
+  server/Dockerfile.bank-backup \
+  company-ca.pem \
+  docker-compose.corporate.yml
+
+echo "=== COMMIT ==="
+git add -A
+git status --short
+
+if git diff --cached --quiet; then
+  echo "No new changes to commit."
+else
+  git commit -m "Sync latest ROVE changes from personal repository" || exit 1
+fi
+
+echo "=== PUSH TO LBG ==="
+git push -u company "$FEATURE_BRANCH" || exit 1
+
+echo
+echo "========================================"
+echo "SUCCESS"
+echo "========================================"
+echo "LBG branch:"
+echo "$FEATURE_BRANCH"
+echo
+echo "Create PR:"
+echo "$FEATURE_BRANCH -> main"
+echo
+
+echo "=== RETURN TO PERSONAL MAIN ==="
+git switch main
+
+if [ "$STASHED" -eq 1 ]; then
+  echo "=== RESTORE LOCAL BANK-LAPTOP CHANGES ==="
+  git stash pop || true
+fi
+
+echo
+echo "=== FINAL STATUS ==="
+git status
+
+SCRIPT
