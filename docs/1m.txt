@@ -1,15 +1,16 @@
+#### error #####
 === 8. Stage frontend revision ===
 Deploying container to Cloud Run service [rove-web] in project [tactical-innovation-f2b97b] region [europe-west1]
 ✓ Deploying... Done.                                                           
   ✓ Creating Revision...                                                       
-  ✓ Routing traffic...                                                         
 Done.                                                                          
-Service [rove-web] revision [rove-web-00002-juj] has been deployed and is serving 0 percent of traffic.
-The revision can be reached directly at https://update-20261107215637-386b4ad78cbf---rove-web-b6v6r2j77a-ew.a.run.app
+Service [rove-web] revision [rove-web-00003-kov] has been deployed and is serving 0 percent of traffic.
+The revision can be reached directly at https://update-20261108144941-386b4ad78cbf---rove-web-b6v6r2j77a-ew.a.run.app
 curl: (56) The requested URL returned error: 403
 Deployment failed at line 86.
 Database migrations are not automatically reversed. Do not reset the database.
 
+curent code:
 echo "=== 8. Stage frontend revision ==="
 # Clear old command overrides so this image starts Nginx using its own CMD.
 gc run deploy "$WEB_SERVICE" --region="$REGION" --image="$web_image" \
@@ -20,13 +21,3 @@ web_revision=$(sed -n '1p' "$deploy_work/web-tag.txt")
 staged_web_url=$(sed -n '2p' "$deploy_work/web-tag.txt")
 check_url "$staged_web_url/"
 check_url "$staged_web_url/api/health"
-
-echo "=== 9. Route traffic and verify ==="
-api_attempted=1
-gc run services update-traffic "$API_SERVICE" --region="$REGION" --to-revisions="$api_revision=100" --quiet
-web_attempted=1
-gc run services update-traffic "$WEB_SERVICE" --region="$REGION" --to-revisions="$web_revision=100" --quiet
-check_url "$web_url/"
-check_url "$web_url/api/health"
-check_url "$web_url/api/catalogue/featured"
-trap - ERR
