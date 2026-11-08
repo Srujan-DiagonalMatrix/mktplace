@@ -1,6 +1,26 @@
-=== Without authentication ===
-/: probe:1: command not found: curl
-/api/health: probe:1: command not found: curl
-=== With Google identity token ===
-zsh: command not found: gcloud
-Could not obtain an identity token from the active gcloud login.
+(
+  set +x
+  staged_url='https://update-20261108144941-386b4ad78cbf---rove-web-b6v6r2j77a-ew.a.run.app'
+
+  probe() {
+    curl --silent --show-error --max-time 20 --output /dev/null \
+      --write-out 'HTTP %{http_code} | proxy CONNECT %{http_connect}\n' "$@"
+  }
+
+  echo '=== Without authentication ==='
+  for endpoint in / /api/health; do
+    printf '%s: ' "$endpoint"
+    probe "${staged_url}${endpoint}"
+  done
+
+  echo '=== With authentication ==='
+  if token=$(gcloud auth print-identity-token) && [[ -n "$token" ]]; then
+    for endpoint in / /api/health; do
+      printf '%s: ' "$endpoint"
+      printf 'X-Serverless-Authorization: Bearer %s\n' "$token" |
+        probe --header @- "${staged_url}${endpoint}"
+    done
+  else
+    echo 'Could not obtain an identity token.'
+  fi
+)
