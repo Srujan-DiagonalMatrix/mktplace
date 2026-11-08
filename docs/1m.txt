@@ -1,23 +1,26 @@
-#### error #####
-=== 8. Stage frontend revision ===
-Deploying container to Cloud Run service [rove-web] in project [tactical-innovation-f2b97b] region [europe-west1]
-✓ Deploying... Done.                                                           
-  ✓ Creating Revision...                                                       
-Done.                                                                          
-Service [rove-web] revision [rove-web-00003-kov] has been deployed and is serving 0 percent of traffic.
-The revision can be reached directly at https://update-20261108144941-386b4ad78cbf---rove-web-b6v6r2j77a-ew.a.run.app
-curl: (56) The requested URL returned error: 403
-Deployment failed at line 86.
-Database migrations are not automatically reversed. Do not reset the database.
+(
+  set +x
+  staged_url='https://update-20261108144941-386b4ad78cbf---rove-web-b6v6r2j77a-ew.a.run.app'
 
-curent code:
-echo "=== 8. Stage frontend revision ==="
-# Clear old command overrides so this image starts Nginx using its own CMD.
-gc run deploy "$WEB_SERVICE" --region="$REGION" --image="$web_image" \
-  --port=8080 --command="" --args="" --no-traffic --tag="$tag" --quiet
-gc run services describe "$WEB_SERVICE" --region="$REGION" --format=json > "$deploy_work/staged-web.json"
-get_tag "$deploy_work/staged-web.json" "$tag" > "$deploy_work/web-tag.txt"
-web_revision=$(sed -n '1p' "$deploy_work/web-tag.txt")
-staged_web_url=$(sed -n '2p' "$deploy_work/web-tag.txt")
-check_url "$staged_web_url/"
-check_url "$staged_web_url/api/health"
+  probe() {
+    curl --silent --show-error --max-time 20 --output /dev/null \
+      --write-out 'HTTP %{http_code} | proxy CONNECT %{http_connect}\n' "$@"
+  }
+
+  echo '=== Without authentication ==='
+  for path in / /api/health; do
+    printf '%s: ' "$path"
+    probe "$staged_url$path"
+  done
+
+  echo '=== With Google identity token ==='
+  if token=$(gcloud auth print-identity-token) && [[ -n "$token" ]]; then
+    for path in / /api/health; do
+      printf '%s: ' "$path"
+      printf 'X-Serverless-Authorization: Bearer %s\n' "$token" |
+        probe --header @- "$staged_url$path"
+    done
+  else
+    echo 'Could not obtain an identity token from the active gcloud login.'
+  fi
+)
