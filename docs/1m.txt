@@ -1,6 +1,4 @@
-=== Without authentication ===
-/: HTTP 403 | proxy CONNECT 000
-/api/health: HTTP 200 | proxy CONNECT 000
-=== With authentication ===
-/: HTTP 403 | proxy CONNECT 000
-/api/health: HTTP 200 | proxy CONNECT 000
+srujan.kumar@DEV-H59N27LXKY rove % ./deploy/incr-deploy.sh         
+bash: ./rove/deploy/lbg-push.sh: No such file or directory
+srujan.kumar@DEV-H59N27LXKY rove % pwd
+/Users/srujan.kumar/Documents/git/rove
