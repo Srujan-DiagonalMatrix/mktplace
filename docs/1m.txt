@@ -1,1 +1,62 @@
-Rove could not connect to the AutosOnShow token service (ConnectError). Check Cloud Run outbound HTTPS (TCP 443), DNS, and any VPC connector, Cloud NAT, or firewall egress rules.
+bash <<'ROVE_DIAG'
+set +x
+API_URL="${ROVE_API_URL:-http://localhost:9000}"
+
+echo "=== Docker services ==="
+docker compose ps
+
+echo
+echo "=== Mac DNS and HTTPS to AutosOnShow (no credentials sent) ==="
+python3 - <<'PY'
+import socket, ssl
+host = "br-api.aos.tv"
+try:
+    print("DNS:", ", ".join(sorted({x[4][0] for x in socket.getaddrinfo(host, 443)})))
+    with socket.create_connection((host, 443), timeout=8) as raw:
+        with ssl.create_default_context().wrap_socket(raw, server_hostname=host) as conn:
+            print("TLS: connected; protocol", conn.version())
+except Exception as e:
+    print("Host connection failed:", type(e).__name__, str(e))
+PY
+
+echo
+echo "=== API container credentials and proxy presence (values hidden) ==="
+docker compose exec -T api sh -c '
+for name in AOS_CLIENT_ID AOS_CLIENT_SECRET; do
+  if [ -n "$(printenv "$name" 2>/dev/null)" ]; then echo "$name: set"; else echo "$name: MISSING"; fi
+done
+for name in HTTPS_PROXY HTTP_PROXY ALL_PROXY; do
+  if printenv "$name" >/dev/null 2>&1; then echo "$name: set"; else echo "$name: not set"; fi
+done
+'
+
+echo
+echo "=== Rove token endpoint (token value hidden) ==="
+tmpfile="$(mktemp)"
+if status="$(curl --silent --show-error --max-time 25 -o "$tmpfile" -w '%{http_code}' "$API_URL/api/catalogue/aos-token" 2>&1)"; then
+  python3 - "$tmpfile" "$status" <<'PY'
+import json, sys
+path, status = sys.argv[1:]
+print("HTTP status:", status)
+try:
+    body = json.load(open(path))
+    if isinstance(body.get("token"), str):
+        print("Token received: yes (value hidden)")
+    else:
+        print("API detail:", body.get("detail", "No detail returned"))
+except Exception:
+    print("Response was not JSON; body hidden")
+PY
+else
+  echo "Could not call local Rove API: $status"
+fi
+rm -f "$tmpfile"
+
+echo
+echo "=== Recent AOS API log lines ==="
+docker compose logs --since=30m api 2>&1 | python3 -c '
+import sys
+lines = [line.rstrip() for line in sys.stdin if "AOS" in line or "aos-token" in line]
+print("\n".join(lines[-20:]) if lines else "No matching AOS log lines found.")
+'
+ROVE_DIAG
