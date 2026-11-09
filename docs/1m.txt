@@ -1,1 +1,1 @@
-Rove returned the public demo token. The configured integration could not be confirmed. Select Public demo to test it separately.
+Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.
