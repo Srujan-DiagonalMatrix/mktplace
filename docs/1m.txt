@@ -1,3 +1,1 @@
-Please enable CORS for `https://rove-web-b6v6r2j77a-ew.a.run.app` on `https://br-api.aos.tv`. The browser’s preflight request for `GET /vehicles/{registration}` is blocked because the response lacks `Access-Control-Allow-Origin`.
-
-Please allow `OPTIONS` and `GET` requests with the `Authorization` header.
+Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.
