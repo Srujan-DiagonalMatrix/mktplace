@@ -1,1 +1,1 @@
-Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.
+Rove could not connect to the AutosOnShow token service (ConnectError). Check Cloud Run outbound HTTPS (TCP 443), DNS, and any VPC connector, Cloud NAT, or firewall egress rules.
