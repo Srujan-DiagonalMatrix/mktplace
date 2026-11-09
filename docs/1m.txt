@@ -1,1 +1,27 @@
-Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.
+=== 5. Configure one-off migration Job ===
+Creating Cloud Run job [rove-migrate-update-20261109065650-6b042c531580] in project [tactical-innovation-f2b97b] region [europe-west1]
+X Creating job... spec.template.spec.containers[0].env[7].value_from.secret_key
+_ref.name: Permission denied on secret: projects/446065888450/secrets/AOS_CLIEN
+T_ID/versions/latest for Revision service account rove-api-runtime@tactical-inn
+ovation-f2b97b.iam.gserviceaccount.com. The service account used must be grante
+d the 'Secret Manager Secret Accessor' role (roles/secretmanager.secretAccessor
+) at the secret, project or higher level.                                      
+spec.template.spec.containers[0].env[
+8].value_from.secret_key_ref.name: Permission denied on secret: projects/446065
+888450/secrets/AOS_CLIENT_SECRET/versions/latest for Revision service account r
+ove-api-runtime@tactical-innovation-f2b97b.iam.gserviceaccount.com. The service
+ account used must be granted the 'Secret Manager Secret Accessor' role (roles/
+secretmanager.secretAccessor) at the secret, project or higher level.          
+spec.temp
+late.spec.containers[0].env[9].value_from.secret_key_ref.name: Permission denie
+d on secret: projects/446065888450/secrets/VITE_AOS_TOKEN/versions/latest for R
+evision service account rove-api-runtime@tactical-innovation-f2b97b.iam.gservic
+eaccount.com. The service account used must be granted the 'Secret Manager Secr
+et Accessor' role (roles/secretmanager.secretAccessor) at the secret, project o
+r higher level.                                                                
+Job failed to deploy                                                           
+ERROR: (gcloud.run.jobs.replace) spec.template.spec.containers[0].env[7].value_from.secret_key_ref.name: Permission denied on secret: projects/446065888450/secrets/AOS_CLIENT_ID/versions/latest for Revision service account rove-api-runtime@tactical-innovation-f2b97b.iam.gserviceaccount.com. The service account used must be granted the 'Secret Manager Secret Accessor' role (roles/secretmanager.secretAccessor) at the secret, project or higher level.
+spec.template.spec.containers[0].env[8].value_from.secret_key_ref.name: Permission denied on secret: projects/446065888450/secrets/AOS_CLIENT_SECRET/versions/latest for Revision service account rove-api-runtime@tactical-innovation-f2b97b.iam.gserviceaccount.com. The service account used must be granted the 'Secret Manager Secret Accessor' role (roles/secretmanager.secretAccessor) at the secret, project or higher level.
+spec.template.spec.containers[0].env[9].value_from.secret_key_ref.name: Permission denied on secret: projects/446065888450/secrets/VITE_AOS_TOKEN/versions/latest for Revision service account rove-api-runtime@tactical-innovation-f2b97b.iam.gserviceaccount.com. The service account used must be granted the 'Secret Manager Secret Accessor' role (roles/secretmanager.secretAccessor) at the secret, project or higher level.
+Deployment failed at line 66.
+Database migrations are not automatically reversed. Do not reset the database.
