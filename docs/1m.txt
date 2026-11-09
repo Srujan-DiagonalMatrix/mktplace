@@ -1,12 +1,3 @@
-BCA / AutosOnShow 360°
-Check whether AutosOnShow returns exterior frames or an interior panorama for a vehicle, then try the viewer.
+Please enable CORS for `https://rove-web-b6v6r2j77a-ew.a.run.app` on `https://br-api.aos.tv`. The browser’s preflight request for `GET /vehicles/{registration}` is blocked because the response lacks `Access-Control-Allow-Origin`.
 
-Registration or AOS vehicle ID
-BF73ATX
-Credentials
-Rove integration
-Check 360°
-Use demo vehicle
-Testing BF73ATX with a non-demo token from the Rove API.
-
-360° view could not be checked. Please try again later.
+Please allow `OPTIONS` and `GET` requests with the `Authorization` header.
