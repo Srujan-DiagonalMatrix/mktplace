@@ -1,17 +1,40 @@
-=== Docker services ===
-NAME             IMAGE                   COMMAND                  SERVICE   CREATED         STATUS                   PORTS
-rove-api         rove-api                "sh -c 'alembic upgr…"   api       6 minutes ago   Up 5 minutes             0.0.0.0:9000->8000/tcp, [::]:9000->8000/tcp
-rove-db          postgres:16-alpine      "docker-entrypoint.s…"   db        6 minutes ago   Up 6 minutes (healthy)   0.0.0.0:5434->5432/tcp, [::]:5434->5432/tcp
-rove-mailpit-1   axllent/mailpit:v1.20   "/mailpit"               mailpit   6 minutes ago   Up 6 minutes (healthy)   127.0.0.1:8025->8025/tcp
-rove-web         nginx:alpine            "/docker-entrypoint.…"   web       6 minutes ago   Up 5 minutes             0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+docker compose exec -T api python - <<'PY'
+import asyncio, httpx
 
-=== Mac DNS and HTTPS to AutosOnShow (no credentials sent) ===
-DNS: 40.180.142.235, 52.208.0.249
-TLS: connected; protocol TLSv1.2
+async def main():
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            # No credentials: this checks only whether the container can connect.
+            response = await client.post(
+                "https://br-api.aos.tv/token/",
+                data={"grant_type": "client_credentials"},
+            )
+            print("Container reached AutosOnShow; HTTP", response.status_code)
+    except Exception as exc:
+        cause = exc.__cause__
+        print("Container connection failed:", type(exc).__name__)
+        print("Underlying cause:", type(cause).__name__ if cause else "none")
 
-=== API container credentials and proxy presence (values hidden) ===
-AOS_CLIENT_ID: set
-AOS_CLIENT_SECRET: set
-HTTPS_PROXY: not set
-HTTP_PROXY: not set
-ALL_PROXY: not set
+asyncio.run(main())
+PY
+
+echo "=== Rove token check (token value hidden) ==="
+python3 - <<'PY'
+import json, urllib.error, urllib.request
+
+url = "http://localhost:9000/api/catalogue/aos-token"
+try:
+    response = urllib.request.urlopen(url, timeout=25)
+    body = json.loads(response.read())
+    print("Rove API HTTP:", response.status)
+    print("Token received:", "yes (value hidden)" if body.get("token") else "no")
+except urllib.error.HTTPError as exc:
+    body = json.loads(exc.read())
+    print("Rove API HTTP:", exc.code)
+    print("API detail:", body.get("detail", "No detail returned"))
+except Exception as exc:
+    print("Could not call local Rove API:", type(exc).__name__, str(exc))
+PY
+
+echo "=== Recent AOS logs ==="
+docker compose logs --since=30m api 2>&1 | grep -i 'AOS\|aos-token' | tail -20
