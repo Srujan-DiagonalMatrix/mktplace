@@ -1,26 +1,53 @@
-bash <<'SH'
-set -u
+=== 1. Failed execution status ===
+ERROR: (gcloud.run.jobs.executions.describe) There was a problem refreshing your current auth tokens: Reauthentication failed. cannot prompt during non-interactive execution.
+Please run:
 
-PROJECT="tactical-innovation-f2b97b"
-REGION="europe-west1"
-EXECUTION="rove-migrate-update-20261110150441-9e23e9e1f840-28ckd"
-JOB="rove-migrate-update-20261110150441-9e23e9e1f840"
+  $ gcloud auth login
 
-echo "=== 1. Failed execution status ==="
-gcloud --project="$PROJECT" run jobs executions describe "$EXECUTION" \
-  --region="$REGION" \
-  --format='yaml(status.conditions,status.failedCount,status.succeededCount,status.logUri)' || true
+to obtain new credentials.
 
-echo
-echo "=== 2. Migration container logs ==="
-gcloud --project="$PROJECT" beta run jobs executions logs read "$EXECUTION" \
-  --region="$REGION" --limit=200 || \
-gcloud --project="$PROJECT" run jobs logs read "$JOB" \
-  --region="$REGION" --limit=200
+If you have already logged in with a different account, run:
 
-echo
-echo "=== 3. Job configuration (image and command only) ==="
-gcloud --project="$PROJECT" run jobs describe "$JOB" \
-  --region="$REGION" \
-  --format='yaml(spec.template.spec.template.spec.containers.image,spec.template.spec.template.spec.containers.command,spec.template.spec.template.spec.containers.args)' || true
-SH
+  $ gcloud config set account ACCOUNT
+
+to select an already authenticated account to use.
+
+=== 2. Migration container logs ===
+ERROR: (gcloud.beta.run.jobs.executions.logs.read) There was a problem refreshing your current auth tokens: Reauthentication failed. cannot prompt during non-interactive execution.
+Please run:
+
+  $ gcloud auth login
+
+to obtain new credentials.
+
+If you have already logged in with a different account, run:
+
+  $ gcloud config set account ACCOUNT
+
+to select an already authenticated account to use.
+ERROR: (gcloud.run.jobs.logs.read) There was a problem refreshing your current auth tokens: Reauthentication failed. cannot prompt during non-interactive execution.
+Please run:
+
+  $ gcloud auth login
+
+to obtain new credentials.
+
+If you have already logged in with a different account, run:
+
+  $ gcloud config set account ACCOUNT
+
+to select an already authenticated account to use.
+
+=== 3. Job configuration (image and command only) ===
+ERROR: (gcloud.run.jobs.describe) There was a problem refreshing your current auth tokens: Reauthentication failed. cannot prompt during non-interactive execution.
+Please run:
+
+  $ gcloud auth login
+
+to obtain new credentials.
+
+If you have already logged in with a different account, run:
+
+  $ gcloud config set account ACCOUNT
+
+to select an already authenticated account to use.
