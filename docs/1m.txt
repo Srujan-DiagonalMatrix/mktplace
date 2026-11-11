@@ -1,40 +1,23 @@
-docker compose exec -T api python - <<'PY'
-import asyncio, httpx
+=== 5. Configure one-off migration Job ===
+Creating Cloud Run job [rove-migrate-update-20261110150441-9e23e9e1f840] in project [tactical-innovation-f2b97b] region [europe-west1]
+✓ Creating job... Done.                                                        
+Done.                                                                          
+Job [rove-migrate-update-20261110150441-9e23e9e1f840] has been successfully created.
 
-async def main():
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            # No credentials: this checks only whether the container can connect.
-            response = await client.post(
-                "https://br-api.aos.tv/token/",
-                data={"grant_type": "client_credentials"},
-            )
-            print("Container reached AutosOnShow; HTTP", response.status_code)
-    except Exception as exc:
-        cause = exc.__cause__
-        print("Container connection failed:", type(exc).__name__)
-        print("Underlying cause:", type(cause).__name__ if cause else "none")
+To execute this job, use:
+gcloud run jobs execute rove-migrate-update-20261110150441-9e23e9e1f840
+=== 6. Migrate the existing database ===
+X Creating execution... Task rove-migrate-update-20261110150441-9e23e9e1f840-28
+ckd-task0 failed with exit code: 1 and message: The container exited with an er
+ror.                                                                           
+  ✓ Provisioning resources... Provisioned imported containers.                 
+  ✓ Starting execution... Started deployed execution in 25.74s.                
+  X Running execution... 0 / 1 complete                                        
+Executing job failed                                                           
+ERROR: (gcloud.run.jobs.execute) The execution failed.
+View details about this execution by running:
+gcloud run jobs executions describe rove-migrate-update-20261110150441-9e23e9e1f840-28ckd
 
-asyncio.run(main())
-PY
-
-echo "=== Rove token check (token value hidden) ==="
-python3 - <<'PY'
-import json, urllib.error, urllib.request
-
-url = "http://localhost:9000/api/catalogue/aos-token"
-try:
-    response = urllib.request.urlopen(url, timeout=25)
-    body = json.loads(response.read())
-    print("Rove API HTTP:", response.status)
-    print("Token received:", "yes (value hidden)" if body.get("token") else "no")
-except urllib.error.HTTPError as exc:
-    body = json.loads(exc.read())
-    print("Rove API HTTP:", exc.code)
-    print("API detail:", body.get("detail", "No detail returned"))
-except Exception as exc:
-    print("Could not call local Rove API:", type(exc).__name__, str(exc))
-PY
-
-echo "=== Recent AOS logs ==="
-docker compose logs --since=30m api 2>&1 | grep -i 'AOS\|aos-token' | tail -20
+Or visit https://console.cloud.google.com/run/jobs/executions/details/europe-west1/rove-migrate-update-20261110150441-9e23e9e1f840-28ckd?project=446065888450
+Deployment failed at line 66.
+Database migrations are not automatically reversed. Do not reset the database.
