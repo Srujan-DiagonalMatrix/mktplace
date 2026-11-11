@@ -1,23 +1,26 @@
-=== 5. Configure one-off migration Job ===
-Creating Cloud Run job [rove-migrate-update-20261110150441-9e23e9e1f840] in project [tactical-innovation-f2b97b] region [europe-west1]
-✓ Creating job... Done.                                                        
-Done.                                                                          
-Job [rove-migrate-update-20261110150441-9e23e9e1f840] has been successfully created.
+bash <<'SH'
+set -u
 
-To execute this job, use:
-gcloud run jobs execute rove-migrate-update-20261110150441-9e23e9e1f840
-=== 6. Migrate the existing database ===
-X Creating execution... Task rove-migrate-update-20261110150441-9e23e9e1f840-28
-ckd-task0 failed with exit code: 1 and message: The container exited with an er
-ror.                                                                           
-  ✓ Provisioning resources... Provisioned imported containers.                 
-  ✓ Starting execution... Started deployed execution in 25.74s.                
-  X Running execution... 0 / 1 complete                                        
-Executing job failed                                                           
-ERROR: (gcloud.run.jobs.execute) The execution failed.
-View details about this execution by running:
-gcloud run jobs executions describe rove-migrate-update-20261110150441-9e23e9e1f840-28ckd
+PROJECT="tactical-innovation-f2b97b"
+REGION="europe-west1"
+EXECUTION="rove-migrate-update-20261110150441-9e23e9e1f840-28ckd"
+JOB="rove-migrate-update-20261110150441-9e23e9e1f840"
 
-Or visit https://console.cloud.google.com/run/jobs/executions/details/europe-west1/rove-migrate-update-20261110150441-9e23e9e1f840-28ckd?project=446065888450
-Deployment failed at line 66.
-Database migrations are not automatically reversed. Do not reset the database.
+echo "=== 1. Failed execution status ==="
+gcloud --project="$PROJECT" run jobs executions describe "$EXECUTION" \
+  --region="$REGION" \
+  --format='yaml(status.conditions,status.failedCount,status.succeededCount,status.logUri)' || true
+
+echo
+echo "=== 2. Migration container logs ==="
+gcloud --project="$PROJECT" beta run jobs executions logs read "$EXECUTION" \
+  --region="$REGION" --limit=200 || \
+gcloud --project="$PROJECT" run jobs logs read "$JOB" \
+  --region="$REGION" --limit=200
+
+echo
+echo "=== 3. Job configuration (image and command only) ==="
+gcloud --project="$PROJECT" run jobs describe "$JOB" \
+  --region="$REGION" \
+  --format='yaml(spec.template.spec.template.spec.containers.image,spec.template.spec.template.spec.containers.command,spec.template.spec.template.spec.containers.args)' || true
+SH
