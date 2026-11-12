@@ -95,4 +95,4 @@ Traceback (most recent call last):
     raise ex.with_traceback(None)
 sqlalchemy.exc.ProgrammingError: (psycopg.errors.DuplicateColumn) column "pricing_breakdown" of relation "finance_options" already exists
 [SQL: ALTER TABLE finance_options ADD COLUMN pricing_breakdown JSONB]
-(Background on this error at: https://sqlalche.me/e/20/f405)
+(Background on this error at: https://sqlalche.me/e/20/f405).
