@@ -1,11 +1,5 @@
-    self.dialect.do_execute(
-  File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
-    cursor.execute(statement, parameters)
-  File "/usr/local/lib/python3.12/site-packages/psycopg/cursor.py", line 97, in execute
-    raise ex.with_traceback(None)
-sqlalchemy.exc.ProgrammingError: (psycopg.errors.DuplicateColumn) column "pricing_breakdown" of relation "finance_options" already exists
-[SQL: ALTER TABLE finance_options ADD COLUMN pricing_breakdown JSONB]
-(Background on this error at: https://sqlalche.me/e/20/f405)
+Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.
+
 INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 INFO  [alembic.runtime.migration] Will assume transactional DDL.
 INFO  [alembic.runtime.migration] Running upgrade 022_restore_peugeot_card_image -> 023_contract_purchase_formulas, Persist editable Contract Purchase assumptions and quote breakdowns.
@@ -13,86 +7,77 @@ INFO  [alembic.runtime.migration] Running upgrade 023_contract_purchase_formulas
 INFO  [alembic.runtime.migration] Running upgrade 024_contract_purchase_vat -> 025_used_contract_hire_rates, Create imported Used Contract Hire pricing records.
 INFO  [alembic.runtime.migration] Running upgrade 025_used_contract_hire_rates -> 026_vehicle_registration_key, Use vehicle registration as a unique inventory identity.
 INFO  [alembic.runtime.migration] Running upgrade 026_vehicle_registration_key -> 027_normalize_bca_inventory, Normalize supplier body types for the public vehicle catalogue.
-INFO  [alembic.runtime.migration] Running upgrade 027_normalize_bca_inventory -> 028_finance_pricing_breakdown, Add the finance quote pricing breakdown column.
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
-    cursor.execute(statement, parameters)
-  File "/usr/local/lib/python3.12/site-packages/psycopg/cursor.py", line 97, in execute
-    raise ex.with_traceback(None)
-psycopg.errors.DuplicateColumn: column "pricing_breakdown" of relation "finance_options" already exists
-The above exception was the direct cause of the following exception:
-Traceback (most recent call last):
-  File "/usr/local/bin/alembic", line 8, in <module>
-    sys.exit(main())
-             ^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 1022, in main
-    CommandLine(prog=prog).main(argv=argv)
-  File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 1012, in main
-    self.run_cmd(cfg, options)
-  File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 946, in run_cmd
-    fn(
-  File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 483, in upgrade
-    script.run_env()
-  File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 549, in run_env
-    util.load_python_file(self.dir, "env.py")
-  File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 116, in load_python_file
-    module = load_module_py(module_id, path)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 136, in load_module_py
-    spec.loader.exec_module(module)  # type: ignore
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
-  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-  File "/app/alembic/env.py", line 58, in <module>
-    run_migrations_online()
-  File "/app/alembic/env.py", line 52, in run_migrations_online
-    context.run_migrations()
-  File "<string>", line 8, in run_migrations
-  File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 946, in run_migrations
-    self.get_context().run_migrations(**kw)
-  File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 627, in run_migrations
-    step.migration_fn(**kw)
-  File "/app/alembic/versions/028_finance_pricing_breakdown.py", line 19, in upgrade
-    op.add_column(
-  File "<string>", line 8, in add_column
-  File "<string>", line 3, in add_column
-  File "/usr/local/lib/python3.12/site-packages/alembic/operations/ops.py", line 2186, in add_column
-    return operations.invoke(op)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/alembic/operations/base.py", line 441, in invoke
-    return fn(self, operation)
-           ^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/alembic/operations/toimpl.py", line 175, in add_column
-    operations.impl.add_column(
-  File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 378, in add_column
-    self._exec(
-  File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 246, in _exec
-    return conn.execute(construct, params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
-    return meth(
-           ^^^^^
-  File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 187, in _execute_on_connection
-    return connection._execute_ddl(
-           ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1530, in _execute_ddl
-    ret = self._execute_context(
-          ^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-    return self._exec_single_context(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-    self._handle_dbapi_exception(
-  File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
-    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-  File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
-    cursor.execute(statement, parameters)
-  File "/usr/local/lib/python3.12/site-packages/psycopg/cursor.py", line 97, in execute
-    raise ex.with_traceback(None)
-sqlalchemy.exc.ProgrammingError: (psycopg.errors.DuplicateColumn) column "pricing_breakdown" of relation "finance_options" already exists
-[SQL: ALTER TABLE finance_options ADD COLUMN pricing_breakdown JSONB]
-(Background on this error at: https://sqlalche.me/e/20/f405).
+INFO  [alembic.runtime.migration] Running upgrade 027_normalize_bca_inventory -> 028_finance_pricing_breakdown, Add the finance quote pricing breakdown column when it is missing.
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     172.19.0.6:34402 - "GET /api/auth/me HTTP/1.1" 401 Unauthorized
+INFO:     172.19.0.6:34382 - "GET /api/catalogue/vehicles HTTP/1.1" 200 OK
+INFO:     172.19.0.6:34418 - "GET /api/catalogue/vehicles HTTP/1.1" 200 OK
+INFO:     172.19.0.6:34430 - "GET /api/catalogue/featured HTTP/1.1" 200 OK
+AOS token service could not be reached (ConnectError)
+INFO:     172.19.0.6:34380 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
+AOS token service could not be reached (ConnectError)
+INFO:     172.19.0.6:34438 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
+INFO:     172.19.0.6:53824 - "GET /api/catalogue/vehicles HTTP/1.1" 200 OK
+INFO:     172.19.0.6:53832 - "GET /api/catalogue/featured HTTP/1.1" 200 OK
+INFO:     172.19.0.6:53834 - "POST /api/applications HTTP/1.1" 201 Created
+INFO:     172.19.0.6:53850 - "PUT /api/applications/36049e03-8993-49cf-8998-6de73ff30720/vehicle-selection HTTP/1.1" 200 OK
+INFO:     172.19.0.6:53856 - "GET /api/catalogue/vehicles HTTP/1.1" 200 OK
+INFO:     172.19.0.6:53860 - "GET /api/catalogue/featured HTTP/1.1" 200 OK
+INFO:     172.19.0.6:53870 - "GET /api/applications/36049e03-8993-49cf-8998-6de73ff30720/vehicle-selection HTTP/1.1" 200 OK
+INFO:     172.19.0.6:53884 - "GET /api/applications/36049e03-8993-49cf-8998-6de73ff30720/finance-options HTTP/1.1" 200 OK
+INFO:     172.19.0.6:36470 - "GET /api/admin/submissions?search= HTTP/1.1" 401 Unauthorized
+INFO:     172.19.0.6:48600 - "POST /api/admin/login HTTP/1.1" 200 OK
+INFO:     172.19.0.6:48608 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
+INFO:     172.19.0.6:48630 - "GET /api/admin/vehicles?search=&status=all&limit=20&offset=0 HTTP/1.1" 200 OK
+INFO:     172.19.0.6:48624 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:48638 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:48654 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
+INFO:     172.19.0.6:48670 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
+INFO:     172.19.0.6:37152 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:37154 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
+INFO:     172.19.0.6:37164 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
+AOS token service could not be reached (ConnectError)
+INFO:     172.19.0.6:37180 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
+INFO:     172.19.0.6:37182 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:37184 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
+INFO:     172.19.0.6:37206 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:37194 - "GET /api/admin/vehicles?search=&status=all&limit=20&offset=0 HTTP/1.1" 200 OK
+INFO:     172.19.0.6:33552 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:33554 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
+INFO:     172.19.0.6:33566 - "GET /api/admin/vehicles?search=&status=all&limit=20&offset=0 HTTP/1.1" 200 OK
+INFO:     172.19.0.6:33582 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:33584 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:52082 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:52096 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:58318 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:58324 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:38774 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:38786 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:50674 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:50682 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
+INFO:     172.19.0.6:50686 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:50700 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
+INFO:     172.19.0.6:50706 - "GET /api/admin/vehicles?search=&status=all&limit=20&offset=0 HTTP/1.1" 200 OK
+INFO:     172.19.0.6:50708 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+AOS token service could not be reached (ConnectError)
+INFO:     172.19.0.6:50720 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
+INFO:     172.19.0.6:57814 - "GET /api/admin/vehicles?search=&status=all&limit=20&offset=0 HTTP/1.1" 200 OK
+INFO:     172.19.0.6:57804 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:57808 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
+INFO:     172.19.0.6:57818 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:57824 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:37502 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:37504 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+INFO:     172.19.0.6:37506 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
+AOS token service could not be reached (ConnectError)
+INFO:     172.19.0.6:37514 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
+AOS token service could not be reached (ConnectError)
+INFO:     172.19.0.6:37520 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
+AOS token service could not be reached (ConnectError)
+INFO:     172.19.0.6:37534 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
+AOS token service could not be reached (ConnectError)
+INFO:     172.19.0.6:37542 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
+INFO:     172.19.0.6:56238 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
