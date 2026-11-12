@@ -1,83 +1,14 @@
-Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.
+AOS_TOKEN_URL='https://<configured-token-host>/<token-path>'
 
-INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-INFO  [alembic.runtime.migration] Will assume transactional DDL.
-INFO  [alembic.runtime.migration] Running upgrade 022_restore_peugeot_card_image -> 023_contract_purchase_formulas, Persist editable Contract Purchase assumptions and quote breakdowns.
-INFO  [alembic.runtime.migration] Running upgrade 023_contract_purchase_formulas -> 024_contract_purchase_vat, Make Contract Purchase pricing schema compatible with legacy databases and add VAT.
-INFO  [alembic.runtime.migration] Running upgrade 024_contract_purchase_vat -> 025_used_contract_hire_rates, Create imported Used Contract Hire pricing records.
-INFO  [alembic.runtime.migration] Running upgrade 025_used_contract_hire_rates -> 026_vehicle_registration_key, Use vehicle registration as a unique inventory identity.
-INFO  [alembic.runtime.migration] Running upgrade 026_vehicle_registration_key -> 027_normalize_bca_inventory, Normalize supplier body types for the public vehicle catalogue.
-INFO  [alembic.runtime.migration] Running upgrade 027_normalize_bca_inventory -> 028_finance_pricing_breakdown, Add the finance quote pricing breakdown column when it is missing.
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     172.19.0.6:34402 - "GET /api/auth/me HTTP/1.1" 401 Unauthorized
-INFO:     172.19.0.6:34382 - "GET /api/catalogue/vehicles HTTP/1.1" 200 OK
-INFO:     172.19.0.6:34418 - "GET /api/catalogue/vehicles HTTP/1.1" 200 OK
-INFO:     172.19.0.6:34430 - "GET /api/catalogue/featured HTTP/1.1" 200 OK
-AOS token service could not be reached (ConnectError)
-INFO:     172.19.0.6:34380 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
-AOS token service could not be reached (ConnectError)
-INFO:     172.19.0.6:34438 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
-INFO:     172.19.0.6:53824 - "GET /api/catalogue/vehicles HTTP/1.1" 200 OK
-INFO:     172.19.0.6:53832 - "GET /api/catalogue/featured HTTP/1.1" 200 OK
-INFO:     172.19.0.6:53834 - "POST /api/applications HTTP/1.1" 201 Created
-INFO:     172.19.0.6:53850 - "PUT /api/applications/36049e03-8993-49cf-8998-6de73ff30720/vehicle-selection HTTP/1.1" 200 OK
-INFO:     172.19.0.6:53856 - "GET /api/catalogue/vehicles HTTP/1.1" 200 OK
-INFO:     172.19.0.6:53860 - "GET /api/catalogue/featured HTTP/1.1" 200 OK
-INFO:     172.19.0.6:53870 - "GET /api/applications/36049e03-8993-49cf-8998-6de73ff30720/vehicle-selection HTTP/1.1" 200 OK
-INFO:     172.19.0.6:53884 - "GET /api/applications/36049e03-8993-49cf-8998-6de73ff30720/finance-options HTTP/1.1" 200 OK
-INFO:     172.19.0.6:36470 - "GET /api/admin/submissions?search= HTTP/1.1" 401 Unauthorized
-INFO:     172.19.0.6:48600 - "POST /api/admin/login HTTP/1.1" 200 OK
-INFO:     172.19.0.6:48608 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
-INFO:     172.19.0.6:48630 - "GET /api/admin/vehicles?search=&status=all&limit=20&offset=0 HTTP/1.1" 200 OK
-INFO:     172.19.0.6:48624 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:48638 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:48654 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
-INFO:     172.19.0.6:48670 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
-INFO:     172.19.0.6:37152 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:37154 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
-INFO:     172.19.0.6:37164 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
-AOS token service could not be reached (ConnectError)
-INFO:     172.19.0.6:37180 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
-INFO:     172.19.0.6:37182 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:37184 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
-INFO:     172.19.0.6:37206 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:37194 - "GET /api/admin/vehicles?search=&status=all&limit=20&offset=0 HTTP/1.1" 200 OK
-INFO:     172.19.0.6:33552 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:33554 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
-INFO:     172.19.0.6:33566 - "GET /api/admin/vehicles?search=&status=all&limit=20&offset=0 HTTP/1.1" 200 OK
-INFO:     172.19.0.6:33582 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:33584 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:52082 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:52096 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:58318 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:58324 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:38774 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:38786 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:50674 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:50682 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
-INFO:     172.19.0.6:50686 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:50700 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
-INFO:     172.19.0.6:50706 - "GET /api/admin/vehicles?search=&status=all&limit=20&offset=0 HTTP/1.1" 200 OK
-INFO:     172.19.0.6:50708 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-AOS token service could not be reached (ConnectError)
-INFO:     172.19.0.6:50720 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
-INFO:     172.19.0.6:57814 - "GET /api/admin/vehicles?search=&status=all&limit=20&offset=0 HTTP/1.1" 200 OK
-INFO:     172.19.0.6:57804 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:57808 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
-INFO:     172.19.0.6:57818 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:57824 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:37502 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:37504 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
-INFO:     172.19.0.6:37506 - "GET /api/admin/submissions?search= HTTP/1.1" 200 OK
-AOS token service could not be reached (ConnectError)
-INFO:     172.19.0.6:37514 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
-AOS token service could not be reached (ConnectError)
-INFO:     172.19.0.6:37520 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
-AOS token service could not be reached (ConnectError)
-INFO:     172.19.0.6:37534 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
-AOS token service could not be reached (ConnectError)
-INFO:     172.19.0.6:37542 - "GET /api/catalogue/aos-token HTTP/1.1" 502 Bad Gateway
-INFO:     172.19.0.6:56238 - "GET /api/admin/vehicles/summary HTTP/1.1" 200 OK
+docker compose --env-file .env.docker exec -T api \
+  python - "$AOS_TOKEN_URL" <<'PY'
+import sys
+import httpx
+
+try:
+    response = httpx.get(sys.argv[1], timeout=10, follow_redirects=False)
+    print(f"Token endpoint responded with HTTP {response.status_code}")
+except httpx.RequestError as exc:
+    print(f"{type(exc).__name__}: {exc}")
+    sys.exit(1)
+PY
