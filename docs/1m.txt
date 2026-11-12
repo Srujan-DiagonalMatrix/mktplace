@@ -1,14 +1,26 @@
-AOS_TOKEN_URL='https://<configured-token-host>/<token-path>'
+bash <<'BASH'
+set -e
+read -rsp 'Paste the AutosOnShow client secret: ' aos_secret </dev/tty
+printf '\n' >/dev/tty
 
-docker compose --env-file .env.docker exec -T api \
-  python - "$AOS_TOKEN_URL" <<'PY'
+printf '%s' "$aos_secret" |
+  docker compose --env-file .env.docker exec -T api python -c '
 import sys
 import httpx
 
 try:
-    response = httpx.get(sys.argv[1], timeout=10, follow_redirects=False)
-    print(f"Token endpoint responded with HTTP {response.status_code}")
+    response = httpx.post(
+        "https://br-api.aos.tv/token/",
+        data={
+            "grant_type": "client_credentials",
+            "client_id": "bcarove",
+            "client_secret": sys.stdin.read(),
+        },
+        timeout=10,
+    )
+    print(f"HTTP {response.status_code}")
 except httpx.RequestError as exc:
     print(f"{type(exc).__name__}: {exc}")
     sys.exit(1)
-PY
+'
+BASH
