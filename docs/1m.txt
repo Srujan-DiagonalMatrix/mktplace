@@ -1,8 +1,55 @@
-PY
-UTC: 2026-11-16T12:17:22+00:00
-Runtime CA: /etc/ssl/certs/ca-certificates.crt
-Client ID matches expected account: True
-ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)
+bash <<'ROVE_REAPPLY_CA'
+set -euo pipefail
+shopt -s nullglob
 
-What's next:
-    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
+aos_override=""
+for candidate in "${TMPDIR:-/tmp}"/rove-aos-ca.*/compose.ca.yaml; do
+  if [ -z "$aos_override" ] || [ "$candidate" -nt "$aos_override" ]; then
+    aos_override="$candidate"
+  fi
+done
+if [ -z "$aos_override" ]; then
+  printf 'Earlier CA override is missing. Rerun the ROVE_AOS_RUNTIME_CA block to recreate it.\n' >&2
+  exit 1
+fi
+
+aos_compose_file=""
+for candidate in compose.yaml compose.yml docker-compose.yml docker-compose.yaml; do
+  if [ -f "$candidate" ]; then
+    aos_compose_file="$candidate"
+    break
+  fi
+done
+if [ -z "$aos_compose_file" ]; then
+  printf 'Run this from the Rove repo containing the Compose file.\n' >&2
+  exit 1
+fi
+
+printf 'Using override: %s\n' "$aos_override"
+rove_compose() {
+  docker compose --env-file .env.docker \
+    -f "$aos_compose_file" -f "$aos_override" "$@"
+}
+
+rove_compose up -d --no-deps --force-recreate api
+
+rove_compose exec -T api python - <<'PY'
+import os
+from pathlib import Path
+
+import httpx
+
+expected = "/run/rove-ca/ca-bundle.pem"
+configured = os.getenv("SSL_CERT_FILE")
+print("Runtime CA:", configured, flush=True)
+if configured != expected or not Path(expected).is_file():
+    raise SystemExit("The CA override is missing from the running API container.")
+
+try:
+    response = httpx.get("https://br-api.aos.tv/token/", timeout=15)
+except httpx.RequestError as exc:
+    print(f"TLS probe failed: {type(exc).__name__}: {exc}")
+else:
+    print("TLS probe HTTP:", response.status_code)
+PY
+ROVE_REAPPLY_CA
