@@ -1,71 +1,11 @@
-bash <<'ROVE_AOS_403'
-set +x
-
-aos_ca_file="${CORPORATE_CA_FILE:-server/certs/company-ca-bundle.pem}"
-if [ ! -r "$aos_ca_file" ] || [ ! -s "$aos_ca_file" ]; then
-  printf 'CA bundle missing or empty: %s\n' "$aos_ca_file" >&2
-  printf 'Set CORPORATE_CA_FILE to the approved LBG CA PEM and rerun.\n' >&2
-  exit 1
-fi
-
-printf 'AutosOnShow client secret for bcarove: ' > /dev/tty
-IFS= read -r -s aos_secret < /dev/tty || exit 1
-printf '\n' > /dev/tty
-if [ -z "$aos_secret" ]; then
-  printf 'No secret entered.\n' >&2
-  exit 1
-fi
-
-{
-  printf '%s\n' "$aos_secret"
-  cat "$aos_ca_file"
-} | docker compose --env-file .env.docker exec -T api python -c '
-import ssl
-import sys
-from datetime import datetime, timezone
-
-import httpx
-
-secret, _, ca_pem = sys.stdin.read().partition("\n")
-try:
-    context = ssl.create_default_context()
-    context.load_verify_locations(cadata=ca_pem)
-except (ssl.SSLError, ValueError) as exc:
-    sys.exit(f"Could not load CA bundle: {exc}")
-
-url = "https://br-api.aos.tv/token/"
-timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
-print(f"UTC timestamp: {timestamp}", flush=True)
-print(f"Request: POST {url}", flush=True)
-
-try:
-    response = httpx.post(
-        url,
-        data={
-            "grant_type": "client_credentials",
-            "client_id": "bcarove",
-            "client_secret": secret,
-        },
-        verify=context,
-        timeout=15,
-        follow_redirects=False,
-    )
-except httpx.RequestError as exc:
-    sys.exit(f"{type(exc).__name__}: {exc}")
-
-print(f"AutosOnShow HTTP {response.status_code}")
-
-if response.status_code == 403:
-    print("403 response headers:")
-    for name in ("content-type", "server", "via", "x-request-id", "x-correlation-id"):
-        value = response.headers.get(name) or "(absent)"
-        print(f"  {name}: {value}")
-elif response.is_success:
-    try:
-        payload = response.json()
-    except ValueError:
-        payload = {}
-    token_present = isinstance(payload, dict) and bool(payload.get("access_token"))
-    print("Access token returned:", "yes" if token_present else "no")
-'
 ROVE_AOS_403
+AutosOnShow client secret for bcarove: 
+UTC timestamp: 2026-11-16T11:54:13+00:00
+Request: POST https://br-api.aos.tv/token/
+AutosOnShow HTTP 403
+403 response headers:
+  content-type: text/html; charset=utf-8
+  server: (absent)
+  via: (absent)
+  x-request-id: (absent)
+  x-correlation-id: (absent)
