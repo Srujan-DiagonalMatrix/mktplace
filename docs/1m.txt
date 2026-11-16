@@ -1,43 +1,22 @@
-status:
-  latestReadyRevisionName: rove-api-00019-qen
-  traffic:
-  - revisionName: rove-api-00003-tac
-    tag: update-20261107215637-386b4ad78cbf
-    url: https://update-20261107215637-386b4ad78cbf---rove-api-b6v6r2j77a-ew.a.run.app
-  - revisionName: rove-api-00004-jaf
-    tag: update-20261108144941-386b4ad78cbf
-    url: https://update-20261108144941-386b4ad78cbf---rove-api-b6v6r2j77a-ew.a.run.app
-  - revisionName: rove-api-00005-fad
-    tag: update-20261108150827-06660a8d9c51
-    url: https://update-20261108150827-06660a8d9c51---rove-api-b6v6r2j77a-ew.a.run.app
-  - revisionName: rove-api-00007-xul
-    tag: update-20261108154133-f38549da3b92
-    url: https://update-20261108154133-f38549da3b92---rove-api-b6v6r2j77a-ew.a.run.app
-  - revisionName: rove-api-00009-luv
-    tag: update-20261108160119-4e0a6fc589f6
-    url: https://update-20261108160119-4e0a6fc589f6---rove-api-b6v6r2j77a-ew.a.run.app
-  - revisionName: rove-api-00011-bav
-    tag: update-20261108162911-5ee9f2bb00b1
-    url: https://update-20261108162911-5ee9f2bb00b1---rove-api-b6v6r2j77a-ew.a.run.app
-  - revisionName: rove-api-00013-zar
-    tag: update-20261108193637-777fae8c9461
-    url: https://update-20261108193637-777fae8c9461---rove-api-b6v6r2j77a-ew.a.run.app
-  - revisionName: rove-api-00017-yak
-    tag: update-20261109071250-6b042c531580
-    url: https://update-20261109071250-6b042c531580---rove-api-b6v6r2j77a-ew.a.run.app
-  - percent: 100
-    revisionName: rove-api-00019-qen
-    tag: update-20261111092005-295df829ed02
-    url: https://update-20261111092005-295df829ed02---rove-api-b6v6r2j77a-ew.a.run.app
-2026-11-16 11:22:13 GET 200 https://rove-api-b6v6r2j77a-ew.a.run.app/api/catalogue/aos-token
-2026-11-16 11:22:14 INFO:     169.254.169.126:19448 - "GET /api/catalogue/aos-token HTTP/1.1" 200 OK
-2026-11-16 11:22:14 GET 200 https://rove-api-b6v6r2j77a-ew.a.run.app/api/catalogue/aos-token
-2026-11-16 11:22:14 INFO:     169.254.169.126:19490 - "GET /api/catalogue/aos-token HTTP/1.1" 200 OK
+printf '\n--- Mac TLS ---\n'
+curl --silent --show-error --connect-timeout 10 --max-time 20 \
+  --output /dev/null --write-out 'Mac HTTP %{http_code}\n' \
+  https://br-api.aos.tv/token/
 
+printf '\n--- Docker API TLS ---\n'
+docker compose --env-file .env.docker exec -T api python - <<'PY'
+import os
+import ssl
 
+import httpx
 
-  AutosOnShow client secret for bcarove: 
-ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)
+print("Python CA paths:", ssl.get_default_verify_paths())
+for name in ("HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "SSL_CERT_FILE", "SSL_CERT_DIR"):
+    print(f"{name}: {'set' if os.getenv(name) else 'unset'}")
 
-What's next:
-    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
+try:
+    response = httpx.get("https://br-api.aos.tv/token/", timeout=15)
+    print(f"Docker HTTP {response.status_code}")
+except httpx.RequestError as exc:
+    print(f"{type(exc).__name__}: {exc}")
+PY
