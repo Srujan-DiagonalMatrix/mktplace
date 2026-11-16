@@ -61,3 +61,6 @@ except httpx.RequestError as exc:
     print(f"{type(exc).__name__}: {exc}")
 '
 ROVE_AOS_RUNTIME_CA
+
+
+nl -ba server/app/routers/catalogue.py | sed -n '35,105p'
