@@ -1,30 +1,98 @@
-Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.
+bash <<'ROVE_CA_FIX'
+set -euo pipefail
 
-Warning: Ignoring extra certs from `/Users/srujan.kumar/combined_certs.pem`, load failed: error:80000002:system library::No such file or directory
+ca_source="${CORPORATE_CA_FILE:-server/certs/company-ca-bundle.pem}"
+if [ ! -s "$ca_source" ] || [ ! -r "$ca_source" ]; then
+  printf 'Approved CA bundle missing or unreadable: %s\n' "$ca_source" >&2
+  printf 'Set CORPORATE_CA_FILE to the approved LBG CA PEM and retry.\n' >&2
+  exit 1
+fi
 
-added 164 packages, and audited 165 packages in 5s
+compose_file=""
+for candidate in compose.yaml compose.yml docker-compose.yml docker-compose.yaml; do
+  if [ -f "$candidate" ]; then
+    compose_file="$candidate"
+    break
+  fi
+done
+if [ -z "$compose_file" ] || [ ! -f .env.docker ]; then
+  printf 'Run this from the Rove repo with its Compose file and .env.docker.\n' >&2
+  exit 1
+fi
 
-33 packages are looking for funding
-  run `npm fund` for details
+work_dir="$(mktemp -d "$(pwd -P)/.rove-aos-ca.XXXXXX")"
+override="$work_dir/compose.ca.yaml"
 
-8 vulnerabilities (3 moderate, 5 high)
+printf '\n--- 1. Build the combined CA bundle ---\n'
+docker compose --env-file .env.docker -f "$compose_file" \
+  exec -T api cat /etc/ssl/certs/ca-certificates.crt \
+  </dev/null >"$work_dir/ca-bundle.pem"
+printf '\n' >>"$work_dir/ca-bundle.pem"
+cat "$ca_source" >>"$work_dir/ca-bundle.pem"
+chmod 644 "$work_dir/ca-bundle.pem"
 
-To address issues that do not require attention, run:
-  npm audit fix
+cat >"$override" <<YAML
+services:
+  api:
+    environment:
+      SSL_CERT_FILE: /run/rove-ca/ca-bundle.pem
+    volumes:
+      - type: bind
+        source: "$work_dir/ca-bundle.pem"
+        target: /run/rove-ca/ca-bundle.pem
+        read_only: true
+        bind:
+          create_host_path: false
+YAML
 
-To address all issues, run:
-  npm audit fix --force
+rove_compose() {
+  docker compose --env-file .env.docker -f "$compose_file" -f "$override" "$@"
+}
 
-Run `npm audit` for details.
-npm warn allow-scripts 1 package has install scripts not yet covered by allowScripts:
-npm warn allow-scripts   fsevents@2.3.3 (install: (install scripts present))
-npm warn allow-scripts
-npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
-npm notice
-npm notice New major version of npm available! 11.17.0 -> 12.2.2
-npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
-npm notice To update run: npm install -g npm@12.2.2
-npm notice
+printf '\n--- 2. Recreate only the API container ---\n'
+printf 'Local override: %s\n' "$override"
+rove_compose up -d --no-deps --force-recreate api </dev/null
 
-> rove-vehicle-finance@1.0.0 build
-> vite build
+printf '\n--- 3. Verify the live CA and replay the token POST ---\n'
+rove_compose exec -T api python -u - <<'PYTHON'
+import os
+from datetime import datetime, timezone
+
+import httpx
+
+expected_ca = "/run/rove-ca/ca-bundle.pem"
+runtime_ca = os.getenv("SSL_CERT_FILE")
+print("Runtime CA:", runtime_ca)
+if runtime_ca != expected_ca or not os.access(expected_ca, os.R_OK):
+    raise SystemExit("The CA override did not reach the running API container.")
+
+client_id = os.getenv("AOS_CLIENT_ID")
+client_secret = os.getenv("AOS_CLIENT_SECRET")
+if not client_id or not client_secret:
+    raise SystemExit("AOS credentials are missing from the API container.")
+
+print("UTC:", datetime.now(timezone.utc).isoformat(timespec="seconds"))
+try:
+    response = httpx.post(
+        "https://br-api.aos.tv/token/",
+        data={
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret,
+        },
+        timeout=15,
+    )
+except httpx.RequestError as exc:
+    raise SystemExit(f"{type(exc).__name__}: {exc}") from None
+
+print("Upstream HTTP:", response.status_code)
+print("Content-Type:", response.headers.get("content-type", "(absent)"))
+if response.is_success:
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = {}
+    token = payload.get("access_token") if isinstance(payload, dict) else None
+    print("Valid access_token field:", isinstance(token, str) and bool(token.strip()))
+PYTHON
+ROVE_CA_FIX
