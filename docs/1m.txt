@@ -1,47 +1,8 @@
-docker compose --env-file .env.docker exec -T api python - <<'PY'
-import asyncio
-import os
-from datetime import datetime, timezone
-
-import httpx
-
-
-async def main():
-    client_id = os.getenv("AOS_CLIENT_ID")
-    client_secret = os.getenv("AOS_CLIENT_SECRET")
-    if not client_id or not client_secret:
-        raise SystemExit("AOS client ID or secret is missing from the API container.")
-
-    print("UTC:", datetime.now(timezone.utc).isoformat(timespec="seconds"))
-    print("Runtime CA:", os.getenv("SSL_CERT_FILE", "(unset)"))
-    print("Client ID matches expected account:", client_id == "bcarove")
-
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(
-                "https://br-api.aos.tv/token/",
-                data={
-                    "grant_type": "client_credentials",
-                    "client_id": client_id,
-                    "client_secret": client_secret,
-                },
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-            )
-    except httpx.RequestError as exc:
-        raise SystemExit(f"{type(exc).__name__}: {exc}") from None
-
-    print("Upstream HTTP:", response.status_code)
-    for name in ("content-type", "server", "via", "x-request-id", "x-correlation-id"):
-        print(f"{name}: {response.headers.get(name, '(absent)')}")
-
-    if response.is_success:
-        try:
-            payload = response.json()
-        except ValueError:
-            payload = {}
-        token = payload.get("access_token") if isinstance(payload, dict) else None
-        print("Valid access_token field:", isinstance(token, str) and bool(token.strip()))
-
-
-asyncio.run(main())
 PY
+UTC: 2026-11-16T12:17:22+00:00
+Runtime CA: /etc/ssl/certs/ca-certificates.crt
+Client ID matches expected account: True
+ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)
+
+What's next:
+    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
