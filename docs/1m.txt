@@ -1,67 +1,21 @@
-bash <<'ROVE_AOS_DIAG'
-set +x
-aos_ca_file="${CORPORATE_CA_FILE:-server/certs/company-ca-bundle.pem}"
+--- 1. Browser route through nginx ---
+nginx route HTTP 502
 
-printf '\n--- 1. Browser route through nginx ---\n'
-curl --silent --show-error --max-time 25 --output /dev/null \
-  --write-out 'nginx route HTTP %{http_code}\n' \
-  http://localhost:8080/api/catalogue/aos-token
+--- 2. API route and outbound TLS inside Docker ---
+Direct API route: HTTP 502
+SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+Configured CA file readable: True
+AOS_CLIENT_ID: set
+AOS_CLIENT_SECRET: set
+VITE_AOS_TOKEN: set
+AutosOnShow with default HTTPX trust: ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)
+AutosOnShow with additional CA bundle: HTTP 403
 
-printf '\n--- 2. API route and outbound TLS inside Docker ---\n'
-{
-  if [ -r "$aos_ca_file" ] && [ -s "$aos_ca_file" ]; then
-    cat "$aos_ca_file"
-  fi
-} | docker compose --env-file .env.docker exec -T api python -c '
-import os
-import ssl
-import sys
+--- 3. Backend log markers from the last five minutes ---
+API log: ConnectError
+API log: /api/catalogue/aos-token returned 502
+API log: ConnectError
+API log: /api/catalogue/aos-token returned 502
 
-import httpx
-
-def probe(label, url, **options):
-    try:
-        response = httpx.get(url, timeout=15, follow_redirects=False, **options)
-        print(f"{label}: HTTP {response.status_code}", flush=True)
-    except httpx.RequestError as exc:
-        print(f"{label}: {type(exc).__name__}: {exc}", flush=True)
-
-probe("Direct API route", "http://127.0.0.1:8000/api/catalogue/aos-token")
-
-ca_path = os.getenv("SSL_CERT_FILE")
-print("SSL_CERT_FILE:", ca_path or "(unset)", flush=True)
-if ca_path:
-    print("Configured CA file readable:", os.access(ca_path, os.R_OK), flush=True)
-
-for name in ("AOS_CLIENT_ID", "AOS_CLIENT_SECRET", "VITE_AOS_TOKEN"):
-    state = "set" if os.getenv(name) else "unset"
-    print(f"{name}: {state}", flush=True)
-
-url = "https://br-api.aos.tv/token/"
-probe("AutosOnShow with default HTTPX trust", url)
-
-ca_pem = sys.stdin.read()
-if ca_pem.strip():
-    try:
-        context = ssl.create_default_context()
-        context.load_verify_locations(cadata=ca_pem)
-    except (ssl.SSLError, ValueError) as exc:
-        sys.exit(f"Could not load the additional CA bundle: {exc}")
-    probe("AutosOnShow with additional CA bundle", url, verify=context)
-else:
-    print("Additional CA test skipped: bundle missing or empty.")
-'
-
-printf '\n--- 3. Backend log markers from the last five minutes ---\n'
-docker compose --env-file .env.docker logs --since 5m --no-color api |
-  awk '
-    /CERTIFICATE_VERIFY_FAILED/ { print "API log: CERTIFICATE_VERIFY_FAILED" }
-    /ConnectError/              { print "API log: ConnectError" }
-    /ConnectTimeout/            { print "API log: ConnectTimeout" }
-    /ReadTimeout/               { print "API log: ReadTimeout" }
-    /aos-token/ && /502/        { print "API log: /api/catalogue/aos-token returned 502" }
-  '
-
-printf '\n--- 4. Find the backend code that generates this error ---\n'
-git grep -n -F 'Rove could not reach the AutosOnShow token service' -- '*.py'
-ROVE_AOS_DIAG
+--- 4. Find the backend code that generates this error ---
+server/app/routers/catalogue.py:72:                detail="Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.",
