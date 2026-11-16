@@ -1,42 +1,43 @@
-gcloud run services describe rove-api \
-  --project=tactical-innovation-f2b97b \
-  --region=europe-west1 \
-  --format='yaml(status.traffic,status.latestReadyRevisionName)'
+status:
+  latestReadyRevisionName: rove-api-00019-qen
+  traffic:
+  - revisionName: rove-api-00003-tac
+    tag: update-20261107215637-386b4ad78cbf
+    url: https://update-20261107215637-386b4ad78cbf---rove-api-b6v6r2j77a-ew.a.run.app
+  - revisionName: rove-api-00004-jaf
+    tag: update-20261108144941-386b4ad78cbf
+    url: https://update-20261108144941-386b4ad78cbf---rove-api-b6v6r2j77a-ew.a.run.app
+  - revisionName: rove-api-00005-fad
+    tag: update-20261108150827-06660a8d9c51
+    url: https://update-20261108150827-06660a8d9c51---rove-api-b6v6r2j77a-ew.a.run.app
+  - revisionName: rove-api-00007-xul
+    tag: update-20261108154133-f38549da3b92
+    url: https://update-20261108154133-f38549da3b92---rove-api-b6v6r2j77a-ew.a.run.app
+  - revisionName: rove-api-00009-luv
+    tag: update-20261108160119-4e0a6fc589f6
+    url: https://update-20261108160119-4e0a6fc589f6---rove-api-b6v6r2j77a-ew.a.run.app
+  - revisionName: rove-api-00011-bav
+    tag: update-20261108162911-5ee9f2bb00b1
+    url: https://update-20261108162911-5ee9f2bb00b1---rove-api-b6v6r2j77a-ew.a.run.app
+  - revisionName: rove-api-00013-zar
+    tag: update-20261108193637-777fae8c9461
+    url: https://update-20261108193637-777fae8c9461---rove-api-b6v6r2j77a-ew.a.run.app
+  - revisionName: rove-api-00017-yak
+    tag: update-20261109071250-6b042c531580
+    url: https://update-20261109071250-6b042c531580---rove-api-b6v6r2j77a-ew.a.run.app
+  - percent: 100
+    revisionName: rove-api-00019-qen
+    tag: update-20261111092005-295df829ed02
+    url: https://update-20261111092005-295df829ed02---rove-api-b6v6r2j77a-ew.a.run.app
+2026-11-16 11:22:13 GET 200 https://rove-api-b6v6r2j77a-ew.a.run.app/api/catalogue/aos-token
+2026-11-16 11:22:14 INFO:     169.254.169.126:19448 - "GET /api/catalogue/aos-token HTTP/1.1" 200 OK
+2026-11-16 11:22:14 GET 200 https://rove-api-b6v6r2j77a-ew.a.run.app/api/catalogue/aos-token
+2026-11-16 11:22:14 INFO:     169.254.169.126:19490 - "GET /api/catalogue/aos-token HTTP/1.1" 200 OK
 
-gcloud run services logs read rove-api \
-  --project=tactical-innovation-f2b97b \
-  --region=europe-west1 \
-  --freshness=20m \
-  --limit=100 \
-  --log-filter='(severity>=ERROR OR httpRequest.status>=500 OR "AutosOnShow" OR "ConnectError" OR "aos-token")'
 
 
+  AutosOnShow client secret for bcarove: 
+ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)
 
-
-  bash <<'ROVE_AOS_TEST'
-printf 'AutosOnShow client secret for bcarove: ' > /dev/tty
-IFS= read -r -s aos_secret < /dev/tty || exit 1
-printf '\n' > /dev/tty
-[ -n "$aos_secret" ] || { printf 'No secret entered.\n'; exit 1; }
-
-printf '%s' "$aos_secret" |
-  docker compose --env-file .env.docker exec -T api python -c '
-import sys
-import httpx
-
-try:
-    response = httpx.post(
-        "https://br-api.aos.tv/token/",
-        data={
-            "grant_type": "client_credentials",
-            "client_id": "bcarove",
-            "client_secret": sys.stdin.read(),
-        },
-        timeout=15.0,
-    )
-    print(f"AutosOnShow HTTP {response.status_code}")
-except httpx.RequestError as exc:
-    print(f"{type(exc).__name__}: {exc}", file=sys.stderr)
-    sys.exit(2)
-'
-ROVE_AOS_TEST
+What's next:
+    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
