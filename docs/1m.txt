@@ -1,21 +1,63 @@
---- 1. Browser route through nginx ---
-nginx route HTTP 502
+bash <<'ROVE_AOS_RUNTIME_CA'
+set -euo pipefail
 
---- 2. API route and outbound TLS inside Docker ---
-Direct API route: HTTP 502
-SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
-Configured CA file readable: True
-AOS_CLIENT_ID: set
-AOS_CLIENT_SECRET: set
-VITE_AOS_TOKEN: set
-AutosOnShow with default HTTPX trust: ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)
-AutosOnShow with additional CA bundle: HTTP 403
+aos_ca_source="${CORPORATE_CA_FILE:-server/certs/company-ca-bundle.pem}"
+if [ ! -r "$aos_ca_source" ] || [ ! -s "$aos_ca_source" ]; then
+  printf 'Missing or empty approved CA bundle: %s\n' "$aos_ca_source" >&2
+  exit 1
+fi
 
---- 3. Backend log markers from the last five minutes ---
-API log: ConnectError
-API log: /api/catalogue/aos-token returned 502
-API log: ConnectError
-API log: /api/catalogue/aos-token returned 502
+aos_compose_file=""
+for candidate in compose.yaml compose.yml docker-compose.yml docker-compose.yaml; do
+  if [ -f "$candidate" ]; then
+    aos_compose_file="$candidate"
+    break
+  fi
+done
+if [ -z "$aos_compose_file" ]; then
+  printf 'Run this from the Rove directory containing the Compose file.\n' >&2
+  exit 1
+fi
 
---- 4. Find the backend code that generates this error ---
-server/app/routers/catalogue.py:72:                detail="Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.",
+aos_work_dir="$(mktemp -d "${TMPDIR:-/tmp}/rove-aos-ca.XXXXXX")"
+aos_work_dir="$(cd "$aos_work_dir" && pwd -P)"
+aos_override="$aos_work_dir/compose.ca.yaml"
+
+docker compose --env-file .env.docker -f "$aos_compose_file" \
+  exec -T api cat /etc/ssl/certs/ca-certificates.crt \
+  > "$aos_work_dir/ca-bundle.pem"
+printf '\n' >> "$aos_work_dir/ca-bundle.pem"
+cat "$aos_ca_source" >> "$aos_work_dir/ca-bundle.pem"
+chmod 644 "$aos_work_dir/ca-bundle.pem"
+
+cat > "$aos_override" <<YAML
+services:
+  api:
+    environment:
+      SSL_CERT_FILE: /run/rove-ca/ca-bundle.pem
+    volumes:
+      - type: bind
+        source: "$aos_work_dir/ca-bundle.pem"
+        target: /run/rove-ca/ca-bundle.pem
+        read_only: true
+YAML
+
+printf 'Local override: %s\n' "$aos_override"
+docker compose --env-file .env.docker \
+  -f "$aos_compose_file" -f "$aos_override" \
+  up -d --no-deps --force-recreate api
+
+docker compose --env-file .env.docker \
+  -f "$aos_compose_file" -f "$aos_override" \
+  exec -T api python -c '
+import os
+import httpx
+
+print("Runtime CA:", os.environ["SSL_CERT_FILE"])
+try:
+    response = httpx.get("https://br-api.aos.tv/token/", timeout=15)
+    print("AutosOnShow TLS probe HTTP", response.status_code)
+except httpx.RequestError as exc:
+    print(f"{type(exc).__name__}: {exc}")
+'
+ROVE_AOS_RUNTIME_CA
