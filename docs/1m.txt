@@ -1,66 +1,67 @@
-bash <<'ROVE_AOS_RUNTIME_CA'
-set -euo pipefail
-
-aos_ca_source="${CORPORATE_CA_FILE:-server/certs/company-ca-bundle.pem}"
-if [ ! -r "$aos_ca_source" ] || [ ! -s "$aos_ca_source" ]; then
-  printf 'Missing or empty approved CA bundle: %s\n' "$aos_ca_source" >&2
-  exit 1
-fi
-
-aos_compose_file=""
-for candidate in compose.yaml compose.yml docker-compose.yml docker-compose.yaml; do
-  if [ -f "$candidate" ]; then
-    aos_compose_file="$candidate"
-    break
-  fi
-done
-if [ -z "$aos_compose_file" ]; then
-  printf 'Run this from the Rove directory containing the Compose file.\n' >&2
-  exit 1
-fi
-
-aos_work_dir="$(mktemp -d "${TMPDIR:-/tmp}/rove-aos-ca.XXXXXX")"
-aos_work_dir="$(cd "$aos_work_dir" && pwd -P)"
-aos_override="$aos_work_dir/compose.ca.yaml"
-
-docker compose --env-file .env.docker -f "$aos_compose_file" \
-  exec -T api cat /etc/ssl/certs/ca-certificates.crt \
-  > "$aos_work_dir/ca-bundle.pem"
-printf '\n' >> "$aos_work_dir/ca-bundle.pem"
-cat "$aos_ca_source" >> "$aos_work_dir/ca-bundle.pem"
-chmod 644 "$aos_work_dir/ca-bundle.pem"
-
-cat > "$aos_override" <<YAML
-services:
-  api:
-    environment:
-      SSL_CERT_FILE: /run/rove-ca/ca-bundle.pem
-    volumes:
-      - type: bind
-        source: "$aos_work_dir/ca-bundle.pem"
-        target: /run/rove-ca/ca-bundle.pem
-        read_only: true
-YAML
-
-printf 'Local override: %s\n' "$aos_override"
-docker compose --env-file .env.docker \
-  -f "$aos_compose_file" -f "$aos_override" \
-  up -d --no-deps --force-recreate api
-
-docker compose --env-file .env.docker \
-  -f "$aos_compose_file" -f "$aos_override" \
-  exec -T api python -c '
-import os
-import httpx
-
-print("Runtime CA:", os.environ["SSL_CERT_FILE"])
-try:
-    response = httpx.get("https://br-api.aos.tv/token/", timeout=15)
-    print("AutosOnShow TLS probe HTTP", response.status_code)
-except httpx.RequestError as exc:
-    print(f"{type(exc).__name__}: {exc}")
-'
-ROVE_AOS_RUNTIME_CA
-
-
-nl -ba server/app/routers/catalogue.py | sed -n '35,105p'
+    35      client_secret = os.getenv("AOS_CLIENT_SECRET")
+    36      if not client_id or not client_secret:
+    37          raise HTTPException(
+    38              status_code=503,
+    39              detail="AOS_CLIENT_ID and AOS_CLIENT_SECRET are missing from the API runtime. For Docker Compose, confirm .env.docker or .env.credentials is loaded into the API container. For Cloud Run, configure them on the API service or through Secret Manager.",
+    40          )
+    41      if _cached_token_valid():
+    42          return {"token": _token_cache["token"]}
+    43      async with _token_lock:
+    44          if _cached_token_valid():
+    45              return {"token": _token_cache["token"]}
+    46          try:
+    47              async with httpx.AsyncClient(timeout=10.0) as client:
+    48                  response = await client.post("https://br-api.aos.tv/token/", data={
+    49                      "grant_type": "client_credentials", "client_id": client_id,
+    50                      "client_secret": client_secret,
+    51                  }, headers={"Content-Type": "application/x-www-form-urlencoded"})
+    52                  response.raise_for_status()
+    53                  payload = response.json()
+    54                  token = payload["access_token"]
+    55                  if not isinstance(token, str) or not token.strip():
+    56                      raise ValueError("Invalid token")
+    57                  expires_in = payload.get("expires_in", 7200)
+    58                  if isinstance(expires_in, bool) or not isinstance(expires_in, int) or expires_in <= 0:
+    59                      expires_in = 7200
+    60                  _token_cache.update(token=token, expires_at=time.time() + expires_in)
+    61                  return {"token": token}
+    62          except httpx.HTTPStatusError as exc:
+    63              logger.warning("AOS token exchange rejected with HTTP %s", exc.response.status_code)
+    64              raise HTTPException(
+    65                  status_code=502,
+    66                  detail=f"AutosOnShow rejected the configured credentials (HTTP {exc.response.status_code}). Check the AOS client ID, client secret, and account access.",
+    67              ) from exc
+    68          except httpx.RequestError as exc:
+    69              logger.warning("AOS token service could not be reached (%s)", type(exc).__name__)
+    70              raise HTTPException(
+    71                  status_code=502,
+    72                  detail="Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.",
+    73              ) from exc
+    74          except (KeyError, ValueError, TypeError) as exc:
+    75              logger.warning("AOS token response was invalid (%s)", type(exc).__name__)
+    76              raise HTTPException(
+    77                  status_code=502,
+    78                  detail="AutosOnShow returned an invalid token response. Check the API logs and confirm the configured AOS account is enabled for this integration.",
+    79              ) from exc
+    80          except Exception as exc:
+    81              logger.exception("Unexpected AOS token exchange failure (%s)", type(exc).__name__)
+    82              raise HTTPException(
+    83                  status_code=502,
+    84                  detail="Rove could not complete the AutosOnShow token exchange. Check the API logs for the failure category.",
+    85              ) from exc
+    86
+    87
+    88  @router.get("/vehicles", response_model=list[VehicleResponse])
+    89  def available_vehicles(db: Session = Depends(get_db)):
+    90      return VehicleRepository(db).list_available()
+    91
+    92
+    93  @router.get("/featured", response_model=list[VehiclePromotionResponse])
+    94  def featured_vehicles(db: Session = Depends(get_db)):
+    95      return db.scalars(select(VehiclePromotion)
+    96          .join(VehiclePromotion.vehicle)
+    97          .where(Vehicle.is_available.is_(True))
+    98          .options(selectinload(VehiclePromotion.vehicle).selectinload(Vehicle.images),
+    99                   selectinload(VehiclePromotion.vehicle).selectinload(Vehicle.features),
+   100                   selectinload(VehiclePromotion.vehicle).selectinload(Vehicle.specification))
+   101          .order_by(VehiclePromotion.display_order, VehiclePromotion.id)).all()
