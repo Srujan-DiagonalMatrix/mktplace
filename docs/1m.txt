@@ -1,67 +1,47 @@
-    35      client_secret = os.getenv("AOS_CLIENT_SECRET")
-    36      if not client_id or not client_secret:
-    37          raise HTTPException(
-    38              status_code=503,
-    39              detail="AOS_CLIENT_ID and AOS_CLIENT_SECRET are missing from the API runtime. For Docker Compose, confirm .env.docker or .env.credentials is loaded into the API container. For Cloud Run, configure them on the API service or through Secret Manager.",
-    40          )
-    41      if _cached_token_valid():
-    42          return {"token": _token_cache["token"]}
-    43      async with _token_lock:
-    44          if _cached_token_valid():
-    45              return {"token": _token_cache["token"]}
-    46          try:
-    47              async with httpx.AsyncClient(timeout=10.0) as client:
-    48                  response = await client.post("https://br-api.aos.tv/token/", data={
-    49                      "grant_type": "client_credentials", "client_id": client_id,
-    50                      "client_secret": client_secret,
-    51                  }, headers={"Content-Type": "application/x-www-form-urlencoded"})
-    52                  response.raise_for_status()
-    53                  payload = response.json()
-    54                  token = payload["access_token"]
-    55                  if not isinstance(token, str) or not token.strip():
-    56                      raise ValueError("Invalid token")
-    57                  expires_in = payload.get("expires_in", 7200)
-    58                  if isinstance(expires_in, bool) or not isinstance(expires_in, int) or expires_in <= 0:
-    59                      expires_in = 7200
-    60                  _token_cache.update(token=token, expires_at=time.time() + expires_in)
-    61                  return {"token": token}
-    62          except httpx.HTTPStatusError as exc:
-    63              logger.warning("AOS token exchange rejected with HTTP %s", exc.response.status_code)
-    64              raise HTTPException(
-    65                  status_code=502,
-    66                  detail=f"AutosOnShow rejected the configured credentials (HTTP {exc.response.status_code}). Check the AOS client ID, client secret, and account access.",
-    67              ) from exc
-    68          except httpx.RequestError as exc:
-    69              logger.warning("AOS token service could not be reached (%s)", type(exc).__name__)
-    70              raise HTTPException(
-    71                  status_code=502,
-    72                  detail="Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.",
-    73              ) from exc
-    74          except (KeyError, ValueError, TypeError) as exc:
-    75              logger.warning("AOS token response was invalid (%s)", type(exc).__name__)
-    76              raise HTTPException(
-    77                  status_code=502,
-    78                  detail="AutosOnShow returned an invalid token response. Check the API logs and confirm the configured AOS account is enabled for this integration.",
-    79              ) from exc
-    80          except Exception as exc:
-    81              logger.exception("Unexpected AOS token exchange failure (%s)", type(exc).__name__)
-    82              raise HTTPException(
-    83                  status_code=502,
-    84                  detail="Rove could not complete the AutosOnShow token exchange. Check the API logs for the failure category.",
-    85              ) from exc
-    86
-    87
-    88  @router.get("/vehicles", response_model=list[VehicleResponse])
-    89  def available_vehicles(db: Session = Depends(get_db)):
-    90      return VehicleRepository(db).list_available()
-    91
-    92
-    93  @router.get("/featured", response_model=list[VehiclePromotionResponse])
-    94  def featured_vehicles(db: Session = Depends(get_db)):
-    95      return db.scalars(select(VehiclePromotion)
-    96          .join(VehiclePromotion.vehicle)
-    97          .where(Vehicle.is_available.is_(True))
-    98          .options(selectinload(VehiclePromotion.vehicle).selectinload(Vehicle.images),
-    99                   selectinload(VehiclePromotion.vehicle).selectinload(Vehicle.features),
-   100                   selectinload(VehiclePromotion.vehicle).selectinload(Vehicle.specification))
-   101          .order_by(VehiclePromotion.display_order, VehiclePromotion.id)).all()
+docker compose --env-file .env.docker exec -T api python - <<'PY'
+import asyncio
+import os
+from datetime import datetime, timezone
+
+import httpx
+
+
+async def main():
+    client_id = os.getenv("AOS_CLIENT_ID")
+    client_secret = os.getenv("AOS_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        raise SystemExit("AOS client ID or secret is missing from the API container.")
+
+    print("UTC:", datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    print("Runtime CA:", os.getenv("SSL_CERT_FILE", "(unset)"))
+    print("Client ID matches expected account:", client_id == "bcarove")
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                "https://br-api.aos.tv/token/",
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+    except httpx.RequestError as exc:
+        raise SystemExit(f"{type(exc).__name__}: {exc}") from None
+
+    print("Upstream HTTP:", response.status_code)
+    for name in ("content-type", "server", "via", "x-request-id", "x-correlation-id"):
+        print(f"{name}: {response.headers.get(name, '(absent)')}")
+
+    if response.is_success:
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = {}
+        token = payload.get("access_token") if isinstance(payload, dict) else None
+        print("Valid access_token field:", isinstance(token, str) and bool(token.strip()))
+
+
+asyncio.run(main())
+PY
