@@ -1,55 +1,42 @@
-Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.
+gcloud run services describe rove-api \
+  --project=tactical-innovation-f2b97b \
+  --region=europe-west1 \
+  --format='yaml(status.traffic,status.latestReadyRevisionName)'
 
-{
-  "protoPayload": {
-    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
-    "status": {},
-    "authenticationInfo": {
-      "principalEmail": "srujan.kumar@lloydsbanking.dev"
-    },
-    "requestMetadata": {
-      "callerIp": "148.64.28.180",
-      "callerSuppliedUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36,gzip(gfe),gzip(gfe)",
-      "requestAttributes": {
-        "time": "2026-11-16T11:13:07.823793Z",
-        "auth": {}
-      },
-      "destinationAttributes": {}
-    },
-    "serviceName": "run.googleapis.com",
-    "methodName": "google.cloud.run.v2.Revisions.GetRevision",
-    "authorizationInfo": [
-      {
-        "resource": "projects/tactical-innovation-f2b97b/locations/europe-west1/services/rove-api/revisions/rove-api-00019-qen",
-        "permission": "run.revisions.get",
-        "granted": true,
-        "resourceAttributes": {},
-        "permissionType": "ADMIN_READ"
-      }
-    ],
-    "resourceName": "projects/tactical-innovation-f2b97b/locations/europe-west1/services/rove-api/revisions/rove-api-00019-qen",
-    "resourceLocation": {
-      "currentLocations": [
-        "europe-west1"
-      ]
-    }
-  },
-  "insertId": "8xz5tfd1i8j",
-  "resource": {
-    "type": "cloud_run_revision",
-    "labels": {
-      "configuration_name": "",
-      "project_id": "tactical-innovation-f2b97b",
-      "service_name": "rove-api",
-      "location": "europe-west1",
-      "revision_name": "rove-api-00019-qen"
-    }
-  },
-  "timestamp": "2026-11-16T11:13:07.779232Z",
-  "severity": "INFO",
-  "logName": "projects/tactical-innovation-f2b97b/logs/cloudaudit.googleapis.com%2Fdata_access",
-  "receiveTimestamp": "2026-11-16T11:13:08.587041980Z"
-}
+gcloud run services logs read rove-api \
+  --project=tactical-innovation-f2b97b \
+  --region=europe-west1 \
+  --freshness=20m \
+  --limit=100 \
+  --log-filter='(severity>=ERROR OR httpRequest.status>=500 OR "AutosOnShow" OR "ConnectError" OR "aos-token")'
 
-bcarove
-p4vaij32tcszpshhi7g
+
+
+
+  bash <<'ROVE_AOS_TEST'
+printf 'AutosOnShow client secret for bcarove: ' > /dev/tty
+IFS= read -r -s aos_secret < /dev/tty || exit 1
+printf '\n' > /dev/tty
+[ -n "$aos_secret" ] || { printf 'No secret entered.\n'; exit 1; }
+
+printf '%s' "$aos_secret" |
+  docker compose --env-file .env.docker exec -T api python -c '
+import sys
+import httpx
+
+try:
+    response = httpx.post(
+        "https://br-api.aos.tv/token/",
+        data={
+            "grant_type": "client_credentials",
+            "client_id": "bcarove",
+            "client_secret": sys.stdin.read(),
+        },
+        timeout=15.0,
+    )
+    print(f"AutosOnShow HTTP {response.status_code}")
+except httpx.RequestError as exc:
+    print(f"{type(exc).__name__}: {exc}", file=sys.stderr)
+    sys.exit(2)
+'
+ROVE_AOS_TEST
