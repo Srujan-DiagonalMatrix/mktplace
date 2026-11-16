@@ -1,12 +1,1 @@
---- 1. Build the combined CA bundle ---
-
---- 2. Recreate only the API container ---
-Local override: /Users/srujan.kumar/Documents/git/rove/.rove-aos-ca.mYJ1fy/compose.ca.yaml
-[+] up 1/1
- ✔ Container rove-api Started                                                                                                              0.7s
-
---- 3. Verify the live CA and replay the token POST ---
-Runtime CA: /run/rove-ca/ca-bundle.pem
-UTC: 2026-11-16T12:30:29+00:00
-Upstream HTTP: 403
-Content-Type: text/html; charset=utf-8
+"AutosOnShow rejected the configured credentials (HTTP 403). Check the AOS client ID, client secret, and account access."
