@@ -1,56 +1,67 @@
-Request URL
-http://localhost:8080/api/catalogue/aos-token
-Request method
-GET
-Status code
-502 Bad Gateway
-Remote address
-[::1]:8080
-Referrer policy
-strict-origin-when-cross-origin
+bash <<'ROVE_AOS_DIAG'
+set +x
+aos_ca_file="${CORPORATE_CA_FILE:-server/certs/company-ca-bundle.pem}"
 
-connection
-keep-alive
+printf '\n--- 1. Browser route through nginx ---\n'
+curl --silent --show-error --max-time 25 --output /dev/null \
+  --write-out 'nginx route HTTP %{http_code}\n' \
+  http://localhost:8080/api/catalogue/aos-token
 
-content-length
-119
-content-type
-application/json
-date
-Mon, 16 Nov 2026 12:04:44 GMT
-server
-nginx/1.31.8
+printf '\n--- 2. API route and outbound TLS inside Docker ---\n'
+{
+  if [ -r "$aos_ca_file" ] && [ -s "$aos_ca_file" ]; then
+    cat "$aos_ca_file"
+  fi
+} | docker compose --env-file .env.docker exec -T api python -c '
+import os
+import ssl
+import sys
 
-accept
-*/*
-accept-encoding
-gzip, deflate, br, zstd
-accept-language
-en-GB,en-US;q=0.9,en;q=0.8
-connection
-keep-alive
-cookie
-rove_guest_d118667e84204207941f5db72d84994a=YiBMFhhn9iQ0sayHhKaAJN_d6nITUsdZTTliWSXFUuk; rove_guest_ca3ccd3bfe8d47948ac3c4a8d5d37892=OwVyMVG44G0iHfAM6FykmMl8FZhgoRmHzTJbL-i91u0; rove_guest_9b4fcf45ddc9482e9d94101573926f8d=Lypkyh99qAD11EFKCnT-GHfvGuardMQurCmJvfcMm70; rove_guest_5998268ebb724a8d99c53ace2f06d25f=UgBcCbzbrg0RAHlE1oV2ygcU7ayU7GQpiUwFA30YVmM; rove_guest_fb009be812ae4b74955be53806483408=7oqvfPHWWCirYbflPzs9CrNux0iPeOJruHEDqeARSoo; rove_admin_session=LQo0Xh0GCBuIOQtYQ0aQEDkUZtflrAV9l7U0fM1Yisw
-host
-localhost:8080
-referer
-http://localhost:8080/admin
-sec-ch-ua
-"Not-A.Brand";v="99", "Google Chrome";v="157", "Chromium";v="157"
-sec-ch-ua-mobile
-?1
-sec-ch-ua-platform
-"iOS"
-sec-fetch-dest
-empty
-sec-fetch-mode
-cors
-sec-fetch-site
-same-origin
-user-agent
-Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1
+import httpx
 
+def probe(label, url, **options):
+    try:
+        response = httpx.get(url, timeout=15, follow_redirects=False, **options)
+        print(f"{label}: HTTP {response.status_code}", flush=True)
+    except httpx.RequestError as exc:
+        print(f"{label}: {type(exc).__name__}: {exc}", flush=True)
 
-detail
-: 
-"Rove could not reach the AutosOnShow token service. Check network access from the API container and retry."
+probe("Direct API route", "http://127.0.0.1:8000/api/catalogue/aos-token")
+
+ca_path = os.getenv("SSL_CERT_FILE")
+print("SSL_CERT_FILE:", ca_path or "(unset)", flush=True)
+if ca_path:
+    print("Configured CA file readable:", os.access(ca_path, os.R_OK), flush=True)
+
+for name in ("AOS_CLIENT_ID", "AOS_CLIENT_SECRET", "VITE_AOS_TOKEN"):
+    state = "set" if os.getenv(name) else "unset"
+    print(f"{name}: {state}", flush=True)
+
+url = "https://br-api.aos.tv/token/"
+probe("AutosOnShow with default HTTPX trust", url)
+
+ca_pem = sys.stdin.read()
+if ca_pem.strip():
+    try:
+        context = ssl.create_default_context()
+        context.load_verify_locations(cadata=ca_pem)
+    except (ssl.SSLError, ValueError) as exc:
+        sys.exit(f"Could not load the additional CA bundle: {exc}")
+    probe("AutosOnShow with additional CA bundle", url, verify=context)
+else:
+    print("Additional CA test skipped: bundle missing or empty.")
+'
+
+printf '\n--- 3. Backend log markers from the last five minutes ---\n'
+docker compose --env-file .env.docker logs --since 5m --no-color api |
+  awk '
+    /CERTIFICATE_VERIFY_FAILED/ { print "API log: CERTIFICATE_VERIFY_FAILED" }
+    /ConnectError/              { print "API log: ConnectError" }
+    /ConnectTimeout/            { print "API log: ConnectTimeout" }
+    /ReadTimeout/               { print "API log: ReadTimeout" }
+    /aos-token/ && /502/        { print "API log: /api/catalogue/aos-token returned 502" }
+  '
+
+printf '\n--- 4. Find the backend code that generates this error ---\n'
+git grep -n -F 'Rove could not reach the AutosOnShow token service' -- '*.py'
+ROVE_AOS_DIAG
