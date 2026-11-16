@@ -1,22 +1,11 @@
-printf '\n--- Mac TLS ---\n'
-curl --silent --show-error --connect-timeout 10 --max-time 20 \
-  --output /dev/null --write-out 'Mac HTTP %{http_code}\n' \
-  https://br-api.aos.tv/token/
+--- Mac TLS ---
+Mac HTTP 403
 
-printf '\n--- Docker API TLS ---\n'
-docker compose --env-file .env.docker exec -T api python - <<'PY'
-import os
-import ssl
-
-import httpx
-
-print("Python CA paths:", ssl.get_default_verify_paths())
-for name in ("HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "SSL_CERT_FILE", "SSL_CERT_DIR"):
-    print(f"{name}: {'set' if os.getenv(name) else 'unset'}")
-
-try:
-    response = httpx.get("https://br-api.aos.tv/token/", timeout=15)
-    print(f"Docker HTTP {response.status_code}")
-except httpx.RequestError as exc:
-    print(f"{type(exc).__name__}: {exc}")
-PY
+--- Docker API TLS ---
+Python CA paths: DefaultVerifyPaths(cafile='/etc/ssl/certs/ca-certificates.crt', capath='/etc/ssl/certs', openssl_cafile_env='SSL_CERT_FILE', openssl_cafile='/etc/ssl/cert.pem', openssl_capath_env='SSL_CERT_DIR', openssl_capath='/etc/ssl/certs')
+HTTPS_PROXY: unset
+ALL_PROXY: unset
+NO_PROXY: unset
+SSL_CERT_FILE: set
+SSL_CERT_DIR: unset
+ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)
