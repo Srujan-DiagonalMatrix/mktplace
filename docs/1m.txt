@@ -1,11 +1,55 @@
---- Mac TLS ---
-Mac HTTP 403
+bash <<'ROVE_AOS_CA_TEST'
+set +x
 
---- Docker API TLS ---
-Python CA paths: DefaultVerifyPaths(cafile='/etc/ssl/certs/ca-certificates.crt', capath='/etc/ssl/certs', openssl_cafile_env='SSL_CERT_FILE', openssl_cafile='/etc/ssl/cert.pem', openssl_capath_env='SSL_CERT_DIR', openssl_capath='/etc/ssl/certs')
-HTTPS_PROXY: unset
-ALL_PROXY: unset
-NO_PROXY: unset
-SSL_CERT_FILE: set
-SSL_CERT_DIR: unset
-ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)
+aos_ca_file="${CORPORATE_CA_FILE:-server/certs/company-ca-bundle.pem}"
+if [ ! -r "$aos_ca_file" ] || [ ! -s "$aos_ca_file" ]; then
+  printf 'CA bundle missing or empty: %s\n' "$aos_ca_file" >&2
+  printf 'Set CORPORATE_CA_FILE to the approved LBG CA PEM and rerun.\n' >&2
+  exit 1
+fi
+
+printf 'AutosOnShow client secret for bcarove: ' > /dev/tty
+IFS= read -r -s aos_secret < /dev/tty || exit 1
+printf '\n' > /dev/tty
+[ -n "$aos_secret" ] || exit 1
+
+{
+  printf '%s\n' "$aos_secret"
+  cat "$aos_ca_file"
+} | docker compose --env-file .env.docker exec -T api python -c '
+import ssl
+import sys
+
+import httpx
+
+secret, _, ca_pem = sys.stdin.read().partition("\n")
+try:
+    context = ssl.create_default_context()
+    context.load_verify_locations(cadata=ca_pem)
+except (ssl.SSLError, ValueError) as exc:
+    sys.exit(f"Could not load CA bundle: {exc}")
+
+try:
+    response = httpx.post(
+        "https://br-api.aos.tv/token/",
+        data={
+            "grant_type": "client_credentials",
+            "client_id": "bcarove",
+            "client_secret": secret,
+        },
+        verify=context,
+        timeout=15,
+    )
+except httpx.RequestError as exc:
+    sys.exit(f"{type(exc).__name__}: {exc}")
+
+print(f"AutosOnShow HTTP {response.status_code}")
+if response.is_success:
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = {}
+    token_present = isinstance(payload, dict) and bool(payload.get("access_token"))
+    print("Access token returned:", "yes" if token_present else "no")
+'
+ROVE_AOS_CA_TEST
