@@ -1,8 +1,7 @@
-date -u '+%Y-%m-%dT%H:%M:%SZ'
-curl --silent --show-error --max-time 20 \
-  --request OPTIONS \
-  --dump-header - --output /dev/null \
-  --header 'Origin: https://rove-web-b6v6r2j77a-ew.a.run.app' \
-  --header 'Access-Control-Request-Method: GET' \
-  --header 'Access-Control-Request-Headers: authorization' \
-  'https://br-api.aos.tv/vehicles/BF73ATX'
+2026-11-17T11:51:50Z
+HTTP/2 403 
+cache-control: no-cache
+x-xss-protection: 1
+content-type: text/html; charset=utf-8
+content-length: 20751
+pragma: no-cache
