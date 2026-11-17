@@ -1,53 +1,8 @@
-Request URL
-https://br-api.aos.tv/vehicles/GX66YCR1
-Request method
-OPTIONS
-Status code
-403 Forbidden
-Remote address
-18.203.239.69:443
-Referrer policy
-strict-origin-when-cross-origin
-cache-control
-no-cache
-content-length
-20753
-content-type
-text/html; charset=utf-8
-pragma
-no-cache
-x-xss-protection
-1
-:authority
-br-api.aos.tv
-:method
-OPTIONS
-:path
-/vehicles/GX66YCR1
-:scheme
-https
-accept
-*/*
-accept-encoding
-gzip, deflate, br, zstd
-accept-language
-en-GB,en-US;q=0.9,en;q=0.8
-access-control-request-headers
-authorization
-access-control-request-method
-GET
-origin
-https://rove-web-b6v6r2j77a-ew.a.run.app
-priority
-u=1, i
-referer
-https://rove-web-b6v6r2j77a-ew.a.run.app/
-sec-fetch-dest
-empty
-sec-fetch-mode
-cors
-sec-fetch-site
-cross-site
-user-agent
-Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36
-  
+date -u '+%Y-%m-%dT%H:%M:%SZ'
+curl --silent --show-error --max-time 20 \
+  --request OPTIONS \
+  --dump-header - --output /dev/null \
+  --header 'Origin: https://rove-web-b6v6r2j77a-ew.a.run.app' \
+  --header 'Access-Control-Request-Method: GET' \
+  --header 'Access-Control-Request-Headers: authorization' \
+  'https://br-api.aos.tv/vehicles/BF73ATX'
