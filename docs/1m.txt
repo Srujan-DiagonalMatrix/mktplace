@@ -1,3 +1,45 @@
-https://br-api.aos.tv/token/
+bash <<'BCA_LBG_MAC'
+set +x
+set -euo pipefail
+umask 077
+command -v python3 >/dev/null || { echo 'Python 3 is required.'; exit 1; }
+work=$(mktemp -d "${TMPDIR:-/tmp}/bca-lbg-mac.XXXXXX")
+trap 'rm -f "$work/token.json"' EXIT
 
-p4vaij32tcszpshhi7g4m7voqlcfnuor
+printf 'AutosOnShow secret for bcarove: ' >/dev/tty
+IFS= read -rs secret </dev/tty
+printf '\n'
+[ -n "$secret" ] || { echo 'No secret entered.'; exit 1; }
+
+printf 'Environment: LBG MacBook\n'
+date -u '+UTC %Y-%m-%dT%H:%M:%SZ'
+status=$(printf '%s' "$secret" | curl -q -sS --max-time 20 \
+  -o "$work/token.json" -w '%{http_code}' \
+  --data-urlencode 'grant_type=client_credentials' \
+  --data-urlencode 'client_id=bcarove' \
+  --data-urlencode 'client_secret@-' \
+  'https://br-api.aos.tv/token/')
+unset secret
+printf 'Token HTTP %s\n' "$status"
+if [ "$status" != 200 ]; then
+  grep -io '<title>[^<]*</title>' "$work/token.json" | head -n 1 || true
+  exit 1
+fi
+
+token=$(python3 -c '
+import json, re, sys
+token = json.load(sys.stdin).get("access_token")
+if not isinstance(token, str) or not re.fullmatch(r"[A-Za-z0-9._~+/=-]+", token):
+    sys.exit("No usable access token in response.")
+print(token)
+' <"$work/token.json")
+
+printf 'Authorization: Bearer %s\n' "$token" | curl -q -sS --max-time 20 \
+  -H @- -H 'Accept: application/json' \
+  -o "$work/vehicle-response.txt" \
+  -w 'Vehicle GET HTTP %{http_code}\nContent type: %{content_type}\n' \
+  'https://br-api.aos.tv/vehicles/BF73ATX'
+unset token
+printf 'Vehicle response saved to %s\n' "$work/vehicle-response.txt"
+grep -io '<title>[^<]*</title>' "$work/vehicle-response.txt" | head -n 1 || true
+BCA_LBG_MAC
