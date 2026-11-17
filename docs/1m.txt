@@ -4,3 +4,17 @@ gcloud run services logs read rove-api \
   --freshness=15m \
   --limit=50 \
   --log-filter='("aos-token" OR "AutosOnShow" OR "ConnectError" OR "ConnectTimeout")'
+2026-11-17 11:20:15 GET 200 https://rove-api-b6v6r2j77a-ew.a.run.app/api/catalogue/aos-token
+2026-11-17 11:20:15 INFO:     169.254.169.126:42194 - "GET /api/catalogue/aos-token HTTP/1.1" 200 OK
+2026-11-17 11:20:28 GET 200 https://rove-api-b6v6r2j77a-ew.a.run.app/api/catalogue/aos-token
+2026-11-17 11:20:28 INFO:     169.254.169.126:45980 - "GET /api/catalogue/aos-token HTTP/1.1" 200 OK
+2026-11-17 11:20:31 GET 200 https://rove-api-b6v6r2j77a-ew.a.run.app/api/catalogue/aos-token
+2026-11-17 11:20:31 INFO:     169.254.169.126:61462 - "GET /api/catalogue/aos-token HTTP/1.1" 200 OK
+2026-11-17 11:20:33 GET 200 https://rove-api-b6v6r2j77a-ew.a.run.app/api/catalogue/aos-token
+2026-11-17 11:20:33 INFO:     169.254.169.126:61478 - "GET /api/catalogue/aos-token HTTP/1.1" 200 OK
+2026-11-17 11:20:34 GET 200 https://rove-api-b6v6r2j77a-ew.a.run.app/api/catalogue/aos-token
+2026-11-17 11:20:34 INFO:     169.254.169.126:61482 - "GET /api/catalogue/aos-token HTTP/1.1" 200 OK
+2026-11-17 11:20:39 GET 200 https://rove-api-b6v6r2j77a-ew.a.run.app/api/catalogue/aos-token
+2026-11-17 11:20:39 INFO:     169.254.169.126:61516 - "GET /api/catalogue/aos-token HTTP/1.1" 200 OK
+2026-11-17 11:20:46 GET 200 https://rove-api-b6v6r2j77a-ew.a.run.app/api/catalogue/aos-token
+2026-11-17 11:20:46 INFO:     169.254.169.126:35600 - "GET /api/catalogue/aos-token HTTP/1.1" 200 OK
