@@ -1,1 +1,7 @@
-brew install --cask postman && open -a Postman
+You have 11 outdated formulae and 2 outdated casks installed.
+
+==> Fetching downloads for: postman
+✘ Cask postman (12.37.1)
+Error: Download failed on Cask 'postman' with message: Download failed: https://dl.pstmn.io/download/version/12.37.1/osx_arm64
+curl: (56) The requested URL returned error: 403
+Error: postman: Download failed for postman.
