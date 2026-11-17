@@ -1,7 +1,26 @@
-New AutosOnShow secret for bcarove: 
-[+] up 1/1
- ✔ Container rove-api Started                                                                                                              0.7s
-Runtime CA: /run/rove-ca/ca-bundle.pem
-UTC: 2026-11-16T12:35:39+00:00
-Upstream HTTP: 403
-Content-Type: text/html; charset=utf-8
+Access to fetch at 'https://br-api.aos.tv/vehicles/BF73ATX' from origin 'https://rove-web-b6v6r2j77a-ew.a.run.app' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+br-api.aos.tv/vehicles/BF73ATX:1  Failed to load resource: net::ERR_FAILED
+index-BrQhakJN.js:16 [AOS] 360 media lookup Objectendpoint: "https://br-api.aos.tv/vehicles/{registration}"registration: "BF73ATX"status: "network_error"vehicleId: null[[Prototype]]: Object
+
+
+Rove could not reach the AutosOnShow token service. Check network access from the API container and retry.
+
+index-BrQhakJN.js:48 
+ GET http://localhost:8080/api/catalogue/aos-token 502 (Bad Gateway)
+f	@	index-BrQhakJN.js:48
+vd	@	index-BrQhakJN.js:15
+(anonymous)	@	index-BrQhakJN.js:15
+Qt	@	index-BrQhakJN.js:15
+Cd	@	index-BrQhakJN.js:15
+up	@	index-BrQhakJN.js:16
+cp	@	index-BrQhakJN.js:16
+
+index-BrQhakJN.js:48 
+ GET http://localhost:8080/api/catalogue/aos-token 502 (Bad Gateway)
+f	@	index-BrQhakJN.js:48
+vd	@	index-BrQhakJN.js:15
+(anonymous)	@	index-BrQhakJN.js:15
+Qt	@	index-BrQhakJN.js:15
+Cd	@	index-BrQhakJN.js:15
+up	@	index-BrQhakJN.js:16
+cp	@	index-BrQhakJN.js:16
