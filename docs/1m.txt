@@ -1,27 +1,29 @@
---- 1. Environment ---
-UTC: 2026-11-18T11:02:19Z
-Darwin arm64
-Docker version 29.4.3, build 055a478
-Docker Compose version v5.1.4
-main
-6ad2d764
-HTTPS_PROXY: unset
-HTTP_PROXY: unset
-ALL_PROXY: unset
-NO_PROXY: unset
-SSL_CERT_FILE: set (value hidden)
-REQUESTS_CA_BUNDLE: set (value hidden)
-PIP_CERT: unset
-PIP_INDEX_URL: unset
-PIP_EXTRA_INDEX_URL: unset
+bash <<'ROVE_READ_BUILD'
+diag_dir=$(ls -td "${TMPDIR:-/tmp}"/rove-build-diag.* 2>/dev/null | head -n 1)
 
---- 2. Mac access to package hosts ---
+if [ -z "$diag_dir" ] || [ ! -f "$diag_dir/build-private.log" ]; then
+  echo "Diagnostic build log not found."
+  exit 1
+fi
 
-Testing https://pypi.org/simple/pip/
-HTTP 200; remote IP 151.101.128.223; TLS verification result 0
+log_file="$diag_dir/build-private.log"
 
-Testing https://files.pythonhosted.org/
-HTTP 404; remote IP 151.101.0.223; TLS verification result 0
+redact() {
+  sed -E \
+    -e 's#(https?://)[^/@[:space:]]+:[^/@[:space:]]+@#\1[REDACTED]@#g' \
+    -e 's#([Aa]uthorization:).*#\1 [REDACTED]#g'
+}
 
---- 3. Full API build ---
-This can take several minutes. Build output follows.
+echo "--- Log size and last modification ---"
+stat -f 'Size: %z bytes; Last updated: %Sm' \
+  -t '%Y-%m-%d %H:%M:%S' "$log_file"
+
+echo
+echo "--- Latest 100 build lines ---"
+tail -n 100 "$log_file" | redact
+
+echo
+echo "--- Local build command processes ---"
+ps -axo pid,etime,comm |
+  awk 'NR == 1 || /docker|buildx|buildkit/'
+ROVE_READ_BUILD
