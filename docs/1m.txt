@@ -1,80 +1,11 @@
-Hi LBG Network Support,
-
-Could you help us investigate and resolve an outbound access issue with the BCA AutosOnShow API? Rove uses this integration to retrieve vehicle data for its 360° viewer. We’re approaching delivery in three days and would appreciate a priority review.
-
-**What we tested**
-
-On 17 November 2026, we ran the same two-step test from an Ubuntu machine outside the LBG network and from an LBG MacBook. Both tests used the `bcarove` client ID, the same AutosOnShow endpoint and the same test vehicle, `BF73ATX`. The script first requested an access token, then used it to fetch the vehicle if the token request succeeded.
-
-- **Ubuntu outside LBG at 13:42:54 UTC.** `POST https://br-api.aos.tv/token/` returned HTTP `200`. The subsequent authenticated `GET https://br-api.aos.tv/vehicles/BF73ATX` also returned HTTP `200` with a JSON response.
-- **LBG MacBook at 13:44:45 UTC.** The same token `POST` returned HTTP `403` with an HTML page titled **LBG: Access Denied**. The script stopped at that point, before making the vehicle `GET`.
-- **Browser preflight reproduced on the LBG MacBook at 11:57:02 UTC.** `OPTIONS https://br-api.aos.tv/vehicles/BF73ATX` returned HTTP `403` with an HTML response and no `Access-Control-Allow-Origin` header. The request specified the Rove origin `https://rove-web-b6v6r2j77a-ew.a.run.app`, requested method `GET`, and requested header `authorization`. Chrome also captured a `403` for that preflight and stopped before sending the authenticated vehicle request.
-
-The attached contains the timestamps, response headers and relevant Cloud Run log summary. Client secrets, access tokens and vehicle response bodies have been omitted.
-
-**What we need your help with**
-
-1. Please trace the MacBook’s token `POST` at **13:44:45 UTC** and identify the gateway or policy that returned **LBG: Access Denied**. Could you confirm the approved network route for `br-api.aos.tv` and apply or route any required policy change?
-2. Please trace the `OPTIONS` request at **11:57:02 UTC** separately and confirm whether LBG blocked it or forwarded it to AutosOnShow. If it was forwarded, any request reference or egress details you can share would help BCA trace it on their side.
-3. Please let us know when we can retest, or if you need the device identifier, source IP or any other details to locate the requests.
-
-Once we hear back, we’ll repeat the token and vehicle tests and verify that the 360° viewer opens from the deployed Rove site on the LBG MacBook.
-
-Thanks,  
-Kumar
-
-
-
-
-Rove / BCA AutosOnShow network diagnostics
-17 November 2026 | All times UTC
-Client ID: bcarove | Test vehicle: BF73ATX
-Client secrets, bearer tokens and vehicle payloads omitted.
-
-1. Ubuntu outside LBG — 13:42:54Z
-POST https://br-api.aos.tv/token/
-Token HTTP 200
-GET https://br-api.aos.tv/vehicles/BF73ATX
-Vehicle GET HTTP 200
-Content type: application/json; charset=utf-8
-
-2. LBG MacBook — 13:44:45Z
-POST https://br-api.aos.tv/token/
-Token HTTP 403
-<TITLE>LBG: Access Denied</TITLE>
-The script stopped at the token request. No vehicle GET was made.
-
-Both tests used grant_type=client_credentials with client ID and secret
-as URL-encoded form fields, followed on success by a bearer-authenticated GET.
-
-3. LBG MacBook — 11:57:02Z (curl preflight reproduction)
-OPTIONS https://br-api.aos.tv/vehicles/BF73ATX
-Origin: https://rove-web-b6v6r2j77a-ew.a.run.app
-Access-Control-Request-Method: GET
-Access-Control-Request-Headers: authorization
-
-HTTP/2 403
-cache-control: no-cache
-x-xss-protection: 1
-content-type: text/html; charset=utf-8
-content-length: 20751
-pragma: no-cache
-No Access-Control-Allow-Origin header observed.
-
-Chrome separately captured OPTIONS for the same URL, origin, method and
-header with HTTP 403, HTML content type and content length 20751.
-Chrome reported remote address 18.203.239.69:443. The response headers
-do not identify who generated the OPTIONS rejection. Chrome did not send
-the authenticated vehicle GET after the failed preflight.
-
-4. Cloud Run — 11:20:15Z–11:20:46Z
-rove-api, europe-west1, project tactical-innovation-f2b97b
-GET /api/catalogue/aos-token returned HTTP 200 on seven requests.
-These are Rove route statuses. A fresh upstream token exchange and an
-authenticated vehicle GET from the deployed runtime were not verified.
-
-Trace requested
-- Identify the gateway/policy that denied the MacBook token POST.
-- Trace the OPTIONS request separately and confirm whether it was blocked
-  within LBG or forwarded to the provider.
-- Confirm the approved network route and any required policy change.
+- add 3 more columns in Inventory: Our Price (gross), Our Price (net), VAT
+- add 6 columns (inventory):
+	Total Rental incl SMR (excl. VAT)
+	Total Rental incl SMR (inc. VAT)
+	Total Rental excl SMR (inc. VAT)
+	Total Rental excl SMR (excl. VAT)
+	Total payable excl SMR (excl. VAT)
+	Total payable excl SMR (inc. VAT)
+	Total VAT excl. SMR
+- remove last 2 columns in existing template. (inventory)
+- 'unlist' button, should not list.
