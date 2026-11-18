@@ -1,29 +1,75 @@
-bash <<'ROVE_READ_BUILD'
-diag_dir=$(ls -td "${TMPDIR:-/tmp}"/rove-build-diag.* 2>/dev/null | head -n 1)
+--- Log size and last modification ---
+Size: 2297 bytes; Last updated: 2026-11-18 11:02:21
 
-if [ -z "$diag_dir" ] || [ ! -f "$diag_dir/build-private.log" ]; then
-  echo "Diagnostic build log not found."
-  exit 1
-fi
+--- Latest 100 build lines ---
+ Image rove-api Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 524B done
+#1 DONE 0.0s
 
-log_file="$diag_dir/build-private.log"
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.40kB done
+#2 DONE 0.0s
 
-redact() {
-  sed -E \
-    -e 's#(https?://)[^/@[:space:]]+:[^/@[:space:]]+@#\1[REDACTED]@#g' \
-    -e 's#([Aa]uthorization:).*#\1 [REDACTED]#g'
-}
+#3 [internal] load metadata for docker.io/library/python:3.12-alpine
+#3 DONE 1.2s
 
-echo "--- Log size and last modification ---"
-stat -f 'Size: %z bytes; Last updated: %Sm' \
-  -t '%Y-%m-%d %H:%M:%S' "$log_file"
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
 
-echo
-echo "--- Latest 100 build lines ---"
-tail -n 100 "$log_file" | redact
+#5 [internal] load build context
+#5 transferring context: 3.31kB done
+#5 DONE 0.0s
 
-echo
-echo "--- Local build command processes ---"
-ps -axo pid,etime,comm |
-  awk 'NR == 1 || /docker|buildx|buildkit/'
-ROVE_READ_BUILD
+#6 [stage-0 1/9] FROM docker.io/library/python:3.12-alpine@sha256:c5ba3deef00c7758561a0f03c26f44f10589263d40e732b8748e0d1f38f6dd89
+#6 resolve docker.io/library/python:3.12-alpine@sha256:c5ba3deef00c7758561a0f03c26f44f10589263d40e732b8748e0d1f38f6dd89 done
+#6 DONE 0.0s
+
+#7 [stage-0 3/9] WORKDIR /app
+#7 CACHED
+
+#8 [stage-0 4/9] COPY requirements.txt .
+#8 CACHED
+
+#9 [stage-0 2/9] RUN --mount=type=secret,id=corporate_ca,required=false     if [ -s /run/secrets/corporate_ca ]; then       if [ -f /etc/ssl/certs/ca-certificates.crt ]; then         cat /run/secrets/corporate_ca >> /etc/ssl/certs/ca-certificates.crt;       else         mkdir -p /etc/ssl/certs && cp /run/secrets/corporate_ca /etc/ssl/certs/ca-certificates.crt;       fi;     fi
+#9 CACHED
+
+#10 [stage-0 5/9] RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.python.org -r requirements.txt
+#10 CACHED
+
+#11 [stage-0 6/9] COPY app ./app
+#11 DONE 0.0s
+
+#12 [stage-0 7/9] COPY scripts ./scripts
+#12 DONE 0.0s
+
+#13 [stage-0 8/9] COPY alembic ./alembic
+#13 DONE 0.0s
+
+#14 [stage-0 9/9] COPY alembic.ini ./alembic.ini
+#14 DONE 0.0s
+
+#15 exporting to image
+#15 exporting layers 0.1s done
+#15 exporting manifest sha256:a90c16bed82ac3cd109d443e738d531ce01eb9d156681b2ee29ce1d8cb8e9af8 done
+#15 exporting config sha256:5ae6decd45f839d706862b2b302a2ed73094f2646db2cf2a8ba8d2d9e97b3b72 done
+#15 exporting attestation manifest sha256:9fde105aa4521c6a7f4056b95712fc26b76acbd0d2d5dfdb7f4e912ba01dc3d4 done
+#15 exporting manifest list sha256:4facc8a16ccae119f5b56f7bc396e8b2076b51a5942819e0d807fafd4e6fbfd2 done
+#15 naming to docker.io/library/rove-api:latest done
+#15 unpacking to docker.io/library/rove-api:latest 0.0s done
+#15 DONE 0.1s
+
+#16 resolving provenance for metadata file
+#16 DONE 0.0s
+ Image rove-api Built 
+
+--- Local build command processes ---
+  PID     ELAPSED COMM
+  555 02-01:52:29 /Library/PrivilegedHelperTools/com.docker.vmnetd
+ 2337 02-01:52:15 /Applications/Docker.app/Contents/MacOS/com.docker.backend
+ 2622 02-01:52:13 /Applications/Docker.app/Contents/MacOS/com.docker.backend
+ 2642 02-01:52:13 /Applications/Docker.app/Contents/MacOS/com.docker.backend
+ 3938 02-01:51:58 /Applications/Docker.app/Contents/MacOS/com.docker.build
+ 3941 02-01:51:58 /Applications/Docker.app/Contents/MacOS/com.docker.virtualization
+ 3972 02-01:51:57 /Applications/Docker.app/Contents/Resources/cli-plugins/docker-sandbox
