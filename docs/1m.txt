@@ -1,3 +1,1 @@
-docker compose up -d --no-deps api &&
-docker compose ps api &&
-docker compose logs --tail=80 api
+Sync latest ROVE changes from personal repository
