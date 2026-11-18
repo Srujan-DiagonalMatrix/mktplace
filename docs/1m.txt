@@ -1,11 +1,32 @@
-- add 3 more columns in Inventory: Our Price (gross), Our Price (net), VAT
-- add 6 columns (inventory):
-	Total Rental incl SMR (excl. VAT)
-	Total Rental incl SMR (inc. VAT)
-	Total Rental excl SMR (inc. VAT)
-	Total Rental excl SMR (excl. VAT)
-	Total payable excl SMR (excl. VAT)
-	Total payable excl SMR (inc. VAT)
-	Total VAT excl. SMR
-- remove last 2 columns in existing template. (inventory)
-- 'unlist' button, should not list.
+[+] build 0/1
+ ⠙ Image rove-api Building                                                                                                                94.4s
+Dockerfile:27
+
+--------------------
+
+  25 |     
+
+  26 |     COPY requirements.txt .
+
+  27 | >>> RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.python.org -r requirements.txt
+
+  28 |     
+
+  29 |     COPY app ./app
+
+--------------------
+
+failed to solve: process "/bin/sh -c pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.python.org -r requirements.txt" did not complete successfully: exit code: 1
+
+
+
+View build details: docker-desktop://dashboard/build/default/default/3cmm6yd6ksfxoaic0x5tcnudz
+
+
+What's next:
+    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
+[+] up 4/4
+ ✔ Container rove-mailpit-1 Started                                                                                                        1.4s
+ ✔ Container rove-db        Healthy                                                                                                        6.9s
+ ✔ Container rove-api       Started                                                                                                        6.7s
+ ✔ Container rove-web       Started  
