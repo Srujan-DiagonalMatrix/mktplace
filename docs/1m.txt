@@ -23,6 +23,9 @@ Once we hear back, we’ll repeat the token and vehicle tests and verify that th
 Thanks,  
 Kumar
 
+
+
+
 Rove / BCA AutosOnShow network diagnostics
 17 November 2026 | All times UTC
 Client ID: bcarove | Test vehicle: BF73ATX
