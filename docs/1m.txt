@@ -1,131 +1,27 @@
-bash <<'ROVE_BUILD_DIAG'
-set -u
-set -o pipefail
-umask 077
+--- 1. Environment ---
+UTC: 2026-11-18T11:02:19Z
+Darwin arm64
+Docker version 29.4.3, build 055a478
+Docker Compose version v5.1.4
+main
+6ad2d764
+HTTPS_PROXY: unset
+HTTP_PROXY: unset
+ALL_PROXY: unset
+NO_PROXY: unset
+SSL_CERT_FILE: set (value hidden)
+REQUESTS_CA_BUNDLE: set (value hidden)
+PIP_CERT: unset
+PIP_INDEX_URL: unset
+PIP_EXTRA_INDEX_URL: unset
 
-diag_dir=$(mktemp -d "${TMPDIR:-/tmp}/rove-build-diag.XXXXXX")
-raw_log="$diag_dir/build-private.log"
-report="$diag_dir/report.txt"
+--- 2. Mac access to package hosts ---
 
-# Remove credentials commonly embedded in URLs before displaying logs.
-redact() {
-  sed -E \
-    -e 's#(https?://)[^/@[:space:]]+:[^/@[:space:]]+@#\1[REDACTED]@#g' \
-    -e 's#([Aa]uthorization:).*#\1 [REDACTED]#g' \
-    -e 's#([?&](token|key|password|secret)=)[^&[:space:]]+#\1[REDACTED]#g'
-}
+Testing https://pypi.org/simple/pip/
+HTTP 200; remote IP 151.101.128.223; TLS verification result 0
 
-{
-  printf '\n--- 1. Environment ---\n'
-  date -u '+UTC: %Y-%m-%dT%H:%M:%SZ'
-  uname -sm
-  docker --version
-  docker compose version
-  git branch --show-current 2>/dev/null || true
-  git rev-parse --short HEAD 2>/dev/null || true
+Testing https://files.pythonhosted.org/
+HTTP 404; remote IP 151.101.0.223; TLS verification result 0
 
-  for name in HTTPS_PROXY HTTP_PROXY ALL_PROXY NO_PROXY SSL_CERT_FILE REQUESTS_CA_BUNDLE PIP_CERT PIP_INDEX_URL PIP_EXTRA_INDEX_URL; do
-    if printenv "$name" >/dev/null 2>&1; then
-      printf '%s: set (value hidden)\n' "$name"
-    else
-      printf '%s: unset\n' "$name"
-    fi
-  done
-
-  printf '\n--- 2. Mac access to package hosts ---\n'
-  for url in \
-    https://pypi.org/simple/pip/ \
-    https://files.pythonhosted.org/
-  do
-    printf '\nTesting %s\n' "$url"
-    curl --silent --show-error \
-      --connect-timeout 10 --max-time 20 \
-      --output /dev/null \
-      --write-out 'HTTP %{http_code}; remote IP %{remote_ip}; TLS verification result %{ssl_verify_result}\n' \
-      "$url" 2>&1 | redact
-  done
-
-  printf '\n--- 3. Full API build ---\n'
-  printf 'This can take several minutes. Build output follows.\n\n'
-
-  docker compose --progress plain build api >"$raw_log" 2>&1 &
-  build_pid=$!
-  tail -n +1 -f "$raw_log" 2>/dev/null | redact &
-  tail_pid=$!
-
-  wait "$build_pid"
-  build_status=$?
-
-  # Stop only this diagnostic's background log reader.
-  kill "$tail_pid" 2>/dev/null || true
-  wait "$tail_pid" 2>/dev/null || true
-
-  printf '\nBuild exit code: %s\n' "$build_status"
-
-  printf '\n--- 4. Relevant build errors ---\n'
-  grep -nEi -B 3 -A 6 \
-    'ERROR:|403|407|certificate|SSL|Retrying|timed out|ConnectionError|ProxyError|Name or service not known|Temporary failure|No matching distribution|Could not find a version|ResolutionImpossible|subprocess-exited|Failed building wheel|fatal error|No space left|permission denied' \
-    "$raw_log" | tail -n 180 | redact || true
-
-  printf '\n--- 5. Last 80 build lines ---\n'
-  tail -n 80 "$raw_log" | redact
-
-  printf '\n--- 6. TLS and package-host access inside existing API image ---\n'
-  container_id=$(docker compose ps -a -q api 2>/dev/null | head -n 1)
-  image_id=""
-  if [ -n "$container_id" ]; then
-    image_id=$(docker inspect --format '{{.Image}}' "$container_id" 2>/dev/null || true)
-  fi
-
-  if [ -n "$image_id" ]; then
-    docker run --rm -i --network bridge \
-      --entrypoint python "$image_id" - <<'PY' 2>&1 | redact
-import os
-import platform
-import ssl
-import urllib.request
-import urllib.error
-
-print("Python:", platform.python_version())
-print("Container architecture:", platform.machine())
-print("Default CA paths:", ssl.get_default_verify_paths())
-
-for name in (
-    "HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY",
-    "SSL_CERT_FILE", "REQUESTS_CA_BUNDLE", "PIP_CERT",
-    "PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL",
-):
-    print(f"{name}: {'set (value hidden)' if os.getenv(name) else 'unset'}")
-
-for url in (
-    "https://pypi.org/simple/pip/",
-    "https://files.pythonhosted.org/",
-):
-    print("\nTesting:", url)
-    try:
-        with urllib.request.urlopen(url, timeout=15) as response:
-            print("HTTP:", response.status)
-            print("Content-Type:", response.headers.get("Content-Type"))
-    except urllib.error.HTTPError as error:
-        print("HTTP:", error.code)
-        print("Content-Type:", error.headers.get("Content-Type"))
-        body = error.read(65536).decode("utf-8", errors="replace")
-        if "LBG: Access Denied" in body:
-            print("Response contains: LBG: Access Denied")
-    except Exception as error:
-        print("Failure:", type(error).__name__, str(error))
-PY
-  else
-    printf 'No existing API container image found; skipped.\n'
-  fi
-
-  printf '\n--- 7. Current containers ---\n'
-  docker compose ps -a
-
-  printf '\n--- Finished ---\n'
-  printf 'Report: %s\n' "$report"
-  printf 'Private full build log: %s\n' "$raw_log"
-  printf 'The existing-image test is supplementary; the build log is authoritative.\n'
-} 2>&1 | tee "$report"
-
-ROVE_BUILD_DIAG
+--- 3. Full API build ---
+This can take several minutes. Build output follows.
