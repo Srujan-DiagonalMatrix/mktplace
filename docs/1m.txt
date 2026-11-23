@@ -1,1 +1,4 @@
-Sync latest ROVE changes from personal repository
+=== 3a. Reconcile legacy pricing breakdown migration ===
+Migration 028 already includes the legacy column guard.
+=== 4. Fresh API/backend and frontend images ===
+./deploy/deploy-rove-updates-gcp.sh: line 264: api_build_args[@]: unbound variable
