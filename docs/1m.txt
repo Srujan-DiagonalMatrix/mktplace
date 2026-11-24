@@ -1,15 +1,83 @@
-- **Customer data storage and access:** Customer and reservation information is stored in the application’s PostgreSQL database hosted on Google Cloud SQL. The application API reads and writes the information, and there is a single administrator account for accessing and managing records through the admin area.
+server/app/main.py
 
-- **Data retention:** Customer information is retained for as long as needed to manage the reservation. The administrator can manually delete records when they are no longer required.
+<<<<<<< feature/rove-sync-20261124-170551
+class DeleteCustomerApplicationsRequest(BaseModel):
+    application_ids: list[UUID] = Field(min_length=1, max_length=1000)
 
-- **Reservation API and administration:** When a customer submits a reservation, the user interface sends the details to the application API, which records them in the database. The administrator can download and share the information for follow-up or delete it when it is no longer needed.
 
-- **Reserved vehicle process:** Once reserved, the vehicle is labelled **“Reserved”** in the search results. The back-office team carries out the follow-up and makes the necessary arrangements with the customer.
+@app.post("/api/admin/submissions/delete", dependencies=[Depends(require_admin)])
+def delete_customer_applications(payload: DeleteCustomerApplicationsRequest, db: Session = Depends(get_db)):
+    ids = set(payload.application_ids)
+    applications = db.scalars(
+        select(Application).join(ApplicationSubmission).where(Application.id.in_(ids))
+    ).all()
+    if len(applications) != len(ids):
+        raise HTTPException(404, "One or more customer applications no longer exist. Refresh and try again.")
+    for application in applications:
+        db.delete(application)
+    db.commit()
+    return {"deleted": len(applications)}
 
-- **Managing reservations:** The administrator decides whether a vehicle should remain reserved, be released for sale or be unlisted once it has been sold.
 
-- **Customer journey:** Customers can browse and select vehicles without signing in. Once an order is submitted, they can download a PDF copy containing the details.
+=======
+>>>>>>> main_stage
 
-- **Customer data in scope:** The personal and business contact details collected are first name, last name, business name, email address and telephone number. No other customer details are stored or shared. The administrator can manually delete these details when they are no longer required.
+<<<<<<< feature/rove-sync-20261124-170551
 
-- **Data owner:** Nicko Williams is the designated data owner. His agreement to the penetration-testing scope and handling of the data should be confirmed before testing begins.
+=======
+>>>>>>> main_stage
+
+
+src/components/AdminDashboard.jsx
+<<<<<<< feature/rove-sync-20261124-170551
+  const [selectedApplications, setSelectedApplications] = useState([]);
+  const [deletingApplications, setDeletingApplications] = useState(false);
+=======
+>>>>>>> main_stage
+
+
+<<<<<<< feature/rove-sync-20261124-170551
+  const visibleSelectedApplications = filteredRecords.filter(record => selectedApplications.includes(record.application_id));
+  const deleteSelectedApplications = async () => {
+    const ids = visibleSelectedApplications.map(record => record.application_id);
+    if (!ids.length || deletingApplications || !window.confirm(`Delete ${ids.length} selected customer application(s), including their journey details and reservations? This cannot be undone.`)) return;
+    setDeletingApplications(true); setError('');
+    try {
+      const response = await fetch(`${API}/api/admin/submissions/delete`, {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ application_ids: ids }),
+      });
+      if (response.status === 401) { setAuthenticated(false); throw new Error('Your admin session expired. Please sign in again.'); }
+      if (!response.ok) throw new Error('Unable to delete customer applications.');
+      setRecords(current => current.filter(record => !ids.includes(record.application_id)));
+      setSelectedApplications(current => current.filter(id => !ids.includes(id)));
+      setSelected(current => current && ids.includes(current.application_id) ? null : current);
+      await loadRecords();
+    } catch (failure) { setError(failure.message); }
+    finally { setDeletingApplications(false); }
+  };
+
+=======
+>>>>>>> main_stage
+
+<<<<<<< feature/rove-sync-20261124-170551
+    <section className="admin-panel admin-applications admin-data-panel"><div className="admin-applications-heading admin-data-heading"><div><h2>Customer applications</h2><p>Review customer details and reservation preferences</p></div><div className="admin-applications-heading-actions admin-data-actions"><span>Summary of {filteredRecords.length} displayed applications</span><button type="button" className="admin-data-delete" disabled={loading || deletingApplications || !visibleSelectedApplications.length} onClick={deleteSelectedApplications}>{deletingApplications ? 'Deleting…' : 'Delete selected'}</button><button type="button" disabled={loading || !filteredRecords.length} onClick={() => downloadApplicationDetails(filteredRecords)}>Download application details</button><button type="button" onClick={() => loadRecords(recordsQuery.current, { silent: true })} disabled={loading}>Refresh</button></div></div>
+=======
+    <section className="admin-panel admin-applications admin-data-panel"><div className="admin-applications-heading admin-data-heading"><div><h2>Customer applications</h2><p>Review customer details and reservation preferences</p></div><div className="admin-applications-heading-actions admin-data-actions"><span>Summary of {filteredRecords.length} displayed applications</span><button type="button" disabled={loading || !filteredRecords.length} onClick={() => downloadApplicationDetails(filteredRecords)}>Download application details</button><button type="button" onClick={() => loadRecords(recordsQuery.current, { silent: true })} disabled={loading}>Refresh</button></div></div>
+>>>>>>> main_stage
+
+<<<<<<< feature/rove-sync-20261124-170551
+          <thead><tr><th scope="col"><input type="checkbox" aria-label="Select all displayed applications" disabled={deletingApplications} checked={filteredRecords.length > 0 && visibleSelectedApplications.length === filteredRecords.length} onChange={event => setSelectedApplications(event.target.checked ? filteredRecords.map(record => record.application_id) : [])} /></th>{applicationColumns.map(([key, label]) => <th key={key} scope="col">{label}</th>)}<th scope="col" aria-label="Actions"></th></tr></thead>
+          <tbody>{filteredRecords.map(record => (
+            <tr key={record.application_id}>
+              <td><input type="checkbox" aria-label={`Select application ${record.application_id}`} disabled={deletingApplications} checked={selectedApplications.includes(record.application_id)} onChange={() => setSelectedApplications(current => current.includes(record.application_id) ? current.filter(id => id !== record.application_id) : [...current, record.application_id])} /></td>
+=======
+          <thead><tr>{applicationColumns.map(([key, label]) => <th key={key} scope="col">{label}</th>)}<th scope="col" aria-label="Actions"></th></tr></thead>
+          <tbody>{filteredRecords.map(record => (
+            <tr key={record.application_id}>
+>>>>>>> main_stage
+
+<<<<<<< feature/rove-sync-20261124-170551
+
+=======
+>>>>>>> main_stage
