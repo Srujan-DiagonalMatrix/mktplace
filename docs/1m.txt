@@ -1,4 +1,15 @@
-=== 3a. Reconcile legacy pricing breakdown migration ===
-Migration 028 already includes the legacy column guard.
-=== 4. Fresh API/backend and frontend images ===
-./deploy/deploy-rove-updates-gcp.sh: line 264: api_build_args[@]: unbound variable
+- **Customer data storage and access:** Customer and reservation information is stored in the application’s PostgreSQL database hosted on Google Cloud SQL. The application API reads and writes the information, and there is a single administrator account for accessing and managing records through the admin area.
+
+- **Data retention:** Customer information is retained for as long as needed to manage the reservation. The administrator can manually delete records when they are no longer required.
+
+- **Reservation API and administration:** When a customer submits a reservation, the user interface sends the details to the application API, which records them in the database. The administrator can download and share the information for follow-up or delete it when it is no longer needed.
+
+- **Reserved vehicle process:** Once reserved, the vehicle is labelled **“Reserved”** in the search results. The back-office team carries out the follow-up and makes the necessary arrangements with the customer.
+
+- **Managing reservations:** The administrator decides whether a vehicle should remain reserved, be released for sale or be unlisted once it has been sold.
+
+- **Customer journey:** Customers can browse and select vehicles without signing in. Once an order is submitted, they can download a PDF copy containing the details.
+
+- **Customer data in scope:** The personal and business contact details collected are first name, last name, business name, email address and telephone number. No other customer details are stored or shared. The administrator can manually delete these details when they are no longer required.
+
+- **Data owner:** Nicko Williams is the designated data owner. His agreement to the penetration-testing scope and handling of the data should be confirmed before testing begins.
