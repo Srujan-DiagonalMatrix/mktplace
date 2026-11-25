@@ -1,33 +1,31 @@
-(
-PERSONAL=$(git rev-parse feature/lbg-import-20261125-121635)
-LBG=$(git -C "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.Zs00E2gw/worktree" rev-parse MERGE_HEAD)
-
-echo "=== REPOSITORY STATUS ==="
-git status --short --branch
-git rev-parse --is-shallow-repository
-git worktree list
-
-echo "=== SOURCE COMMITS ==="
-git show -s --format='%h %s' "$PERSONAL" "$LBG"
-
-echo "=== COMMON ANCESTOR ==="
-git merge-base "$PERSONAL" "$LBG" ||
-  echo "NO COMMON ANCESTOR FOUND"
-
-echo "=== HISTORY ROOTS ==="
-git rev-list --max-parents=0 "$PERSONAL"
-git rev-list --max-parents=0 "$LBG"
-
-echo "=== CONFLICTED FILES ==="
-git -C "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.Zs00E2gw/worktree" \
-  diff --name-only --diff-filter=U
-
-echo "=== FILE DIFFERENCES ==="
-git diff --stat "$PERSONAL" "$LBG" -- \
-  deploy/lbg-pull.sh \
-  deploy/lbg-push.sh \
-  server/app/main.py \
-  src/components/AdminDashboard.jsx \
-  src/components/FullVehicleDetails.jsx \
-  src/components/VehicleResults.jsx
-) 2>&1 | tee "$HOME/Desktop/rove-git-diagnostics.txt"
+=== REPOSITORY STATUS ===
+## main...origin/main
+false
+/Users/srujan.kumar/Documents/git/rove                                               22d68c87 [main]
+/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.f9vnGcHl/worktree c8a84f2a [feature/rove-sync-20261125-092422]
+/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.FnEt4rfb/worktree c8a84f2a [feature/rove-sync-20261125-120745]
+/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.XqNoFKiY/worktree c8a84f2a [feature/rove-sync-20261125-121341]
+/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.Zs00E2gw/worktree 22d68c87 [feature/lbg-import-20261125-121635]
+=== SOURCE COMMITS ===
+22d68c87 Merge pull request #98 from Srujan-DiagonalMatrix/vehicle
+c8a84f2a more fixes on navigation and summary page
+=== COMMON ANCESTOR ===
+NO COMMON ANCESTOR FOUND
+=== HISTORY ROOTS ===
+166061afecd9426087ed3efa1919894009136d64
+6b3f90d3a6bd48dd0ecb7f590bc0eed41bb02893
+=== CONFLICTED FILES ===
+deploy/lbg-pull.sh
+deploy/lbg-push.sh
+server/app/main.py
+src/components/AdminDashboard.jsx
+src/components/FullVehicleDetails.jsx
+src/components/VehicleResults.jsx
+=== FILE DIFFERENCES ===
+ deploy/lbg-pull.sh                    | 73 ++++++++++++++++++++++++++--
+ deploy/lbg-push.sh                    | 89 ++++++++++++++++++++++++++++++++---
+ server/app/main.py                    | 19 --------
+ src/components/AdminDashboard.jsx     | 27 +----------
+ src/components/FullVehicleDetails.jsx | 77 ++++++++++++++++++------------
+ src/components/VehicleResults.jsx     | 43 +++++++++--------
+ 6 files changed, 223 insertions(+), 105 deletions(-)
