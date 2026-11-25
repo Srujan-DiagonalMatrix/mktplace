@@ -1,63 +1,27 @@
-./deploy/lbg-push.sh         
-From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
- * branch              main_stage -> FETCH_HEAD
-From github.com:Srujan-DiagonalMatrix/rove
- * branch              main       -> FETCH_HEAD
-Preparing worktree (new branch 'feature/rove-sync-20261125-123331')
-HEAD is now at c8a84f2a more fixes on navigation and summary page
-Automatic merge went well; stopped before committing as requested
-[feature/rove-sync-20261125-123331 20b0e821] Merge push main (99885ed9502dd7bcd693a5a46845159312b148b8); preserve both histories
-Enumerating objects: 12990, done.
-Counting objects: 100% (12990/12990), done.
-Delta compression using up to 15 threads
-Compressing objects: 100% (6071/6071), done.
-Writing objects: 100% (12820/12820), 53.59 MiB | 9.31 MiB/s, done.
-Total 12820 (delta 6966), reused 12417 (delta 6589), pack-reused 0 (from 0)
-remote: Resolving deltas: 100% (6966/6966), completed with 144 local objects.
-remote: warning: See https://gh.io/lfs for more information.
-remote: warning: File docs/Specs/HowItWorks/Specs/3.Hero/Hero.doc is 59.44 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB
-remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.
-remote: error: GH013: Repository rule violations found for refs/heads/feature/rove-sync-20261125-123331.
-remote: Review all repository rules at https://github.com/lbg-cloud-platform/tactical-innovation-f2b97b/rules?ref=refs%2Fheads%2Ffeature%2Frove-sync-20261125-123331
-remote: 
-remote: - GITHUB PUSH PROTECTION
-remote:   —————————————————————————————————————————
-remote:     Resolve the following violations before pushing again
-remote: 
-remote:     - File path is restricted
-remote:       Found 5 violations:
-remote:     
-remote:       .github/checkov-config.yml
-remote:       .github/workflows/core-actions-manager.yml
-remote:       .github/workflows/core-checkov-action.yml
-remote:       .github/workflows/core-linter.yml
-remote:       .github/workflows/core-semantic-pr.yml
-remote: 
-remote:     (?) To push, resolve push protection violations or follow this URL to request push protection bypass.
-remote:     https://github.com/lbg-cloud-platform/tactical-innovation-f2b97b/exemptions/new/cHVzaF9ydWxlc2V0X2J5cGFzcy01MzYxMzIwNTI3LTEzMDI1NzY4ODc=
-remote: 
-To github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
- ! [remote rejected]   HEAD -> feature/rove-sync-20261125-123331 (error: GH013: Repository rule violations found for refs/heads/feature/rove-sync-20261125-123331.
-Review all repository rules at https://github.com/lbg-cloud-platform/tactical-innovation-f2b97b/rules?ref=refs%2Fheads%2Ffeature%2Frove-sync-20261125-123331
+(
+set -e
 
-- GITHUB PUSH PROTECTION
-  —————————————————————————————————————————
-    Resolve the following violations before pushing again
+cd "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.Tgwvxr2T/worktree"
 
-    - File path is restricted
-      Found 5 violations:
-    
-      .github/checkov-config.yml
-      .github/workflows/core-actions-manager.yml
-      .github/workflows/core-checkov-action.yml
-      .github/workflows/core-linter.yml
-      .github/workflows/core-semantic-pr.yml
+BANK_URL="git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git"
 
-    (?) To push, resolve push protection violations or follow this URL to request push protection bypass.
-    https://github.com/lbg-cloud-platform/tactical-innovation-f2b97b/exemptions/new/cHVzaF9ydWxlc2V0X2J5cGFzcy01MzYxMzIwNTI3LTEzMDI1NzY4ODc=
+git fetch "$BANK_URL" main_stage
+BANK_COMMIT=$(git rev-parse FETCH_HEAD)
 
+# Stop if colleagues updated main_stage since this merge.
+test "$BANK_COMMIT" = "c8a84f2a4133c424fd40f08c39fcdd35ec298b73"
+
+# Confirm LBG-owned workflows are unchanged.
+git diff --exit-code "$BANK_COMMIT" HEAD -- .github
+
+NEW_BRANCH="feature/rove-sync-clean-$(date +%Y%m%d-%H%M%S)"
+
+CLEAN_COMMIT=$(git commit-tree HEAD^{tree} \
+  -p "$BANK_COMMIT" \
+  -m "Sync reconciled ROVE application changes")
+
+git switch -c "$NEW_BRANCH" "$CLEAN_COMMIT"
+git push "$BANK_URL" "HEAD:refs/heads/$NEW_BRANCH"
+
+echo "Create PR: $NEW_BRANCH -> main_stage"
 )
-error: failed to push some refs to 'github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git'
-
-Sync worktree retained: /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.Tgwvxr2T/worktree
-Branch: feature/rove-sync-20261125-123331
