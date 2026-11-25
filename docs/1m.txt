@@ -1,1 +1,7 @@
-code "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.f9vnGcHl/worktree"
+cd "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.f9vnGcHl/worktree"
+
+code deploy/lbg-pull.sh deploy/lbg-push.sh server/app/main.py src/components/AdminDashboard.jsx
+
+
+cp server/app/main.py ~/Desktop/main-conflict.txt
+cp src/components/AdminDashboard.jsx ~/Desktop/AdminDashboard-conflict.txt
