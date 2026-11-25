@@ -1,1 +1,63 @@
-setopt interactivecomments
+./deploy/lbg-push.sh 
+From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
+ * branch              main_stage -> FETCH_HEAD
+From github.com:Srujan-DiagonalMatrix/rove
+ * branch              main       -> FETCH_HEAD
+Preparing worktree (new branch 'feature/rove-sync-20261125-151932')
+HEAD is now at e4dfb469 Merge pull request #11 from lbg-cloud-platform/feature/rove-sync-clean-20261125-124000
+Automatic merge went well; stopped before committing as requested
+[feature/rove-sync-20261125-151932 3b5db1c1] Merge push main (34ae2e8832bf20c02ac97422b5184fff64a499ad); preserve both histories
+Enumerating objects: 13156, done.
+Counting objects: 100% (13000/13000), done.
+Delta compression using up to 15 threads
+Compressing objects: 100% (6068/6068), done.
+Writing objects: 100% (12813/12813), 52.33 MiB | 7.16 MiB/s, done.
+Total 12813 (delta 6966), reused 12407 (delta 6585), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (6966/6966), completed with 156 local objects.
+remote: warning: See https://gh.io/lfs for more information.
+remote: warning: File docs/Specs/HowItWorks/Specs/3.Hero/Hero.doc is 59.44 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.
+remote: error: GH013: Repository rule violations found for refs/heads/feature/rove-sync-20261125-151932.
+remote: Review all repository rules at https://github.com/lbg-cloud-platform/tactical-innovation-f2b97b/rules?ref=refs%2Fheads%2Ffeature%2Frove-sync-20261125-151932
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - File path is restricted
+remote:       Found 5 violations:
+remote:     
+remote:       .github/checkov-config.yml
+remote:       .github/workflows/core-actions-manager.yml
+remote:       .github/workflows/core-checkov-action.yml
+remote:       .github/workflows/core-linter.yml
+remote:       .github/workflows/core-semantic-pr.yml
+remote: 
+remote:     (?) To push, resolve push protection violations or follow this URL to request push protection bypass.
+remote:     https://github.com/lbg-cloud-platform/tactical-innovation-f2b97b/exemptions/new/cHVzaF9ydWxlc2V0X2J5cGFzcy01MzY1MTkxODk5LTEzMDI1NzY4ODc=
+remote: 
+To github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git
+ ! [remote rejected]   HEAD -> feature/rove-sync-20261125-151932 (error: GH013: Repository rule violations found for refs/heads/feature/rove-sync-20261125-151932.
+Review all repository rules at https://github.com/lbg-cloud-platform/tactical-innovation-f2b97b/rules?ref=refs%2Fheads%2Ffeature%2Frove-sync-20261125-151932
+
+- GITHUB PUSH PROTECTION
+  —————————————————————————————————————————
+    Resolve the following violations before pushing again
+
+    - File path is restricted
+      Found 5 violations:
+    
+      .github/checkov-config.yml
+      .github/workflows/core-actions-manager.yml
+      .github/workflows/core-checkov-action.yml
+      .github/workflows/core-linter.yml
+      .github/workflows/core-semantic-pr.yml
+
+    (?) To push, resolve push protection violations or follow this URL to request push protection bypass.
+    https://github.com/lbg-cloud-platform/tactical-innovation-f2b97b/exemptions/new/cHVzaF9ydWxlc2V0X2J5cGFzcy01MzY1MTkxODk5LTEzMDI1NzY4ODc=
+
+)
+error: failed to push some refs to 'github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git'
+
+Sync worktree retained: /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.jgRtKOCC/worktree
+Branch: feature/rove-sync-20261125-151932
