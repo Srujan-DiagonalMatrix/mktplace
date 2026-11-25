@@ -1,35 +1,38 @@
-./deploy/lbg-push.sh 
-From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
- * branch              main_stage -> FETCH_HEAD
-From github.com:Srujan-DiagonalMatrix/rove
- * branch              main       -> FETCH_HEAD
-Preparing worktree (new branch 'feature/rove-sync-20261125-152949')
-HEAD is now at e4dfb469 Merge pull request #11 from lbg-cloud-platform/feature/rove-sync-clean-20261125-124000
-Auto-merging deploy/LBG_SYNC.md
-CONFLICT (add/add): Merge conflict in deploy/LBG_SYNC.md
-Auto-merging deploy/lbg-push.sh
-CONFLICT (content): Merge conflict in deploy/lbg-push.sh
-Auto-merging deploy/lbg-sync.sh
-CONFLICT (add/add): Merge conflict in deploy/lbg-sync.sh
-Auto-merging tests/test_lbg_sync.py
-CONFLICT (add/add): Merge conflict in tests/test_lbg_sync.py
-Automatic merge failed; fix conflicts and then commit the result.
-Conflicting changes require review. Nothing has been pushed.
-deploy/LBG_SYNC.md
-deploy/lbg-push.sh
-deploy/lbg-sync.sh
-tests/test_lbg_sync.py
-Resolve the files in /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.k65FhUli/worktree, then run:
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.k65FhUli/worktree add <resolved-files>
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.k65FhUli/worktree commit
-Before pushing, export a clean LBG-only commit (after committing the resolution):
-  cd /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.k65FhUli/worktree
-  git diff --exit-code e4dfb469437f22fbba88c2436a4c0820a756d9a8 HEAD -- .github &&
-  git update-ref refs/rove-sync-local/feature/rove-sync-20261125-152949 HEAD &&
-  CLEAN_COMMIT=$(git commit-tree "HEAD^{tree}" -p e4dfb469437f22fbba88c2436a4c0820a756d9a8 -m "Sync reconciled ROVE application") &&
-  git reset --soft "$CLEAN_COMMIT" &&
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.k65FhUli/worktree push --force-with-lease=refs/heads/feature/rove-sync-20261125-152949: git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git HEAD:refs/heads/feature/rove-sync-20261125-152949
-Create PR: feature/rove-sync-20261125-152949 -> main_stage
+bash <<'BASH'
+set -e
 
-Sync worktree retained: /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.k65FhUli/worktree
-Branch: feature/rove-sync-20261125-152949
+cd "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.k65FhUli/worktree"
+
+test "$(git branch --show-current)" = "feature/rove-sync-20261125-152949"
+git rev-parse --verify MERGE_HEAD >/dev/null
+
+git restore --source=MERGE_HEAD --staged --worktree -- \
+  deploy/LBG_SYNC.md \
+  deploy/lbg-push.sh \
+  deploy/lbg-sync.sh \
+  tests/test_lbg_sync.py
+
+test -z "$(git diff --name-only --diff-filter=U)"
+git diff --cached --check
+bash -n deploy/lbg-push.sh
+bash -n deploy/lbg-sync.sh
+python3 tests/test_lbg_sync.py
+
+git commit -m "Resolve sync tooling conflicts"
+
+BANK_COMMIT="e4dfb469437f22fbba88c2436a4c0820a756d9a8"
+git diff --exit-code "$BANK_COMMIT" HEAD -- .github
+
+git update-ref refs/rove-sync-local/feature/rove-sync-20261125-152949 HEAD
+
+CLEAN_COMMIT=$(git commit-tree "HEAD^{tree}" \
+  -p "$BANK_COMMIT" \
+  -m "Sync ROVE application and corrected sync tooling")
+
+git reset --soft "$CLEAN_COMMIT"
+
+git push \
+  --force-with-lease=refs/heads/feature/rove-sync-20261125-152949: \
+  git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git \
+  HEAD:refs/heads/feature/rove-sync-20261125-152949
+BASH
