@@ -1,7 +1,34 @@
-cd "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.f9vnGcHl/worktree"
+srujan.kumar@DEV-H59N27LXKY rove % ./deploy/lbg-push.sh
+From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
+ * branch              main_stage -> FETCH_HEAD
+From github.com:Srujan-DiagonalMatrix/rove
+ * branch              main       -> FETCH_HEAD
+Preparing worktree (new branch 'feature/rove-sync-20261125-120914')
+HEAD is now at c8a84f2a more fixes on navigation and summary page
+Auto-merging deploy/lbg-pull.sh
+CONFLICT (add/add): Merge conflict in deploy/lbg-pull.sh
+Auto-merging deploy/lbg-push.sh
+CONFLICT (add/add): Merge conflict in deploy/lbg-push.sh
+Auto-merging server/app/main.py
+CONFLICT (add/add): Merge conflict in server/app/main.py
+Auto-merging src/components/AdminDashboard.jsx
+CONFLICT (add/add): Merge conflict in src/components/AdminDashboard.jsx
+Auto-merging src/components/FullVehicleDetails.jsx
+CONFLICT (add/add): Merge conflict in src/components/FullVehicleDetails.jsx
+Auto-merging src/components/VehicleResults.jsx
+CONFLICT (add/add): Merge conflict in src/components/VehicleResults.jsx
+Automatic merge failed; fix conflicts and then commit the result.
+Conflicting changes require review. Nothing has been pushed.
+deploy/lbg-pull.sh
+deploy/lbg-push.sh
+server/app/main.py
+src/components/AdminDashboard.jsx
+src/components/FullVehicleDetails.jsx
+src/components/VehicleResults.jsx
+Resolve the files in /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.ER2l8PuQ/worktree, then run:
+  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.ER2l8PuQ/worktree add <resolved-files>
+  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.ER2l8PuQ/worktree commit
+  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.ER2l8PuQ/worktree push --force-with-lease=refs/heads/feature/rove-sync-20261125-120914: git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git HEAD:refs/heads/feature/rove-sync-20261125-120914
+Create PR: feature/rove-sync-20261125-120914 -> main_stage
 
-code deploy/lbg-pull.sh deploy/lbg-push.sh server/app/main.py src/components/AdminDashboard.jsx
-
-
-cp server/app/main.py ~/Desktop/main-conflict.txt
-cp src/components/AdminDashboard.jsx ~/Desktop/AdminDashboard-conflict.txt
+Sync worktree retained: /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.ER2l8PuQ/worktree
