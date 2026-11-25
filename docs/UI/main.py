@@ -1,0 +1,1140 @@
+import asyncio
+import csv
+import hashlib
+import hmac
+import io
+import logging
+import os
+import secrets
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
+from typing import Literal
+from uuid import UUID, uuid4
+
+from fastapi import BackgroundTasks, Cookie, Depends, FastAPI, HTTPException, Query, Request, Response
+from fastapi.encoders import jsonable_encoder
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy import select, text, func, or_, exists, delete, case
+from sqlalchemy.exc import IntegrityError
+<<<<<<< HEAD
+=======
+from pydantic import BaseModel, Field
+>>>>>>> 993d97bf571536b43a0512695af13d6e3863ac79
+from sqlalchemy.orm import Session
+
+from .email_service import send_reservation_email_safe
+from .credential_delivery import retry_pending_credentials
+from .database import get_db, SessionLocal
+from .models import (Application, ApplicationSubmission, ContractAgreement, ContractPurchaseFormula, Customer,
+                     FinanceSelection, ReservationOption, User, UsedContractHireRate, Vehicle, VehicleReservation)
+from .contract_purchase import DEFAULT_FORMULAS, DEFAULT_SETTINGS, SETTING_KEYS, calculate_contract_purchase
+from .routers.applications import _session_user, get_journey_service, router as applications_router
+from .routers.auth import router as auth_router
+from .routers.catalogue import router as catalogue_router
+from .routers.orders import router as orders_router, accessible_application_ids
+from .schemas import (AdminLogin, SubmissionCreate, SubmissionResponse, SummaryStageResponse,
+                      UsedContractHireImportRow, UsedContractHireRateResponse, UsedContractHireListResponse,
+                      UsedContractHireDeleteRequest,
+                      VehicleAdminCreate, VehicleAdminListingRequest, VehicleAdminUpdateAvailability, VehicleAdminResponse, VehicleAdminListResponse, VehicleAdminSummaryResponse)
+from .services import JourneyServiceError
+
+@asynccontextmanager
+async def lifespan(app):
+    async def deliver_pending():
+        while True:
+            try:
+                await asyncio.to_thread(retry_pending_credentials, SessionLocal)
+            except Exception:
+                logging.getLogger(__name__).warning("Credential delivery retry deferred; check database and mail configuration")
+            await asyncio.sleep(60)
+    task = asyncio.create_task(deliver_pending())
+    try:
+        yield
+    finally:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
+app = FastAPI(
+    title="ROVE API",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+cors_origin = os.getenv("CORS_ORIGIN", "http://localhost:8080")
+admin_username = os.getenv("ADMIN_USERNAME", "")
+admin_password = os.getenv("ADMIN_PASSWORD", "")
+app_environment = os.getenv("APP_ENV", "development")
+admin_sessions: dict[str, datetime] = {}
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in cors_origin.split(",")],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(applications_router)
+app.include_router(auth_router)
+app.include_router(catalogue_router)
+app.include_router(orders_router)
+
+
+@app.exception_handler(JourneyServiceError)
+def handle_journey_service_error(_, error: JourneyServiceError):
+    return JSONResponse(
+        status_code=error.status_code,
+        content={"detail": str(error)},
+    )
+
+
+@app.get("/api/health")
+def health(db: Session = Depends(get_db)):
+    db.execute(text("SELECT 1"))
+    return {
+        "status": "ok",
+        "service": "rove-api",
+        "database": "connected",
+    }
+
+
+@app.post("/api/submissions", response_model=SubmissionResponse, status_code=201)
+def submit_application(payload: SubmissionCreate, response: Response, request: Request, background_tasks: BackgroundTasks, service=Depends(get_journey_service)):
+    db = service.session
+    # Serialize retries and enforce the same ownership checks as the journey API.
+    application = service.applications.get_for_update(payload.application_id)
+    if application is None:
+        raise HTTPException(status_code=404, detail="Application not found")
+    service.get_application(payload.application_id)
+    existing = db.scalar(select(ApplicationSubmission).where(ApplicationSubmission.application_id == payload.application_id))
+    if existing:
+        if existing.reservation_type != payload.reservation_type.value:
+            raise HTTPException(409, "This application already has an order. View it on My orders or start a new application.")
+        response.status_code = 200
+        return existing
+    option = db.scalar(select(ReservationOption).where(
+        ReservationOption.code == payload.reservation_type.value,
+        ReservationOption.is_active.is_(True),
+    ))
+    if option is None:
+        raise HTTPException(status_code=422, detail="Reservation option is unavailable")
+    snapshot = jsonable_encoder(SummaryStageResponse.model_validate(service.get_summary_stage(application.id)))
+    # Also serialize first-time guest orders before a Customer row exists.
+    lock_key = int.from_bytes(hashlib.sha256(payload.customer.contact_email.encode()).digest()[:8], 'big', signed=True)
+    db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_key})
+    customer = db.scalar(select(Customer).where(Customer.contact_email == payload.customer.contact_email))
+    user = _session_user(request, service)
+    # Serialize separate applications for one account/customer before checking
+    # active duplicates. The application lock above also serializes retries.
+    if user is not None:
+        db.scalar(select(User).where(User.id == user.id).with_for_update())
+    if customer is not None:
+        customer = db.scalar(select(Customer).where(Customer.id == customer.id).with_for_update())
+    owned_ids = accessible_application_ids(request, db)
+    duplicate = db.scalar(select(VehicleReservation)
+        .join(ApplicationSubmission, ApplicationSubmission.application_id == VehicleReservation.application_id)
+        .where(VehicleReservation.application_id.in_(owned_ids),
+            VehicleReservation.vehicle_id == application.finance_selection.vehicle_id,
+            VehicleReservation.status.in_(("pending", "confirmed")),
+            ApplicationSubmission.status.in_(("submitted", "processing")),
+            (VehicleReservation.expires_at.is_(None) | (VehicleReservation.expires_at > datetime.now(timezone.utc))))
+        .limit(1))
+    if duplicate:
+        raise HTTPException(409, "You already have an active order for this vehicle. View or cancel it on My orders before reserving it again.")
+    if user is not None and application.user_id is None:
+        application.user_id = user.id
+    values = payload.customer.model_dump()
+    if customer is None:
+        customer = Customer(**values)
+        db.add(customer)
+        db.flush()
+    else:
+        for field, value in values.items():
+            setattr(customer, field, value)
+    submission = ApplicationSubmission(
+        application_id=application.id,
+        customer_id=customer.id,
+        reservation_type=payload.reservation_type.value,
+        selection_snapshot=snapshot,
+    )
+    db.add(submission)
+    # The reservation service commits the contact details, snapshot, reservation,
+    # and application transition together only after validating the agreement.
+    reservation = service.create_vehicle_reservation(application.id, option.id)
+    db.refresh(submission)
+    admin_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "").strip()
+    if not admin_email:
+        logging.getLogger(__name__).info(
+            "Admin reservation notification skipped: ADMIN_NOTIFICATION_EMAIL not configured"
+        )
+    else:
+        # Materialize all ORM values while the request session is still available.
+        # Notification preparation must not turn a committed reservation into a 500.
+        try:
+            vehicle = db.get(Vehicle, reservation.vehicle_id)
+            reg_no = (vehicle.auction_metadata or {}).get("reg_no")
+            notification = {
+                "admin_email": admin_email,
+                "customer_name": customer.full_name,
+                "contact_email": customer.contact_email,
+                "phone_number": customer.phone_number,
+                "company_name": customer.company_name,
+                "role": customer.role,
+                "vehicle_name": snapshot.get("vehicle_name"),
+                "derivative": vehicle.derivative,
+                "model_year": vehicle.model_year,
+                "reg_no": str(reg_no) if reg_no is not None else None,
+                "stock_reference": vehicle.stock_reference,
+                "reservation_reference": reservation.reservation_reference,
+                "reservation_type": option.code,
+                "option_name": option.name,
+                "hold_duration_hours": option.hold_duration_hours,
+                "expires_at": reservation.expires_at.isoformat() if reservation.expires_at else None,
+                "finance_product_name": snapshot.get("finance_product_name"),
+                "term_months": snapshot.get("term_months"),
+                "annual_mileage": snapshot.get("annual_mileage"),
+                "currency": snapshot.get("currency"),
+                "upfront_payment": snapshot.get("upfront_payment"),
+                "monthly_payment": snapshot.get("monthly_payment"),
+                "total_payable": snapshot.get("total_payable"),
+            }
+            background_tasks.add_task(send_reservation_email_safe, notification)
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "Failed to prepare admin reservation notification"
+            )
+    return submission
+
+
+def require_admin(rove_admin_session: str | None = Cookie(default=None)) -> None:
+    expires = admin_sessions.get(rove_admin_session or "")
+    if not expires or expires <= datetime.now(timezone.utc):
+        if rove_admin_session:
+            admin_sessions.pop(rove_admin_session, None)
+        raise HTTPException(status_code=401, detail="Admin authentication required")
+
+
+@app.post("/api/admin/login")
+def admin_login(payload: AdminLogin, response: Response):
+    if not admin_username or not admin_password:
+        raise HTTPException(status_code=503, detail="Admin login is not configured")
+    valid = hmac.compare_digest(payload.username, admin_username) and hmac.compare_digest(payload.password, admin_password)
+    if not valid:
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
+    token = secrets.token_urlsafe(32)
+    admin_sessions[token] = datetime.now(timezone.utc) + timedelta(hours=8)
+    response.set_cookie("rove_admin_session", token, max_age=28800, httponly=True, samesite="strict", secure=app_environment == "production")
+    return {"authenticated": True}
+
+
+@app.post("/api/admin/logout", status_code=204)
+def admin_logout(response: Response, rove_admin_session: str | None = Cookie(default=None)):
+    if rove_admin_session:
+        admin_sessions.pop(rove_admin_session, None)
+    response.delete_cookie("rove_admin_session")
+
+
+def submission_row(submission: ApplicationSubmission) -> dict:
+    customer = submission.customer
+    return {
+        "customer_id": str(customer.id), "application_id": str(submission.application_id),
+        "full_name": customer.full_name, "role": customer.role,
+        "contact_email": customer.contact_email, "phone_number": customer.phone_number,
+        "company_name": customer.company_name, "reservation_type": submission.reservation_type,
+        "status": submission.status, "submitted_at": submission.submitted_at.isoformat(),
+        "selections": submission.selection_snapshot,
+    }
+
+
+@app.get("/api/admin/submissions", dependencies=[Depends(require_admin)])
+def admin_submissions(search: str = "", db: Session = Depends(get_db)):
+    now = datetime.now(timezone.utc)
+    has_active_reservation = exists(select(VehicleReservation.id).where(
+        VehicleReservation.application_id == ApplicationSubmission.application_id,
+        VehicleReservation.status.in_(("pending", "confirmed")),
+        or_(VehicleReservation.expires_at.is_(None), VehicleReservation.expires_at > now),
+    ))
+    submissions = db.execute(
+        select(ApplicationSubmission, has_active_reservation.label("has_active_reservation"))
+        .join(Customer)
+        .order_by(ApplicationSubmission.submitted_at.desc(), ApplicationSubmission.id.desc())
+    ).all()
+    rows = [
+        {**submission_row(item), "has_active_reservation": active}
+        for item, active in submissions
+    ]
+    needle = search.casefold().strip()
+    if needle:
+        keys = ("full_name", "contact_email", "company_name", "phone_number", "application_id")
+        rows = [row for row in rows if any(needle in row[key].casefold() for key in keys)]
+    return {"items": rows, "total": len(rows)}
+
+
+
+<<<<<<< HEAD
+=======
+class DeleteCustomerApplicationsRequest(BaseModel):
+    application_ids: list[UUID] = Field(min_length=1, max_length=1000)
+
+
+@app.post("/api/admin/submissions/delete", dependencies=[Depends(require_admin)])
+def delete_customer_applications(payload: DeleteCustomerApplicationsRequest, db: Session = Depends(get_db)):
+    ids = set(payload.application_ids)
+    applications = db.scalars(
+        select(Application).join(ApplicationSubmission).where(Application.id.in_(ids))
+    ).all()
+    if len(applications) != len(ids):
+        raise HTTPException(404, "One or more customer applications no longer exist. Refresh and try again.")
+    for application in applications:
+        db.delete(application)
+    db.commit()
+    return {"deleted": len(applications)}
+
+
+>>>>>>> 993d97bf571536b43a0512695af13d6e3863ac79
+def _contract_purchase_payload(db: Session):
+    rows = db.scalars(select(ContractPurchaseFormula)).all()
+    if not rows:
+        rows = [
+            ContractPurchaseFormula(
+                key=item["key"], label=item["label"], kind="setting",
+                value=item["value"], formula=None, is_editable=True,
+            )
+            for item in DEFAULT_SETTINGS
+        ] + [
+            ContractPurchaseFormula(
+                key=item["key"], label=item["label"], kind="formula",
+                value=None, formula=item["formula"], is_editable=False,
+            )
+            for item in DEFAULT_FORMULAS
+        ]
+        db.add_all(rows)
+        db.commit()
+        rows = db.scalars(select(ContractPurchaseFormula)).all()
+    by_key = {row.key: row for row in rows}
+    settings = {item["key"]: by_key[item["key"]].value for item in DEFAULT_SETTINGS}
+    formulas = {item["key"]: by_key[item["key"]].formula for item in DEFAULT_FORMULAS}
+    sample = calculate_contract_purchase(
+        {"D5": 24000, "D6": 2000, "D9": 60, "D18": 0},
+        formulas, settings,
+    )
+    return {
+        "settings": [
+            {**item, "value": settings[item["key"]]}
+            for item in DEFAULT_SETTINGS
+        ],
+        "calculated": [
+            {"key": item["key"], "label": item["label"], "formula": formulas[item["key"]]}
+            for item in DEFAULT_FORMULAS
+        ],
+        "sample": {key: str(value) for key, value in sample.items()},
+    }
+
+
+@app.get("/api/admin/contract-purchase/formulas", dependencies=[Depends(require_admin)])
+def get_contract_purchase_formulas(db: Session = Depends(get_db)):
+    return _contract_purchase_payload(db)
+
+
+@app.put("/api/admin/contract-purchase/formulas", dependencies=[Depends(require_admin)])
+def update_contract_purchase_formulas(payload: dict[str, str], db: Session = Depends(get_db)):
+    if set(payload) != SETTING_KEYS:
+        raise HTTPException(422, "Submit all editable Contract Purchase assumptions.")
+    parsed = {}
+    try:
+        for item in DEFAULT_SETTINGS:
+            value = Decimal(payload[item["key"]])
+            if not value.is_finite() or value < 0 or value > Decimal("1000000"):
+                raise ValueError(f"{item['label']} must be between 0 and 1,000,000.")
+            if item["input_type"] == "percent" and value > Decimal("1"):
+                raise ValueError(f"{item['label']} must be entered as a decimal percentage, e.g. 0.0466 for 4.66%.")
+            parsed[item["key"]] = value
+        formulas = {
+            row.key: row.formula
+            for row in db.scalars(select(ContractPurchaseFormula).where(ContractPurchaseFormula.kind == "formula")).all()
+        }
+        preview = calculate_contract_purchase(
+            {"D5": 24000, "D6": 2000, "D9": 60, "D18": 0},
+            formulas, {key: str(value) for key, value in parsed.items()},
+        )
+        if preview["D7"] < parsed["D8"]:
+            raise ValueError("End value / residual cannot exceed the funded value in the example calculation.")
+    except (ValueError, SyntaxError, ArithmeticError, KeyError) as error:
+        raise HTTPException(422, f"Invalid Contract Purchase assumption: {error}") from None
+    rows = {
+        row.key: row
+        for row in db.scalars(select(ContractPurchaseFormula).where(ContractPurchaseFormula.kind == "setting")).all()
+    }
+    for key, value in parsed.items():
+        rows[key].value = str(value)
+    db.commit()
+    return _contract_purchase_payload(db)
+
+
+def safe_csv(value) -> str:
+    text_value = "" if value is None else str(value)
+    return "'" + text_value if text_value.lstrip().startswith(("=", "+", "-", "@")) else text_value
+
+
+@app.get("/api/admin/submissions.csv", dependencies=[Depends(require_admin)])
+def export_submissions(db: Session = Depends(get_db)):
+    rows = [submission_row(item) for item in db.scalars(select(ApplicationSubmission).join(Customer).order_by(ApplicationSubmission.submitted_at.desc(), ApplicationSubmission.id.desc())).all()]
+    output = io.StringIO()
+    fields = ["customer_id", "application_id", "full_name", "role", "contact_email", "phone_number", "company_name", "reservation_type", "status", "submitted_at", "selections"]
+    writer = csv.DictWriter(output, fieldnames=fields)
+    writer.writeheader()
+    import json
+    for row in rows:
+        row["selections"] = json.dumps(row["selections"], ensure_ascii=False, sort_keys=True)
+        writer.writerow({key: safe_csv(value) for key, value in row.items()})
+    return Response(output.getvalue(), media_type="text/csv; charset=utf-8", headers={"Content-Disposition": "attachment; filename=rove-customer-applications.csv"})
+
+
+
+@app.get("/api/admin/vehicles/summary", response_model=VehicleAdminSummaryResponse, dependencies=[Depends(require_admin)])
+def admin_vehicle_summary(db: Session = Depends(get_db)):
+    counts = {
+        "total": (),
+        "active": (Vehicle.is_available.is_(True),),
+        "used": (Vehicle.condition == "used",),
+        "new": (Vehicle.condition == "new",),
+    }
+    summary = {key: db.scalar(select(func.count()).select_from(Vehicle).where(*filters)) for key, filters in counts.items()}
+    summary["reserved"] = db.scalar(select(func.count(func.distinct(VehicleReservation.vehicle_id))).where(
+        VehicleReservation.status.in_(("pending", "confirmed"))))
+    def breakdown(label):
+        return [{"label": name, "count": count} for name, count in
+                db.execute(select(label, func.count()).select_from(Vehicle).group_by(label).order_by(func.count().desc(), label)).all()]
+
+    def category(column):
+        return func.coalesce(func.nullif(func.lower(func.trim(column)), ""), "unknown")
+    summary["by_fuel"] = breakdown(category(Vehicle.fuel_type))
+    summary["by_vehicle_type"] = breakdown(category(Vehicle.vehicle_type))
+
+    has_reservation = exists(select(VehicleReservation.id).where(
+        VehicleReservation.vehicle_id == Vehicle.id,
+        VehicleReservation.status.in_(("pending", "confirmed")),
+    ))
+    year = datetime.now(timezone.utc).year
+    summary["chart_breakdowns"] = {
+        "status": breakdown(case(
+            (has_reservation, "Reserved"),
+            (Vehicle.is_available.is_(True), "Active"),
+            else_="Unavailable",
+        )),
+        "make": breakdown(category(Vehicle.manufacturer)),
+        "body_type": breakdown(category(Vehicle.vehicle_category)),
+        "model_year": breakdown(case(
+            (Vehicle.model_year >= year - 2, f"{year - 2} or newer"),
+            (Vehicle.model_year >= year - 5, f"{year - 5}–{year - 3}"),
+            else_=f"{year - 6} or older",
+        )),
+        "mileage": breakdown(case(
+            (Vehicle.mileage.is_(None), "Not recorded"),
+            (Vehicle.mileage < 20000, "Under 20,000 mi"),
+            (Vehicle.mileage < 50000, "20,000–49,999 mi"),
+            (Vehicle.mileage < 80000, "50,000–79,999 mi"),
+            else_="80,000+ mi",
+        )),
+        "price": breakdown(case(
+            (or_(Vehicle.list_price.is_(None), Vehicle.list_price <= 0), "Missing price"),
+            (Vehicle.currency != "GBP", "Other currencies"),
+            (Vehicle.list_price < 10000, "Under £10,000"),
+            (Vehicle.list_price < 20000, "£10,000–£19,999"),
+            (Vehicle.list_price < 30000, "£20,000–£29,999"),
+            else_="£30,000+",
+        )),
+    }
+    summary["missing_list_price"] = db.scalar(select(func.count()).select_from(Vehicle).where(
+        or_(Vehicle.list_price.is_(None), Vehicle.list_price <= 0)))
+    return summary
+
+
+@app.get("/api/admin/vehicles", response_model=VehicleAdminListResponse, dependencies=[Depends(require_admin)])
+def list_admin_vehicles(search: str | None = None, status: Literal["all", "active", "reserved"] = "all",
+                        limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0), db: Session = Depends(get_db),
+                        make: str | None = None, model: str | None = None, fuel_type: str | None = None,
+                        vehicle_type: Literal["car", "van"] | None = None,
+                        condition: Literal["new", "used"] | None = None,
+                        year_min: int | None = None, year_max: int | None = None,
+                        mileage_min: int | None = None, mileage_max: int | None = None,
+                        price_min: Decimal | None = None, price_max: Decimal | None = None):
+    filters = []
+    for column, value in ((Vehicle.manufacturer, make), (Vehicle.model, model), (Vehicle.fuel_type, fuel_type)):
+        if value and value.strip():
+            filters.append(func.lower(column).contains(value.strip().lower(), autoescape=True))
+    if vehicle_type:
+        filters.append(Vehicle.vehicle_type == vehicle_type)
+    if condition:
+        filters.append(Vehicle.condition == condition)
+    for column, minimum, maximum in (
+        (Vehicle.model_year, year_min, year_max),
+        (Vehicle.mileage, mileage_min, mileage_max),
+        (Vehicle.list_price, price_min, price_max),
+    ):
+        if minimum is not None and maximum is not None and minimum > maximum:
+            raise HTTPException(422, "Each minimum must be less than or equal to its maximum.")
+        if minimum is not None:
+            filters.append(column >= minimum)
+        if maximum is not None:
+            filters.append(column <= maximum)
+    if price_min is not None or price_max is not None:
+        filters.append(Vehicle.currency == "GBP")
+    active_reservation = exists(select(VehicleReservation.id).where(
+        VehicleReservation.vehicle_id == Vehicle.id,
+        VehicleReservation.status.in_(("pending", "confirmed"))))
+    if status == "active":
+        filters.extend((Vehicle.is_available.is_(True), ~active_reservation))
+    elif status == "reserved":
+        filters.append(active_reservation)
+    if search and search.strip():
+        term = search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        filters.append(or_(*(column.ilike(f"%{term}%", escape="\\") for column in (Vehicle.manufacturer, Vehicle.model, Vehicle.stock_reference, Vehicle.registration))))
+    total = db.scalar(select(func.count()).select_from(Vehicle).where(*filters))
+    items = db.scalars(select(Vehicle).where(*filters).order_by(Vehicle.created_at.desc(), Vehicle.id).limit(limit).offset(offset)).all()
+    reserved_since = dict(db.execute(
+        select(VehicleReservation.vehicle_id, func.min(VehicleReservation.reserved_at))
+        .where(
+            VehicleReservation.vehicle_id.in_([item.id for item in items]),
+            VehicleReservation.status.in_(("pending", "confirmed")),
+        )
+        .group_by(VehicleReservation.vehicle_id)
+    ).all()) if items else {}
+    for item in items:
+        item.is_reserved = item.id in reserved_since
+        item.reserved_at = reserved_since.get(item.id)
+    return {"items": items, "total": total, "limit": limit, "offset": offset}
+
+
+@app.get("/api/admin/vehicles/export.xlsx", dependencies=[Depends(require_admin)])
+def export_admin_vehicles(db: Session = Depends(get_db)):
+    from io import BytesIO
+    import json
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+    from fastapi.responses import Response
+
+    headers = [
+        "Car Registration", "Registration Date", "VIN", "CAP Code", "CAP ID",
+        "Make", "Model", "Derivative", "Mileage", "P11d Value", "Insurance Group",
+        "Notes", "Exterior Colour", "Interior Colour", "Extras", "Model Year",
+        "MOT Expiry", "Fuel Type", "CO2 Emissions", "Battery", "Emission Class",
+        "Doors", "Seats", "Body Type", "Engine Size", "Engine Power", "Battery KW",
+        "Top Speed (MPH)", "Fuel Economy Average (MPG)", "Road Tax (per year)",
+        "Safety Rating", "Screen Size", "Audio no. of speakers", "Boot Space (L)",
+        "Length", "Width", "Height", "Payload (kg)", "Previous Owners", "Last Service",
+        "Mileage at last service", "Our Price (gross)", "Our Price (net)", "VAT", "Stock Reference", "Vehicle Type", "Condition",
+        "Status", "Reserved Since", "Image URL", "Video URL", "Created At",
+    ]
+    vehicles = db.scalars(select(Vehicle).order_by(Vehicle.created_at.desc(), Vehicle.id)).all()
+    reserved_since = dict(db.execute(
+        select(VehicleReservation.vehicle_id, func.min(VehicleReservation.reserved_at))
+        .where(
+            VehicleReservation.vehicle_id.in_([vehicle.id for vehicle in vehicles]),
+            VehicleReservation.status.in_(("pending", "confirmed")),
+        )
+        .group_by(VehicleReservation.vehicle_id)
+    ).all()) if vehicles else {}
+
+    def metadata_value(metadata, header):
+        key = "reg_no" if header == "Car Registration" else (
+            "p11d_value" if header == "P11d Value" else
+            "".join(character.lower() if character.isalnum() else "_" for character in header).strip("_")
+        )
+        while "__" in key:
+            key = key.replace("__", "_")
+        return metadata.get(key)
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Inventory"
+    sheet.append(headers)
+    for cell in sheet[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="003A39")
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:{get_column_letter(len(headers))}{len(vehicles) + 1}"
+
+    core_headers = {
+        "Car Registration": lambda v: v.registration or v.stock_reference,
+        "Make": lambda v: v.manufacturer,
+        "Model": lambda v: v.model,
+        "Derivative": lambda v: v.derivative,
+        "Mileage": lambda v: v.mileage,
+        "P11d Value": lambda v: v.list_price,
+        "Model Year": lambda v: v.model_year,
+        "Fuel Type": lambda v: v.fuel_type,
+        "Doors": lambda v: v.door_count,
+        "Exterior Colour": lambda v: v.colour,
+        "Body Type": lambda v: v.vehicle_category,
+        "Our Price (gross)": lambda v: f"{v.our_price_gross:.2f}" if v.our_price_gross is not None else None,
+        "Our Price (net)": lambda v: f"{v.our_price_net:.2f}" if v.our_price_net is not None else None,
+        "VAT": lambda v: f"{v.vat:.2f}" if v.vat is not None else None,
+    }
+    template_headers = set(headers[:44])
+    for vehicle in vehicles:
+        metadata = vehicle.auction_metadata or {}
+        reserved_at = reserved_since.get(vehicle.id)
+        row = []
+        for header in headers:
+            if header in core_headers:
+                value = core_headers[header](vehicle)
+            elif header in template_headers:
+                value = metadata_value(metadata, header)
+            else:
+                value = {
+                    "Stock Reference": vehicle.stock_reference,
+                    "Vehicle Type": vehicle.vehicle_type,
+                    "Condition": vehicle.condition,
+                    "Status": "Reserved" if reserved_at else ("Active" if vehicle.is_available else "Unavailable"),
+                    "Reserved Since": reserved_at,
+                    "Image URL": vehicle.image_url,
+                    "Video URL": vehicle.video_url,
+                    "Created At": vehicle.created_at,
+                }.get(header)
+            if isinstance(value, (dict, list)):
+                value = json.dumps(value, ensure_ascii=False, sort_keys=True)
+            elif isinstance(value, datetime):
+                value = value.isoformat()
+            elif value is not None and not isinstance(value, (str, int, float, bool)):
+                value = str(value)
+            row.append(value)
+        sheet.append(row)
+
+    for column_cells in sheet.columns:
+        column_index = column_cells[0].column
+        header = str(column_cells[0].value or "")
+        sheet.column_dimensions[get_column_letter(column_index)].width = min(max(len(header) + 2, 14), 32)
+
+    output = BytesIO()
+    workbook.save(output)
+    return Response(
+        content=output.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="rove-inventory.xlsx"'},
+    )
+
+
+@app.post("/api/admin/vehicles", response_model=VehicleAdminResponse, status_code=201, dependencies=[Depends(require_admin)])
+def create_admin_vehicle(payload: VehicleAdminCreate, db: Session = Depends(get_db)):
+    def duplicate():
+        return HTTPException(409, f"A vehicle with stock reference '{payload.stock_reference}' already exists.")
+    if db.scalar(select(Vehicle.id).where(Vehicle.stock_reference == payload.stock_reference)):
+        raise duplicate()
+    vehicle = Vehicle(**payload.model_dump())
+    db.add(vehicle)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        if getattr(getattr(exc.orig, "diag", None), "constraint_name", None) == "uq_vehicles_stock_reference":
+            raise duplicate() from None
+        raise
+    db.refresh(vehicle)
+    return vehicle
+
+
+@app.patch("/api/admin/vehicles/listing", dependencies=[Depends(require_admin)])
+def update_admin_vehicle_listing(payload: VehicleAdminListingRequest, db: Session = Depends(get_db)):
+    ids = sorted(set(payload.vehicle_ids), key=str)
+    vehicles = db.scalars(select(Vehicle).where(Vehicle.id.in_(ids)).order_by(Vehicle.id).with_for_update()).all()
+    if len(vehicles) != len(ids):
+        raise HTTPException(404, "One or more selected vehicles no longer exist. Refresh inventory and try again.")
+    for vehicle in vehicles:
+        vehicle.is_available = payload.is_available
+    db.commit()
+    return {"updated": len(vehicles), "is_available": payload.is_available}
+
+
+@app.patch("/api/admin/vehicles/{vehicle_id}/reservation", response_model=VehicleAdminResponse, dependencies=[Depends(require_admin)])
+def update_admin_vehicle_reservation(vehicle_id: UUID, payload: VehicleAdminUpdateAvailability, db: Session = Depends(get_db)):
+    vehicle = db.get(Vehicle, vehicle_id)
+    if vehicle is None:
+        raise HTTPException(404, "Vehicle not found.")
+    reserved = db.scalar(select(func.count()).select_from(VehicleReservation).where(
+        VehicleReservation.vehicle_id == vehicle.id,
+        VehicleReservation.status.in_(("pending", "confirmed")))) > 0
+    if not payload.is_available and reserved:
+        raise HTTPException(409, "This vehicle already has an active reservation.")
+    if not payload.is_available:
+        if not vehicle.is_available:
+            raise HTTPException(409, "This vehicle is unavailable and cannot be reserved.")
+        application = db.scalar(select(Application)
+            .join(FinanceSelection, FinanceSelection.application_id == Application.id)
+            .join(ContractAgreement, ContractAgreement.application_id == Application.id)
+            .outerjoin(VehicleReservation, VehicleReservation.application_id == Application.id)
+            .where(FinanceSelection.vehicle_id == vehicle.id,
+                   ContractAgreement.status == "acknowledged",
+                   VehicleReservation.id.is_(None))
+            .order_by(Application.updated_at.desc()).limit(1))
+        if application is None:
+            raise HTTPException(409, "No eligible application with an acknowledged contract exists for this vehicle.")
+        agreement = db.scalar(select(ContractAgreement).where(
+            ContractAgreement.application_id == application.id))
+        finance_selection = db.scalar(select(FinanceSelection).where(
+            FinanceSelection.application_id == application.id))
+        option = db.scalar(select(ReservationOption).where(
+            ReservationOption.code == "buy_now", ReservationOption.is_active.is_(True)))
+        if option is None:
+            raise HTTPException(409, "The reservation option is not available.")
+        db.add(VehicleReservation(
+            application_id=application.id,
+            vehicle_id=vehicle.id,
+            finance_selection_id=finance_selection.id,
+            agreement_id=agreement.id,
+            reservation_option_id=option.id,
+            reservation_reference=f"ROVE-RES-{uuid4().hex[:12].upper()}",
+            status="pending",
+            reserved_at=datetime.now(timezone.utc),
+        ))
+        application.current_step = "reservation"
+        application.status = "submitted"
+        agreement.status = "reserved"
+    else:
+        reservation = db.scalar(select(VehicleReservation).where(
+            VehicleReservation.vehicle_id == vehicle.id,
+            VehicleReservation.status.in_(("pending", "confirmed"))).order_by(VehicleReservation.reserved_at.desc()))
+        if reservation is None:
+            raise HTTPException(409, "No active reservation exists for this vehicle.")
+        reservation.status = "cancelled"
+        application = db.get(Application, reservation.application_id)
+        agreement = db.get(ContractAgreement, reservation.agreement_id)
+        if agreement.status == "reserved": agreement.status = "acknowledged"
+        application.status = "in_progress"
+        application.current_step = "summary"
+    db.commit()
+    db.refresh(vehicle)
+    vehicle.is_reserved = not payload.is_available
+    return vehicle
+
+
+@app.delete("/api/admin/vehicles/{vehicle_id}", dependencies=[Depends(require_admin)])
+def delete_admin_vehicle(vehicle_id: UUID, db: Session = Depends(get_db)):
+    vehicle = db.get(Vehicle, vehicle_id)
+    if vehicle is None:
+        raise HTTPException(404, "Vehicle not found.")
+    try:
+        db.delete(vehicle)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Vehicle cannot be deleted because it is referenced by existing customer applications or reservations. Please disable the vehicle instead.") from None
+    return {"message": "Vehicle deleted successfully.", "id": str(vehicle_id)}
+
+
+
+@app.get("/api/admin/used-contract-hire/template.csv", dependencies=[Depends(require_admin)])
+def download_used_contract_hire_template():
+    fields = [
+        "Registration",
+        "Contract Term (months)",
+        "Annual Mileage",
+        "SMR Cost",
+        "Total Rental incl SMR (excl. VAT)",
+        "Total Rental incl SMR (inc. VAT)",
+        "Total Rental excl SMR (inc. VAT)",
+        "Total Rental excl SMR (excl. VAT)",
+        "Total payable excl SMR (excl. VAT)",
+        "Total payable excl SMR (inc. VAT)",
+        "Total VAT excl. SMR",
+    ]
+    output = io.StringIO()
+    csv.writer(output).writerow(fields)
+    return Response(
+        output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="used-contract-hire-template.csv"'},
+    )
+
+
+@app.get("/api/admin/used-contract-hire/summary", dependencies=[Depends(require_admin)])
+def used_contract_hire_summary(db: Session = Depends(get_db)):
+    total = db.scalar(select(func.count()).select_from(UsedContractHireRate)) or 0
+    registrations = db.scalar(
+        select(func.count(func.distinct(UsedContractHireRate.registration)))
+    ) or 0
+    average_smr = db.scalar(select(func.avg(UsedContractHireRate.smr_cost)))
+    average_rental = db.scalar(select(func.avg(UsedContractHireRate.total_rental_incl_smr_ex_vat)))
+    by_term = db.execute(
+        select(
+            UsedContractHireRate.contract_term_months,
+            func.count(),
+            func.sum(UsedContractHireRate.smr_cost),
+            func.sum(UsedContractHireRate.total_rental_incl_smr_ex_vat),
+        )
+        .group_by(UsedContractHireRate.contract_term_months)
+        .order_by(UsedContractHireRate.contract_term_months)
+    ).all()
+    registration_counts = (
+        select(
+            UsedContractHireRate.registration.label("registration"),
+            func.count().label("pricing_rows"),
+        )
+        .group_by(UsedContractHireRate.registration)
+        .subquery()
+    )
+    registration_bucket = case(
+        (registration_counts.c.pricing_rows == 1, "1 pricing row"),
+        (registration_counts.c.pricing_rows == 2, "2 pricing rows"),
+        (registration_counts.c.pricing_rows <= 4, "3–4 pricing rows"),
+        else_="5+ pricing rows",
+    )
+    registrations_by_row_count = db.execute(
+        select(registration_bucket.label("label"), func.count().label("count"))
+        .group_by(registration_bucket)
+        .order_by(registration_bucket)
+    ).all()
+    return {
+        "total": total,
+        "registrations": registrations,
+        "average_smr_cost": average_smr or Decimal("0"),
+        "average_total_rental_incl_smr_ex_vat": average_rental or Decimal("0"),
+        "by_term": [
+            {
+                "label": f"{term} months",
+                "count": count,
+                "smr_total": smr_total or Decimal("0"),
+                "rental_total": rental_total or Decimal("0"),
+            }
+            for term, count, smr_total, rental_total in by_term
+        ],
+        "registrations_by_row_count": [
+            {"label": label, "count": count}
+            for label, count in registrations_by_row_count
+        ],
+    }
+
+
+
+@app.get("/api/admin/used-contract-hire/ids", dependencies=[Depends(require_admin)])
+def list_used_contract_hire_ids(
+    search: str | None = None,
+    contract_term_months: int | None = Query(None, ge=1, le=120),
+    annual_mileage_min: int | None = Query(None, ge=0),
+    annual_mileage_max: int | None = Query(None, ge=0),
+    smr_min: Decimal | None = Query(None, ge=0),
+    smr_max: Decimal | None = Query(None, ge=0),
+    rental_min: Decimal | None = Query(None, ge=0),
+    rental_max: Decimal | None = Query(None, ge=0),
+    db: Session = Depends(get_db),
+):
+    filters = []
+    if search and search.strip():
+        term = search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        filters.append(UsedContractHireRate.registration.ilike(f"%{term}%", escape="\\"))
+    if contract_term_months is not None:
+        filters.append(UsedContractHireRate.contract_term_months == contract_term_months)
+    if annual_mileage_min is not None:
+        filters.append(UsedContractHireRate.annual_mileage >= annual_mileage_min)
+    if annual_mileage_max is not None:
+        filters.append(UsedContractHireRate.annual_mileage <= annual_mileage_max)
+    if smr_min is not None:
+        filters.append(UsedContractHireRate.smr_cost >= smr_min)
+    if smr_max is not None:
+        filters.append(UsedContractHireRate.smr_cost <= smr_max)
+    if rental_min is not None:
+        filters.append(UsedContractHireRate.total_rental_incl_smr_ex_vat >= rental_min)
+    if rental_max is not None:
+        filters.append(UsedContractHireRate.total_rental_incl_smr_ex_vat <= rental_max)
+    return [
+        str(record_id)
+        for record_id in db.scalars(
+            select(UsedContractHireRate.id)
+            .where(*filters)
+            .order_by(
+                UsedContractHireRate.registration,
+                UsedContractHireRate.contract_term_months,
+                UsedContractHireRate.annual_mileage,
+            )
+        ).all()
+    ]
+
+
+@app.get(
+    "/api/admin/used-contract-hire",
+    response_model=UsedContractHireListResponse,
+    dependencies=[Depends(require_admin)],
+)
+def list_used_contract_hire(
+    search: str | None = None,
+    contract_term_months: int | None = Query(None, ge=1, le=120),
+    annual_mileage_min: int | None = Query(None, ge=0),
+    annual_mileage_max: int | None = Query(None, ge=0),
+    smr_min: Decimal | None = Query(None, ge=0),
+    smr_max: Decimal | None = Query(None, ge=0),
+    rental_min: Decimal | None = Query(None, ge=0),
+    rental_max: Decimal | None = Query(None, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+):
+    filters = []
+    if search and search.strip():
+        term = search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        filters.append(UsedContractHireRate.registration.ilike(f"%{term}%", escape="\\"))
+    if contract_term_months is not None:
+        filters.append(UsedContractHireRate.contract_term_months == contract_term_months)
+    if annual_mileage_min is not None:
+        filters.append(UsedContractHireRate.annual_mileage >= annual_mileage_min)
+    if annual_mileage_max is not None:
+        filters.append(UsedContractHireRate.annual_mileage <= annual_mileage_max)
+    if smr_min is not None:
+        filters.append(UsedContractHireRate.smr_cost >= smr_min)
+    if smr_max is not None:
+        filters.append(UsedContractHireRate.smr_cost <= smr_max)
+    if rental_min is not None:
+        filters.append(UsedContractHireRate.total_rental_incl_smr_ex_vat >= rental_min)
+    if rental_max is not None:
+        filters.append(UsedContractHireRate.total_rental_incl_smr_ex_vat <= rental_max)
+
+    total = db.scalar(
+        select(func.count()).select_from(UsedContractHireRate).where(*filters)
+    ) or 0
+    items = db.scalars(
+        select(UsedContractHireRate)
+        .where(*filters)
+        .order_by(
+            UsedContractHireRate.registration,
+            UsedContractHireRate.contract_term_months,
+            UsedContractHireRate.annual_mileage,
+        )
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    return {"items": items, "total": total, "limit": limit, "offset": offset}
+
+
+
+@app.delete("/api/admin/used-contract-hire", dependencies=[Depends(require_admin)])
+def delete_used_contract_hire(
+    payload: UsedContractHireDeleteRequest,
+    db: Session = Depends(get_db),
+):
+    try:
+        result = db.execute(
+            delete(UsedContractHireRate).where(UsedContractHireRate.id.in_(payload.ids))
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(409, "Unable to delete the selected pricing rows.") from None
+    deleted = result.rowcount or 0
+    return {"deleted": deleted, "message": f"{deleted} pricing rows deleted."}
+
+
+@app.post("/api/admin/used-contract-hire/import", dependencies=[Depends(require_admin)])
+async def import_used_contract_hire(
+    request: Request,
+    filename: str = "used-contract-hire.csv",
+    dry_run: bool = False,
+    db: Session = Depends(get_db),
+):
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+    chunks = []
+    size = 0
+    async for chunk in request.stream():
+        size += len(chunk)
+        if size > 10 * 1024 * 1024:
+            raise HTTPException(413, "Used Contract Hire CSV files must be 10 MB or smaller.")
+        chunks.append(chunk)
+    try:
+        text_data = b"".join(chunks).decode("utf-8-sig")
+        reader = csv.DictReader(io.StringIO(text_data))
+    except (UnicodeDecodeError, csv.Error):
+        raise HTTPException(422, "Upload a valid UTF-8 CSV file.") from None
+
+    if not reader.fieldnames:
+        raise HTTPException(422, "The CSV file must include the Used Contract Hire column headers.")
+
+    aliases = {
+        "registration": "registration",
+        "registrationnumber": "registration",
+        "carregistration": "registration",
+        "contracttermmonths": "contract_term_months",
+        "annualmileage": "annual_mileage",
+        "smrcost": "smr_cost",
+        "totalrentalexclvat": "total_rental_incl_smr_ex_vat",
+        "totalrentalexvat": "total_rental_incl_smr_ex_vat",
+        "totalrentalexclvatandsmr": "total_rental_excl_smr_ex_vat",
+        "totalrentalexvatsmr": "total_rental_excl_smr_ex_vat",
+        "totalrentalexvatexsmr": "total_rental_excl_smr_ex_vat",
+    }
+    aliases["totalrentalinclsmrexclvat"] = "total_rental_incl_smr_ex_vat"
+    aliases["totalrentalinclsmrincvat"] = "total_rental_incl_smr_inc_vat"
+    aliases["totalrentalexclsmrincvat"] = "total_rental_excl_smr_inc_vat"
+    aliases["totalrentalexclsmrexclvat"] = "total_rental_excl_smr_ex_vat"
+    aliases["totalpayableexclsmrexclvat"] = "total_payable_excl_smr_ex_vat"
+    aliases["totalpayableexclsmrincvat"] = "total_payable_excl_smr_inc_vat"
+    aliases["totalvatexclsmr"] = "total_vat_excl_smr"
+    mapped_headers = {}
+    for header in reader.fieldnames:
+        if not header:
+            continue
+        normalized = "".join(
+            character
+            for character in header.lower().replace("&", " and ")
+            if character.isalnum()
+        )
+        if normalized in aliases:
+            mapped_headers[aliases[normalized]] = header
+    required = {
+        "registration",
+        "contract_term_months",
+        "annual_mileage",
+        "smr_cost",
+        "total_rental_incl_smr_ex_vat",
+        "total_rental_excl_smr_ex_vat",
+        "total_rental_incl_smr_inc_vat",
+        "total_rental_excl_smr_inc_vat",
+        "total_payable_excl_smr_ex_vat",
+        "total_payable_excl_smr_inc_vat",
+        "total_vat_excl_smr",
+    }
+    missing = sorted(required - set(mapped_headers))
+    if missing:
+        raise HTTPException(
+            422,
+            "Missing required columns: " + ", ".join(missing) + ". Download the template for the expected format.",
+        )
+
+    records = {}
+    errors = []
+    for row_number, raw in enumerate(reader, start=2):
+        values = {key: raw.get(header) for key, header in mapped_headers.items()}
+        for key in (
+            "contract_term_months",
+            "annual_mileage",
+            "smr_cost",
+            "total_rental_incl_smr_ex_vat",
+            "total_rental_excl_smr_ex_vat",
+            "total_rental_incl_smr_inc_vat",
+            "total_rental_excl_smr_inc_vat",
+            "total_payable_excl_smr_ex_vat",
+            "total_payable_excl_smr_inc_vat",
+            "total_vat_excl_smr",
+        ):
+            value = values.get(key)
+            if isinstance(value, str):
+                values[key] = value.strip().replace(",", "").replace("£", "").strip()
+        try:
+            record = UsedContractHireImportRow.model_validate(values)
+        except Exception as error:
+            errors.append(f"Row {row_number}: {error}")
+            if len(errors) >= 20:
+                break
+            continue
+        key = (record.registration, record.contract_term_months, record.annual_mileage)
+        if key in records:
+            errors.append(
+                f"Row {row_number}: duplicate registration, term, and annual mileage for {record.registration}."
+            )
+            if len(errors) >= 20:
+                break
+            continue
+        records[key] = record
+
+    if errors:
+        raise HTTPException(422, detail="; ".join(errors))
+    if not records:
+        raise HTTPException(422, "The CSV file contains no pricing rows.")
+
+    if not dry_run:
+        rows = [record.model_dump() for record in records.values()]
+        statement = pg_insert(UsedContractHireRate).values(rows)
+        statement = statement.on_conflict_do_update(
+            index_elements=[
+                UsedContractHireRate.registration,
+                UsedContractHireRate.contract_term_months,
+                UsedContractHireRate.annual_mileage,
+            ],
+            set_={
+                "smr_cost": statement.excluded.smr_cost,
+                "total_rental_incl_smr_ex_vat": statement.excluded.total_rental_incl_smr_ex_vat,
+                "total_rental_excl_smr_ex_vat": statement.excluded.total_rental_excl_smr_ex_vat,
+                "total_rental_incl_smr_inc_vat": statement.excluded.total_rental_incl_smr_inc_vat,
+                "total_rental_excl_smr_inc_vat": statement.excluded.total_rental_excl_smr_inc_vat,
+                "total_payable_excl_smr_ex_vat": statement.excluded.total_payable_excl_smr_ex_vat,
+                "total_payable_excl_smr_inc_vat": statement.excluded.total_payable_excl_smr_inc_vat,
+                "total_vat_excl_smr": statement.excluded.total_vat_excl_smr,
+                "updated_at": func.now(),
+            },
+        )
+        try:
+            db.execute(statement)
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(409, "Used Contract Hire import failed. No rows were saved.") from None
+
+    count = len(records)
+    return {
+        "count": count,
+        "dry_run": dry_run,
+        "message": f"{count} pricing rows {'validated; no changes saved' if dry_run else 'imported successfully'}.",
+    }
+
+@app.post("/api/admin/inventory", dependencies=[Depends(require_admin)])
+async def upload_inventory(request: Request, filename: str, dry_run: bool = False, sheet: str | None = None, selected_rows: str | None = None, db: Session = Depends(get_db)):
+    from pathlib import Path
+    from tempfile import NamedTemporaryFile
+    from zipfile import BadZipFile, ZipFile
+    from xml.etree.ElementTree import ParseError
+    from openpyxl.utils.exceptions import InvalidFileException
+    from sqlalchemy.exc import SQLAlchemyError
+    from scripts.load_stock import read_rows, normalize_rows, preview_rows, load_stock
+
+    suffix = Path(filename).suffix.lower()
+    if suffix not in {".csv", ".xlsx"}:
+        raise HTTPException(422, "Choose a CSV or XLSX inventory file.")
+    size = 0
+    with NamedTemporaryFile(suffix=suffix) as uploaded:
+        async for chunk in request.stream():
+            size += len(chunk)
+            if size > 10 * 1024 * 1024:
+                raise HTTPException(413, "Inventory files must be 10 MB or smaller.")
+            uploaded.write(chunk)
+        uploaded.flush()
+        try:
+            if suffix == ".xlsx":
+                with ZipFile(uploaded.name) as archive:
+                    if sum(entry.file_size for entry in archive.infolist()) > 50 * 1024 * 1024:
+                        raise ValueError("Expanded workbook is too large. Please split the inventory file.")
+            rows = read_rows(Path(uploaded.name), sheet or None)
+            if dry_run:
+                headers, preview = preview_rows(rows)
+                valid_count = sum(1 for item in preview if item["valid"])
+                return {
+                    "count": valid_count, "valid_count": valid_count,
+                    "invalid_count": len(preview) - valid_count, "dry_run": True,
+                    "headers": headers, "rows": preview,
+                    "message": f"{valid_count} rows are valid; {len(preview) - valid_count} need correction.",
+                }
+            if selected_rows is not None:
+                try:
+                    selected = {int(value) for value in selected_rows.split(",") if value.strip()}
+                except ValueError:
+                    raise ValueError("Selected row numbers must be integers.") from None
+                if not selected:
+                    raise ValueError("Select at least one valid inventory row to import.")
+                available = {number for number, row in enumerate(rows[1:], 2) if any(str(cell or "").strip() for cell in row)}
+                if not selected.issubset(available):
+                    raise ValueError("Selected rows are no longer available. Review the file again.")
+                rows = [rows[0]] + [row for number, row in enumerate(rows[1:], 2) if number in selected]
+            records = normalize_rows(rows)
+            load_stock(records, db)
+            db.commit()
+        except (ValueError, OSError, BadZipFile, UnicodeError, ParseError, InvalidFileException, KeyError) as error:
+            db.rollback()
+            raise HTTPException(422, str(error)) from None
+        except SQLAlchemyError:
+            db.rollback()
+            raise HTTPException(409, "Inventory import failed. No changes were saved; check the inventory values and try again.") from None
+    return {"count": len(records), "dry_run": False, "message": f"{len(records)} vehicles imported successfully."}
