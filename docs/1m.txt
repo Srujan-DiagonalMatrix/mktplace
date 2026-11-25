@@ -1,9 +1,28 @@
+(
+set -e
+
 cd "/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.Zs00E2gw/worktree"
 
-zip "$HOME/Desktop/rove-conflicts.zip" \
+test "$(git branch --show-current)" = "feature/lbg-import-20261125-121635"
+test "$(git rev-parse MERGE_HEAD)" = "c8a84f2a4133c424fd40f08c39fcdd35ec298b73"
+
+unzip -o "$HOME/Downloads/rove-resolved.zip"
+
+git add \
   deploy/lbg-pull.sh \
   deploy/lbg-push.sh \
   server/app/main.py \
   src/components/AdminDashboard.jsx \
   src/components/FullVehicleDetails.jsx \
   src/components/VehicleResults.jsx
+
+git diff --check --cached
+test -z "$(git diff --name-only --diff-filter=U)"
+
+git commit -m "Reconcile LBG and personal histories preserving both sets of changes"
+
+git push \
+  --force-with-lease=refs/heads/feature/lbg-import-20261125-121635: \
+  git@github.com:Srujan-DiagonalMatrix/rove.git \
+  HEAD:refs/heads/feature/lbg-import-20261125-121635
+)
