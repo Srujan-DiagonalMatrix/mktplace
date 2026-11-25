@@ -1,3 +1,1 @@
-From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
- * branch              main_stage -> FETCH_HEAD
-zsh: command not found: #
+setopt interactivecomments
