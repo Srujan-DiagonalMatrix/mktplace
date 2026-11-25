@@ -1,27 +1,3 @@
-(
-set -e
-
-cd "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.Tgwvxr2T/worktree"
-
-BANK_URL="git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git"
-
-git fetch "$BANK_URL" main_stage
-BANK_COMMIT=$(git rev-parse FETCH_HEAD)
-
-# Stop if colleagues updated main_stage since this merge.
-test "$BANK_COMMIT" = "c8a84f2a4133c424fd40f08c39fcdd35ec298b73"
-
-# Confirm LBG-owned workflows are unchanged.
-git diff --exit-code "$BANK_COMMIT" HEAD -- .github
-
-NEW_BRANCH="feature/rove-sync-clean-$(date +%Y%m%d-%H%M%S)"
-
-CLEAN_COMMIT=$(git commit-tree HEAD^{tree} \
-  -p "$BANK_COMMIT" \
-  -m "Sync reconciled ROVE application changes")
-
-git switch -c "$NEW_BRANCH" "$CLEAN_COMMIT"
-git push "$BANK_URL" "HEAD:refs/heads/$NEW_BRANCH"
-
-echo "Create PR: $NEW_BRANCH -> main_stage"
-)
+From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
+ * branch              main_stage -> FETCH_HEAD
+zsh: command not found: #
