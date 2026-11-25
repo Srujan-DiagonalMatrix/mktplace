@@ -1,35 +1,33 @@
-srujan.kumar@DEV-H59N27LXKY rove % ./deploy/lbg-pull.sh main_stage
-From github.com:Srujan-DiagonalMatrix/rove
- * branch              main       -> FETCH_HEAD
-From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
- * branch              main_stage -> FETCH_HEAD
-Preparing worktree (new branch 'feature/lbg-import-20261125-121635')
-HEAD is now at 22d68c87 Merge pull request #98 from Srujan-DiagonalMatrix/vehicle
-Auto-merging deploy/lbg-pull.sh
-CONFLICT (add/add): Merge conflict in deploy/lbg-pull.sh
-Auto-merging deploy/lbg-push.sh
-CONFLICT (add/add): Merge conflict in deploy/lbg-push.sh
-Auto-merging server/app/main.py
-CONFLICT (add/add): Merge conflict in server/app/main.py
-Auto-merging src/components/AdminDashboard.jsx
-CONFLICT (add/add): Merge conflict in src/components/AdminDashboard.jsx
-Auto-merging src/components/FullVehicleDetails.jsx
-CONFLICT (add/add): Merge conflict in src/components/FullVehicleDetails.jsx
-Auto-merging src/components/VehicleResults.jsx
-CONFLICT (add/add): Merge conflict in src/components/VehicleResults.jsx
-Automatic merge failed; fix conflicts and then commit the result.
-Conflicting changes require review. Nothing has been pushed.
-deploy/lbg-pull.sh
-deploy/lbg-push.sh
-server/app/main.py
-src/components/AdminDashboard.jsx
-src/components/FullVehicleDetails.jsx
-src/components/VehicleResults.jsx
-Resolve the files in /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.Zs00E2gw/worktree, then run:
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.Zs00E2gw/worktree add <resolved-files>
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.Zs00E2gw/worktree commit
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.Zs00E2gw/worktree push --force-with-lease=refs/heads/feature/lbg-import-20261125-121635: git@github.com:Srujan-DiagonalMatrix/rove.git HEAD:refs/heads/feature/lbg-import-20261125-121635
-Create PR: feature/lbg-import-20261125-121635 -> main
+(
+PERSONAL=$(git rev-parse feature/lbg-import-20261125-121635)
+LBG=$(git -C "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.Zs00E2gw/worktree" rev-parse MERGE_HEAD)
 
-Sync worktree retained: /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.Zs00E2gw/worktree
-Branch: feature/lbg-import-20261125-121635
+echo "=== REPOSITORY STATUS ==="
+git status --short --branch
+git rev-parse --is-shallow-repository
+git worktree list
+
+echo "=== SOURCE COMMITS ==="
+git show -s --format='%h %s' "$PERSONAL" "$LBG"
+
+echo "=== COMMON ANCESTOR ==="
+git merge-base "$PERSONAL" "$LBG" ||
+  echo "NO COMMON ANCESTOR FOUND"
+
+echo "=== HISTORY ROOTS ==="
+git rev-list --max-parents=0 "$PERSONAL"
+git rev-list --max-parents=0 "$LBG"
+
+echo "=== CONFLICTED FILES ==="
+git -C "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.Zs00E2gw/worktree" \
+  diff --name-only --diff-filter=U
+
+echo "=== FILE DIFFERENCES ==="
+git diff --stat "$PERSONAL" "$LBG" -- \
+  deploy/lbg-pull.sh \
+  deploy/lbg-push.sh \
+  server/app/main.py \
+  src/components/AdminDashboard.jsx \
+  src/components/FullVehicleDetails.jsx \
+  src/components/VehicleResults.jsx
+) 2>&1 | tee "$HOME/Desktop/rove-git-diagnostics.txt"
