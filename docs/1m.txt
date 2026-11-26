@@ -25,14 +25,8 @@ export default function FullVehicleDetails({ vehicle, onBack, mediaRegistration,
   const view = useMemo(() => createVehicleDetailPreview(vehicle, financeQuotes), [vehicle, financeQuotes]);
   const registration = aosRegistration(mediaRegistration || vehicle.registration || vehicle.registration_number
     || vehicle.registrationNumber || vehicle.reg_number || vehicle.auction_metadata?.reg_no);
-<<<<<<< main_stage_kp
-  const catalogueImages = useMemo(() => [...(vehicle.images || [])]
-    .sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || Number(a.display_order || 0) - Number(b.display_order || 0)), [vehicle]);
-  const [aosMedia, setAosMedia] = useState({ vehicleId: null, registration: null, status: 'loading', images: [], featureImages: [], imperfections: [], videoUrl: null });
-=======
   const requestKey = `${vehicle.id}|${registration}|${mediaToken || ''}`;
-  const [aosMedia, setAosMedia] = useState({ key: null, loaded: false, images: [], featureImages: [], videoUrl: null });
->>>>>>> main_stage
+  const [aosMedia, setAosMedia] = useState({ key: null, loaded: false, status: 'loading', images: [], featureImages: [], imperfections: [], videoUrl: null });
   const [activeImage, setActiveImage] = useState(0);
   const [failedGalleryUrls, setFailedGalleryUrls] = useState(() => new Set());
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -53,48 +47,39 @@ export default function FullVehicleDetails({ vehicle, onBack, mediaRegistration,
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [vehicle.id]);
   useEffect(() => {
-<<<<<<< main_stage_kp
-    const empty = { vehicleId: vehicle.id, registration, images: [], featureImages: [], imperfections: [], videoUrl: null };
-    if (!registration || !mediaToken) { setAosMedia({ ...empty, status: 'failed' }); return undefined; }
-    setAosMedia({ ...empty, status: 'loading' });
+    let cancelled = false;
+    let settled = false;
     const controller = new AbortController();
-    let timedOut = false;
-    const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 15000);
-    fetch(`https://br-api.aos.tv/vehicles/${encodeURIComponent(registration)}`, {
-      headers: { Authorization: `Bearer ${mediaToken}` }, credentials: 'omit', signal: controller.signal,
-    }).then((response) => response.ok ? response.json() : null).then((payload) => {
-      if (controller.signal.aborted) return;
-      if (!payload) { setAosMedia({ ...empty, status: 'failed' }); return; }
+    const empty = { key: requestKey, images: [], featureImages: [], imperfections: [], videoUrl: null };
+    const finish = payload => {
+      if (cancelled || settled) return;
+      settled = true;
+      if (!payload) {
+        setAosMedia({ ...empty, loaded: true, status: 'failed' });
+        return;
+      }
       setAosMedia({
-        vehicleId: vehicle.id,
-        registration,
+        key: requestKey,
+        loaded: true,
         status: 'loaded',
         images: mapAosVehicleGallery(payload, vehicle),
         featureImages: mapAosVehicleFeatureImages(payload, vehicle),
         imperfections: mapAosVehicleImperfections(payload, vehicle),
         videoUrl: mapAosVehicleVideo(payload),
       });
-    }).catch(() => {
-      if (timedOut || !controller.signal.aborted) setAosMedia({ ...empty, status: 'failed' });
-    }).finally(() => window.clearTimeout(timeout));
-    return () => { window.clearTimeout(timeout); controller.abort(); };
-=======
-    let cancelled = false;
-    const controller = new AbortController();
-    const finish = payload => {
-      if (!cancelled) setAosMedia({ key: requestKey, loaded: true,
-        images: mapAosVehicleGallery(payload, vehicle), featureImages: mapAosVehicleFeatureImages(payload, vehicle),
-        videoUrl: mapAosVehicleVideo(payload) });
     };
-    setAosMedia({ key: requestKey, loaded: false, images: [], featureImages: [], videoUrl: null });
+    setAosMedia({ ...empty, loaded: false, status: 'loading' });
     const timeout = window.setTimeout(() => { controller.abort(); finish(null); }, 15000);
-    if (!registration) finish(null);
-    else if (mediaToken) fetch(`https://br-api.aos.tv/vehicles/${encodeURIComponent(registration)}`, {
-      headers: { Authorization: `Bearer ${mediaToken}` }, credentials: 'omit', signal: controller.signal,
-    }).then(response => response.ok ? response.json() : null).then(finish)
-      .catch(() => finish(null)).finally(() => window.clearTimeout(timeout));
+    if (!registration) {
+      window.clearTimeout(timeout);
+      finish(null);
+    } else if (mediaToken) {
+      fetch(`https://br-api.aos.tv/vehicles/${encodeURIComponent(registration)}`, {
+        headers: { Authorization: `Bearer ${mediaToken}` }, credentials: 'omit', signal: controller.signal,
+      }).then(response => response.ok ? response.json() : null).then(finish)
+        .catch(() => finish(null)).finally(() => window.clearTimeout(timeout));
+    }
     return () => { cancelled = true; window.clearTimeout(timeout); controller.abort(); };
->>>>>>> main_stage
   }, [vehicle.id, registration, mediaToken]);
 
   const matchingAosMedia = aosMedia.key === requestKey ? aosMedia : null;
@@ -239,7 +224,6 @@ export default function FullVehicleDetails({ vehicle, onBack, mediaRegistration,
         <section className="full-detail-summary"><h2>Vehicle Summary</h2><div>{view.summary.map(([label, value]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div></section>
         <div className="full-detail-overview">{view.information.map(panel => <section className="full-detail-information-panel" key={panel.title}><h3>{panel.title}</h3><div className="full-detail-card"><dl>{panel.rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd className={label === 'Safety rating' ? 'full-detail-safety-rating' : undefined}>{value}</dd></div>)}</dl>{panel.link && documentAction(panel.link, panel.url)}</div></section>)}</div>
 
-<<<<<<< main_stage_kp
         <section className="full-detail-inspection" aria-labelledby="full-detail-inspection-title"><h2 id="full-detail-inspection-title">Vehicle Inspection</h2><div className="full-detail-inspection-card">
           <div className="full-detail-inspection-checks">
             <div><h3>Pre-purchase check</h3><p>{view.inspection.summary}</p></div>
@@ -260,13 +244,6 @@ export default function FullVehicleDetails({ vehicle, onBack, mediaRegistration,
               </button> : <div className="full-detail-imperfections-photo full-detail-imperfections-empty" aria-hidden="true" />}
             </div>
           </div>
-=======
-        <section className="full-detail-inspection"><h2>Vehicle Inspection</h2><div className="full-detail-inspection-grid">
-          <article className="full-detail-inspection-intro"><h3>Pre-purchase check</h3><p>{view.inspection.summary}</p>{documentAction('View full report', view.inspection.reportUrl)}</article>
-          <article className="full-detail-inspection-findings"><h3>Inspection Findings</h3><div className="full-detail-finding"><div><strong>{view.inspection.verified}</strong><b>Verified</b></div><p>{view.inspection.verifiedNote}</p></div></article>
-          <article className="full-detail-inspection-findings"><h3>Imperfections</h3><div className="full-detail-finding"><div><strong>{view.inspection.noted}</strong><b>Noted</b></div><p>{view.inspection.notedNote}</p></div></article>
-          <article className="full-detail-inspection-photos"><h3>Imperfections media</h3><button type="button" aria-label="Open inspection image" onClick={() => openPhoto(null)}><Image image={null} vehicle={vehicle} pending={mediaPending} /><span aria-hidden="true">⌕</span></button></article>
->>>>>>> main_stage
         </div></section>
 
 
@@ -311,4 +288,3 @@ export default function FullVehicleDetails({ vehicle, onBack, mediaRegistration,
     <footer className="full-detail-legal-footer"><nav aria-label="Legal information">{[['Cookie policy', '/cookie-policy'], ['Terms of use', '/terms-of-use'], ['Privacy policy', '/privacy-notice']].map(([label, href]) => <a key={label} href={href}>{label}</a>)}</nav>{detailPreviewContent.legal.map(text => <p key={text}>{text}</p>)}</footer>
   </>;
 }
-
