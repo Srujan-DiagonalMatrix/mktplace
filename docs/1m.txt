@@ -1,64 +1,103 @@
-srujan.kumar@DEV-H59N27LXKY rove % ./deploy/lbg-push.sh 
-From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
- * branch              main_stage -> FETCH_HEAD
-From github.com:Srujan-DiagonalMatrix/rove
- * branch              main       -> FETCH_HEAD
-Preparing worktree (new branch 'feature/rove-sync-20261126-075241')
-HEAD is now at e4dfb469 Merge pull request #11 from lbg-cloud-platform/feature/rove-sync-clean-20261125-124000
-Auto-merging deploy/LBG_SYNC.md
-CONFLICT (add/add): Merge conflict in deploy/LBG_SYNC.md
-Auto-merging deploy/lbg-push.sh
-CONFLICT (content): Merge conflict in deploy/lbg-push.sh
-Auto-merging deploy/lbg-sync.sh
-CONFLICT (add/add): Merge conflict in deploy/lbg-sync.sh
-Auto-merging tests/test_lbg_sync.py
-CONFLICT (add/add): Merge conflict in tests/test_lbg_sync.py
-Automatic merge failed; fix conflicts and then commit the result.
-Conflicting changes require review. Nothing has been pushed.
-deploy/LBG_SYNC.md
-deploy/lbg-push.sh
-deploy/lbg-sync.sh
-tests/test_lbg_sync.py
-Resolve the files in /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.FwCiAPIp/worktree, then run:
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.FwCiAPIp/worktree add <resolved-files>
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.FwCiAPIp/worktree commit
-Before pushing, export a clean LBG-only commit (after committing the resolution):
-  cd /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.FwCiAPIp/worktree
-  git diff --exit-code e4dfb469437f22fbba88c2436a4c0820a756d9a8 HEAD -- .github &&
-  git update-ref refs/rove-sync-local/feature/rove-sync-20261126-075241 HEAD &&
-  CLEAN_COMMIT=$(git commit-tree "HEAD^{tree}" -p e4dfb469437f22fbba88c2436a4c0820a756d9a8 -m "Sync reconciled ROVE application") &&
-  git reset --soft "$CLEAN_COMMIT" &&
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.FwCiAPIp/worktree push --force-with-lease=refs/heads/feature/rove-sync-20261126-075241: git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git HEAD:refs/heads/feature/rove-sync-20261126-075241
-Create PR: feature/rove-sync-20261126-075241 -> main_stage
+bash <<'BASH'
+REPORT="$HOME/Desktop/rove-sync-diagnostics.txt"
 
-Sync worktree retained: /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.FwCiAPIp/worktree
-Branch: feature/rove-sync-20261126-075241
-srujan.kumar@DEV-H59N27LXKY rove % ./deploy/lbg-pull.sh main_stage
-From github.com:Srujan-DiagonalMatrix/rove
- * branch              main       -> FETCH_HEAD
-From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
- * branch              main_stage -> FETCH_HEAD
-Preparing worktree (new branch 'feature/lbg-import-20261126-075259')
-HEAD is now at cd82129b deploy
-Auto-merging deploy/LBG_SYNC.md
-CONFLICT (add/add): Merge conflict in deploy/LBG_SYNC.md
-Auto-merging deploy/lbg-push.sh
-CONFLICT (content): Merge conflict in deploy/lbg-push.sh
-Auto-merging deploy/lbg-sync.sh
-CONFLICT (add/add): Merge conflict in deploy/lbg-sync.sh
-Auto-merging tests/test_lbg_sync.py
-CONFLICT (add/add): Merge conflict in tests/test_lbg_sync.py
-Automatic merge failed; fix conflicts and then commit the result.
-Conflicting changes require review. Nothing has been pushed.
-deploy/LBG_SYNC.md
-deploy/lbg-push.sh
-deploy/lbg-sync.sh
-tests/test_lbg_sync.py
-Resolve the files in /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.8hsv86mP/worktree, then run:
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.8hsv86mP/worktree add <resolved-files>
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.8hsv86mP/worktree commit
-  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.8hsv86mP/worktree push --force-with-lease=refs/heads/feature/lbg-import-20261126-075259: git@github.com:Srujan-DiagonalMatrix/rove.git HEAD:refs/heads/feature/lbg-import-20261126-075259
-Create PR: feature/lbg-import-20261126-075259 -> main
+{
+  echo "=== DATE AND GIT VERSION ==="
+  date
+  git --version
 
-Sync worktree retained: /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.8hsv86mP/worktree
-Branch: feature/lbg-import-20261126-075259
+  echo
+  echo "=== CURRENT CHECKOUT ==="
+  git rev-parse --show-toplevel
+  git status --short --branch
+  git rev-parse --is-shallow-repository
+
+  echo
+  echo "=== WORKTREES ==="
+  git worktree list
+
+  echo
+  echo "=== LOCAL MAIN ==="
+  git log -5 --format='%h %ad %s' --date=iso main
+
+  echo
+  echo "=== REMOTE BRANCH HEADS ==="
+  git ls-remote \
+    git@github.com:Srujan-DiagonalMatrix/rove.git \
+    refs/heads/main
+  git ls-remote \
+    git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git \
+    refs/heads/main_stage
+
+  echo
+  echo "=== LOCAL SYNC SCRIPTS ==="
+  for FILE in deploy/lbg-push.sh deploy/lbg-pull.sh deploy/lbg-sync.sh; do
+    echo
+    echo "--- $FILE ---"
+    if [ -f "$FILE" ]; then
+      shasum -a 256 "$FILE"
+      bash -n "$FILE"
+      sed -n '1,220p' "$FILE"
+    else
+      echo "MISSING"
+    fi
+  done
+
+  for WORKTREE in \
+    "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.FwCiAPIp/worktree" \
+    "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.8hsv86mP/worktree"
+  do
+    echo
+    echo "=== MERGE WORKTREE: $WORKTREE ==="
+
+    if ! git -C "$WORKTREE" rev-parse --git-dir >/dev/null 2>&1; then
+      echo "Worktree no longer exists"
+      continue
+    fi
+
+    git -C "$WORKTREE" status --short --branch
+
+    HEAD_COMMIT=$(git -C "$WORKTREE" rev-parse HEAD)
+    OTHER_COMMIT=$(git -C "$WORKTREE" rev-parse --verify MERGE_HEAD 2>/dev/null)
+
+    echo "HEAD: $HEAD_COMMIT"
+    echo "MERGE_HEAD: $OTHER_COMMIT"
+
+    if [ -z "$OTHER_COMMIT" ]; then
+      echo "No merge currently in progress"
+      continue
+    fi
+
+    echo "--- Both source commits ---"
+    git -C "$WORKTREE" show -s \
+      --format='%H %ad %s' --date=iso \
+      "$HEAD_COMMIT" "$OTHER_COMMIT"
+
+    echo "--- Common ancestors ---"
+    git -C "$WORKTREE" merge-base --all \
+      "$HEAD_COMMIT" "$OTHER_COMMIT" ||
+      echo "NO COMMON ANCESTOR"
+
+    echo "--- Unresolved index entries ---"
+    git -C "$WORKTREE" ls-files --unmerged
+
+    echo "--- Differences between source versions ---"
+    git -C "$WORKTREE" diff \
+      "$HEAD_COMMIT" "$OTHER_COMMIT" -- \
+      deploy/lbg-pull.sh \
+      deploy/lbg-push.sh \
+      deploy/lbg-sync.sh \
+      deploy/LBG_SYNC.md \
+      tests/test_lbg_sync.py
+
+    echo "--- Workflow differences between source versions ---"
+    git -C "$WORKTREE" diff --stat \
+      "$HEAD_COMMIT" "$OTHER_COMMIT" -- .github
+  done
+
+  echo
+  echo "=== END OF REPORT ==="
+} > "$REPORT" 2>&1
+
+echo "Report saved to: $REPORT"
+BASH
