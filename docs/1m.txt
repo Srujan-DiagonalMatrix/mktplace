@@ -1,25 +1,16 @@
-cd "/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.8hsv86mP/worktree"
+git pull
+remote: Enumerating objects: 1, done.
+remote: Counting objects: 100% (1/1), done.
+remote: Total 1 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (1/1), 936 bytes | 312.00 KiB/s, done.
+From github.com:Srujan-DiagonalMatrix/rove
+   482071fa..29d4f89a  main       -> origin/main
+There is no tracking information for the current branch.
+Please specify which branch you want to rebase against.
+See git-pull(1) for details.
 
-python3 - <<'PY'
-from pathlib import Path
-p = Path("tests/test_lbg_sync.py")
-s = p.read_text()
-old = "line[9:]!=str(work)"
-new = "Path(line[9:]).resolve() != work.resolve()"
-if old in s:
-    p.write_text(s.replace(old, new))
-elif new not in s:
-    raise SystemExit("Unexpected test content; stop and share the file.")
-PY
+    git pull <remote> <branch>
 
-python3 tests/test_lbg_sync.py
+If you wish to set tracking information for this branch you can do so with:
 
-
-
-git add tests/test_lbg_sync.py
-git diff --cached --check &&
-git commit -m "Merge LBG main_stage retaining corrected sync tooling" &&
-git push \
-  --force-with-lease=refs/heads/feature/lbg-import-20261126-075259: \
-  git@github.com:Srujan-DiagonalMatrix/rove.git \
-  HEAD:refs/heads/feature/lbg-import-20261126-075259
+    git branch --set-upstream-to=<remote>/<branch> feature/lbg-import-20261126-075259
