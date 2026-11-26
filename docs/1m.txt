@@ -1,47 +1,8 @@
-bash <<'BASH'
-set -e
-
-cd "/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.8hsv86mP/worktree"
-
-test "$(git branch --show-current)" = "feature/lbg-import-20261126-075259"
-test "$(git rev-parse HEAD)" = "cd82129b688ac2e7a97174a0aad56c0913fec437"
-test "$(git rev-parse MERGE_HEAD)" = "e4dfb469437f22fbba88c2436a4c0820a756d9a8"
-
-git restore --source=HEAD --staged --worktree -- \
-  deploy/LBG_SYNC.md \
-  deploy/lbg-push.sh \
-  deploy/lbg-sync.sh \
-  tests/test_lbg_sync.py
-
-test -z "$(git diff --name-only --diff-filter=U)"
-
-python3 - <<'PY'
-from pathlib import Path
-for name in [
-    "deploy/LBG_SYNC.md",
-    "deploy/lbg-push.sh",
-    "deploy/lbg-sync.sh",
-    "tests/test_lbg_sync.py",
-]:
-    p = Path(name)
-    p.write_bytes(p.read_bytes().rstrip(b"\r\n") + b"\n")
-PY
-
-git add \
-  deploy/LBG_SYNC.md \
-  deploy/lbg-push.sh \
-  deploy/lbg-sync.sh \
-  tests/test_lbg_sync.py
-
-git diff --cached --check
-bash -n deploy/lbg-push.sh
-bash -n deploy/lbg-sync.sh
-python3 tests/test_lbg_sync.py
-
-git commit -m "Merge LBG main_stage while retaining corrected sync tooling"
-
-git push \
-  --force-with-lease=refs/heads/feature/lbg-import-20261126-075259: \
-  git@github.com:Srujan-DiagonalMatrix/rove.git \
-  HEAD:refs/heads/feature/lbg-import-20261126-075259
-BASH
+Traceback (most recent call last):
+  File "/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.8hsv86mP/worktree/tests/test_lbg_sync.py", line 69, in <module>
+    retained=Path(line[9:]);git('worktree','remove','--force',str(retained),cwd=work)
+                            ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.8hsv86mP/worktree/tests/test_lbg_sync.py", line 6, in git
+    if ok: assert r.returncode==0,(args,r.stderr)
+                  ^^^^^^^^^^^^^^^
+AssertionError: (('worktree', 'remove', '--force', '/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/tmp4ypf5o02/work'), "fatal: '/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/tmp4ypf5o02/work' is a main working tree\n")
