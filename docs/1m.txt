@@ -1,8 +1,25 @@
-Traceback (most recent call last):
-  File "/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.8hsv86mP/worktree/tests/test_lbg_sync.py", line 69, in <module>
-    retained=Path(line[9:]);git('worktree','remove','--force',str(retained),cwd=work)
-                            ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.8hsv86mP/worktree/tests/test_lbg_sync.py", line 6, in git
-    if ok: assert r.returncode==0,(args,r.stderr)
-                  ^^^^^^^^^^^^^^^
-AssertionError: (('worktree', 'remove', '--force', '/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/tmp4ypf5o02/work'), "fatal: '/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/tmp4ypf5o02/work' is a main working tree\n")
+cd "/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.8hsv86mP/worktree"
+
+python3 - <<'PY'
+from pathlib import Path
+p = Path("tests/test_lbg_sync.py")
+s = p.read_text()
+old = "line[9:]!=str(work)"
+new = "Path(line[9:]).resolve() != work.resolve()"
+if old in s:
+    p.write_text(s.replace(old, new))
+elif new not in s:
+    raise SystemExit("Unexpected test content; stop and share the file.")
+PY
+
+python3 tests/test_lbg_sync.py
+
+
+
+git add tests/test_lbg_sync.py
+git diff --cached --check &&
+git commit -m "Merge LBG main_stage retaining corrected sync tooling" &&
+git push \
+  --force-with-lease=refs/heads/feature/lbg-import-20261126-075259: \
+  git@github.com:Srujan-DiagonalMatrix/rove.git \
+  HEAD:refs/heads/feature/lbg-import-20261126-075259
