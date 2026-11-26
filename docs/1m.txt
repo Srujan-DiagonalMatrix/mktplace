@@ -1,103 +1,31 @@
-bash <<'BASH'
-REPORT="$HOME/Desktop/rove-sync-diagnostics.txt"
-
-{
-  echo "=== DATE AND GIT VERSION ==="
-  date
-  git --version
-
-  echo
-  echo "=== CURRENT CHECKOUT ==="
-  git rev-parse --show-toplevel
-  git status --short --branch
-  git rev-parse --is-shallow-repository
-
-  echo
-  echo "=== WORKTREES ==="
-  git worktree list
-
-  echo
-  echo "=== LOCAL MAIN ==="
-  git log -5 --format='%h %ad %s' --date=iso main
-
-  echo
-  echo "=== REMOTE BRANCH HEADS ==="
-  git ls-remote \
-    git@github.com:Srujan-DiagonalMatrix/rove.git \
-    refs/heads/main
-  git ls-remote \
-    git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git \
-    refs/heads/main_stage
-
-  echo
-  echo "=== LOCAL SYNC SCRIPTS ==="
-  for FILE in deploy/lbg-push.sh deploy/lbg-pull.sh deploy/lbg-sync.sh; do
-    echo
-    echo "--- $FILE ---"
-    if [ -f "$FILE" ]; then
-      shasum -a 256 "$FILE"
-      bash -n "$FILE"
-      sed -n '1,220p' "$FILE"
-    else
-      echo "MISSING"
-    fi
-  done
-
-  for WORKTREE in \
-    "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.FwCiAPIp/worktree" \
-    "/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.8hsv86mP/worktree"
-  do
-    echo
-    echo "=== MERGE WORKTREE: $WORKTREE ==="
-
-    if ! git -C "$WORKTREE" rev-parse --git-dir >/dev/null 2>&1; then
-      echo "Worktree no longer exists"
-      continue
-    fi
-
-    git -C "$WORKTREE" status --short --branch
-
-    HEAD_COMMIT=$(git -C "$WORKTREE" rev-parse HEAD)
-    OTHER_COMMIT=$(git -C "$WORKTREE" rev-parse --verify MERGE_HEAD 2>/dev/null)
-
-    echo "HEAD: $HEAD_COMMIT"
-    echo "MERGE_HEAD: $OTHER_COMMIT"
-
-    if [ -z "$OTHER_COMMIT" ]; then
-      echo "No merge currently in progress"
-      continue
-    fi
-
-    echo "--- Both source commits ---"
-    git -C "$WORKTREE" show -s \
-      --format='%H %ad %s' --date=iso \
-      "$HEAD_COMMIT" "$OTHER_COMMIT"
-
-    echo "--- Common ancestors ---"
-    git -C "$WORKTREE" merge-base --all \
-      "$HEAD_COMMIT" "$OTHER_COMMIT" ||
-      echo "NO COMMON ANCESTOR"
-
-    echo "--- Unresolved index entries ---"
-    git -C "$WORKTREE" ls-files --unmerged
-
-    echo "--- Differences between source versions ---"
-    git -C "$WORKTREE" diff \
-      "$HEAD_COMMIT" "$OTHER_COMMIT" -- \
-      deploy/lbg-pull.sh \
-      deploy/lbg-push.sh \
-      deploy/lbg-sync.sh \
-      deploy/LBG_SYNC.md \
-      tests/test_lbg_sync.py
-
-    echo "--- Workflow differences between source versions ---"
-    git -C "$WORKTREE" diff --stat \
-      "$HEAD_COMMIT" "$OTHER_COMMIT" -- .github
-  done
-
-  echo
-  echo "=== END OF REPORT ==="
-} > "$REPORT" 2>&1
-
-echo "Report saved to: $REPORT"
-BASH
+=== REPOSITORY STATUS ===
+## main...origin/main
+false
+/Users/srujan.kumar/Documents/git/rove                                               22d68c87 [main]
+/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.f9vnGcHl/worktree c8a84f2a [feature/rove-sync-20261125-092422]
+/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.FnEt4rfb/worktree c8a84f2a [feature/rove-sync-20261125-120745]
+/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.XqNoFKiY/worktree c8a84f2a [feature/rove-sync-20261125-121341]
+/private/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.Zs00E2gw/worktree 22d68c87 [feature/lbg-import-20261125-121635]
+=== SOURCE COMMITS ===
+22d68c87 Merge pull request #98 from Srujan-DiagonalMatrix/vehicle
+c8a84f2a more fixes on navigation and summary page
+=== COMMON ANCESTOR ===
+NO COMMON ANCESTOR FOUND
+=== HISTORY ROOTS ===
+166061afecd9426087ed3efa1919894009136d64
+6b3f90d3a6bd48dd0ecb7f590bc0eed41bb02893
+=== CONFLICTED FILES ===
+deploy/lbg-pull.sh
+deploy/lbg-push.sh
+server/app/main.py
+src/components/AdminDashboard.jsx
+src/components/FullVehicleDetails.jsx
+src/components/VehicleResults.jsx
+=== FILE DIFFERENCES ===
+ deploy/lbg-pull.sh                    | 73 ++++++++++++++++++++++++++--
+ deploy/lbg-push.sh                    | 89 ++++++++++++++++++++++++++++++++---
+ server/app/main.py                    | 19 --------
+ src/components/AdminDashboard.jsx     | 27 +----------
+ src/components/FullVehicleDetails.jsx | 77 ++++++++++++++++++------------
+ src/components/VehicleResults.jsx     | 43 +++++++++--------
+ 6 files changed, 223 insertions(+), 105 deletions(-)
