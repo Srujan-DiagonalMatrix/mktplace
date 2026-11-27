@@ -1,89 +1,47 @@
-python3 - <<'PY'
-from pathlib import Path
-import subprocess
+./deploy/lbg-push.sh 
+From github-company:lbg-cloud-platform/tactical-innovation-f2b97b
+ * branch              main_stage -> FETCH_HEAD
+From github.com:Srujan-DiagonalMatrix/rove
+ * branch              main       -> FETCH_HEAD
+Preparing worktree (new branch 'feature/rove-sync-20261127-104806')
+HEAD is now at da2d8d8b Merge pull request #15 from lbg-cloud-platform/feature/rove-sync-20261127-101510
+Auto-merging src/main.jsx
+CONFLICT (content): Merge conflict in src/main.jsx
+Auto-merging tests/browser/admin-inventory.spec.js
+CONFLICT (content): Merge conflict in tests/browser/admin-inventory.spec.js
+Auto-merging tests/browser/analytics-full-journey.spec.js
+CONFLICT (content): Merge conflict in tests/browser/analytics-full-journey.spec.js
+Auto-merging tests/browser/analytics-step1-step3.spec.js
+CONFLICT (content): Merge conflict in tests/browser/analytics-step1-step3.spec.js
+Auto-merging tests/browser/analytics-step1-step4.spec.js
+CONFLICT (content): Merge conflict in tests/browser/analytics-step1-step4.spec.js
+Auto-merging tests/browser/analytics-step5-step7.spec.js
+CONFLICT (content): Merge conflict in tests/browser/analytics-step5-step7.spec.js
+Auto-merging tests/browser/handover.spec.js
+CONFLICT (content): Merge conflict in tests/browser/handover.spec.js
+Auto-merging tests/browser/reservation-admin.spec.js
+CONFLICT (content): Merge conflict in tests/browser/reservation-admin.spec.js
+Automatic merge failed; fix conflicts and then commit the result.
+Conflicting changes require review. Nothing has been pushed.
+src/main.jsx
+tests/browser/admin-inventory.spec.js
+tests/browser/analytics-full-journey.spec.js
+tests/browser/analytics-step1-step3.spec.js
+tests/browser/analytics-step1-step4.spec.js
+tests/browser/analytics-step5-step7.spec.js
+tests/browser/handover.spec.js
+tests/browser/reservation-admin.spec.js
+Resolve the files in /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.4Qy5dqjd/worktree, then run:
+  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.4Qy5dqjd/worktree add <resolved-files>
+  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.4Qy5dqjd/worktree commit
+Before pushing, export a clean LBG-only commit (after committing the resolution):
+  cd /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.4Qy5dqjd/worktree
+  git diff --exit-code da2d8d8b294089b43cfaff3b53b6a4a99a311219 HEAD -- .github &&
+  git update-ref refs/rove-sync-local/feature/rove-sync-20261127-104806 HEAD &&
+  CLEAN_COMMIT=$(git commit-tree "HEAD^{tree}" -p da2d8d8b294089b43cfaff3b53b6a4a99a311219 -m "Sync reconciled ROVE application") &&
+  git reset --soft "$CLEAN_COMMIT" &&
+  git -C /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.4Qy5dqjd/worktree push --force-with-lease=refs/heads/feature/rove-sync-20261127-104806: git@github-company:lbg-cloud-platform/tactical-innovation-f2b97b.git HEAD:refs/heads/feature/rove-sync-20261127-104806
+Create PR: feature/rove-sync-20261127-104806 -> main_stage
 
-worktree = Path("/var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T/rove-sync.qB9rMNLG/worktree")
-branch = "feature/lbg-import-20261127-100010"
-base = "9f09dd9e8aaeea9f8fd3b950959335c520e9b65e"
-
-def git(*args):
-    return subprocess.check_output(
-        ["git", "-C", str(worktree), *args], text=True
-    ).strip()
-
-def read(ref):
-    return subprocess.check_output(
-        ["git", "-C", str(worktree), "show", ref], text=True
-    )
-
-def normalize(content):
-    return content.replace(
-        "'/admin'", "'/admin-rove-271126'"
-    ).replace(
-        '"/admin"', '"/admin-rove-271126"'
-    )
-
-assert git("branch", "--show-current") == branch, "Unexpected branch"
-git("rev-parse", "--verify", "MERGE_HEAD")
-
-allowed = {
-    "tests/browser/analytics-full-journey.spec.js",
-    "tests/browser/analytics-step1-step3.spec.js",
-    "tests/browser/analytics-step1-step4.spec.js",
-    "tests/browser/analytics-step5-step7.spec.js",
-}
-
-files = git("diff", "--name-only", "--diff-filter=U").splitlines()
-assert files, "No unresolved conflicts found"
-assert set(files) <= allowed, "Other conflicts need individual review"
-
-resolved = {}
-for file in files:
-    ours = normalize(read(":2:" + file))
-    theirs = normalize(read(":3:" + file))
-    original = normalize(read(base + ":" + file))
-
-    if ours == theirs:
-        content = ours
-    elif ours == original:
-        content = theirs
-    elif theirs == original:
-        content = ours
-    else:
-        raise SystemExit(
-            f"STOP: competing changes in {file}. No files have been modified."
-        )
-
-    subprocess.run(
-        ["node", "--input-type=module", "--check"],
-        input=content, text=True, check=True
-    )
-    resolved[file] = content
-
-for file, content in resolved.items():
-    (worktree / file).write_text(content)
-
-git("add", "--", *resolved)
-assert not git("diff", "--name-only", "--diff-filter=U")
-
-subprocess.run([
-    "git", "-C", str(worktree), "commit", "-m",
-    "Merge LBG main_stage and preserve admin URL test updates"
-], check=True)
-
-subprocess.run([
-    "git", "-C", str(worktree), "push",
-    f"--force-with-lease=refs/heads/{branch}:",
-    "git@github.com:Srujan-DiagonalMatrix/rove.git",
-    f"HEAD:refs/heads/{branch}"
-], check=True)
-
-print("\nPersonal import feature branch pushed successfully.")
-PY
-
-
-cd /Users/srujan.kumar/Documents/git/rove &&
-git fetch origin &&
-git switch main &&
-git pull --ff-only origin main &&
-./deploy/lbg-push.sh
+Sync worktree retained: /var/folders/xj/rmn6klgj0ylbbdhzt9ffcc780000gp/T//rove-sync.4Qy5dqjd/worktree
+Branch: feature/rove-sync-20261127-104806
