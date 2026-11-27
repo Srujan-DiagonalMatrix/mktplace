@@ -1,10 +1,5 @@
-./restart.sh 
-There is no tracking information for the current branch.
-Please specify which branch you want to rebase against.
-See git-pull(1) for details.
-
-    git pull <remote> <branch>
-
-If you wish to set tracking information for this branch you can do so with:
-
-    git branch --set-upstream-to=<remote>/<branch> feature/lbg-import-20261126-075259
+git stash push -u -m "Backup before syncing main" &&
+git fetch origin &&
+git switch main &&
+git branch --set-upstream-to=origin/main main &&
+git pull --ff-only
